@@ -1,0 +1,36 @@
+{
+  "name": "precode",
+  "version": "1.0.0",
+  "description": "Scripts per adaptar projectes ionic després d'haver-se instal·lat.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "http://ZEYAt5UZyeyiZ6PyXBLP@gitlab.codi.ovh/tools/precode.git"
+  },
+  "scripts": {
+    "dev": "TS_NODE_PROJECT='./tsconfig.json' ts-node-dev  --inspect --respawn ./src src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@angular/compiler": "^8.2.14",
+    "@angular/core": "^8.2.14",
+    "@types/fs-extra": "^8.0.1",
+    "@types/node": "^12.12.27",
+    "chalk": "^3.0.0",
+    "codelyzer": "^5.2.0",
+    "ionic": "^5.4.7",
+    "ts-node": "^8.5.2",
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "@ionic-native/network": "^5.23.0",
+    "commander": "^4.0.1",
+    "glob": "^7.1.6",
+    "qs": "^6.9.3",
+    "zone.js": "^0.9.1"
+  }
+}

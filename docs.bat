@@ -1,0 +1,1 @@
+typedoc --out docs src/code --readme README.md

@@ -1,0 +1,16 @@
+{
+  "app": {
+    "name": "meta-controller",
+    "package": "com.meta-controller.app"
+  },
+  "api": {
+    "url": {
+      "dev": "dev",
+      "pro": "pro"
+    }
+  },
+  "git": {
+    "url": "http://gitlab.codi.ovh",
+    "token": "ZEYAt5UZyeyiZ6PyXBLP"
+  }
+}
