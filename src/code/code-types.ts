@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import * as ts from 'typescript';
+import { TextReplacement, TextReplacer } from './text-replacer';
 
 export type ModifierType = 'private' | 'protected' | 'public';
 
@@ -20,9 +22,9 @@ export interface ConstructorDeclaration {
 export interface FindReplaceOptions {
   /** Si se establece se utiliza como condición previa para iniciar la sustitución. */
   contains?: string | RegExp;
-  match: string | RegExp;
+  match?: string | RegExp;
   // replace?: string | (() => string);
-  replace?: string;
+  replace?: string | ((file: ts.SourceFile, replacer: TextReplacer) => void);
   global?: boolean;
   insensitive?: boolean;
   description?: string;
@@ -36,6 +38,7 @@ export interface FileOptions {
   replaces?: FindReplaceOptions[];
   copy?: string;
   content?: string;
+  source?: ts.SourceFile;
   contentFromFile?: string;
   saveOnContentChanges?: boolean;
   appendRatherThanOverwrite?: boolean;

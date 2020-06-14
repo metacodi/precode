@@ -118,6 +118,7 @@ project.initialize().then(async () => {
       replace: `\$1\n    TranslateModule.forRoot({\n      loader: {\n        provide: TranslateLoader,\n        useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),\n        deps: [HttpClient]\n      }\n    }),\n    `,
     }],
   });
+
   // await project.file('src/app/app.component.ts', {
   //   imports: [
   //     { action: 'add', specifiers: ['TranslateService'], source: '@ngx-translate/core' }
@@ -148,7 +149,7 @@ project.initialize().then(async () => {
   await project.file('src/app/app.module.ts', {
     imports: [
       { action: 'remove', specifiers: [ 'AppRoutingModule' ], source: './app-routing.module' },
-      // { action: 'add', specifiers: [ 'Routes' ], source: '@angular/router' },
+      // { specifiers: [ 'Routes' ], source: '@angular/router' },
     ],
     // replaces: [{
     //   match: /(\@NgModule\(\{(?:.|\r|\n)*)(?:AppRoutingModule(?:,?))((.|\n)*)/,
@@ -170,7 +171,6 @@ project.initialize().then(async () => {
   //     // { contains: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.dev}}`, replace: api.url.dev, },
   //   ],
   // });
-
 
   // await project.move('src/app/home', 'src/app/modules/home');
 

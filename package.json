@@ -22,14 +22,19 @@
     "chalk": "^3.0.0",
     "codelyzer": "^5.2.0",
     "ionic": "^5.4.7",
+    "mysql": "^2.18.1",
     "ts-node": "^8.5.2",
     "tslint": "^5.20.1",
     "typescript": "^3.7.2"
   },
   "dependencies": {
     "@ionic-native/network": "^5.23.0",
+    "@ngx-translate/core": "^12.1.2",
+    "@ngx-translate/http-loader": "^4.0.0",
+    "@types/mysql": "^2.15.13",
     "commander": "^4.0.1",
     "glob": "^7.1.6",
+    "php-parser": "^3.0.1",
     "qs": "^6.9.3",
     "zone.js": "^0.9.1"
   }

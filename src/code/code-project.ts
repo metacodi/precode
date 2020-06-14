@@ -7,6 +7,11 @@ import Prompt from 'commander';
 import { exec } from 'child_process'; // const { exec } = require('child_process');
 import { CodeProjectConfig, FileOptions, FolderOptions, CloneOptions, CurlOptions, PropertyValue } from './code-types';
 import { of } from 'rxjs';
+import * as ts from 'typescript';
+import * as mysql from 'mysql';
+import { TextReplacer, TextReplacement } from './text-replacer';
+import { isFunction } from 'util';
+
 
 // --------------------------------------------------------------------------------
 //  CodeProject
@@ -94,6 +99,10 @@ export class CodeProject {
   line = `--------------------------------------------------------------------------------`;
   os: string;
 
+  /** Referencia a la conexión abierta del pool. */
+  connection: mysql.Connection | mysql.PoolConnection;
+
+
   /** @category Init */
   constructor(path: string, scriptPath: string, os: string, name?: string) {
     try {
@@ -129,27 +138,33 @@ export class CodeProject {
   async initialize(): Promise<any> {
     const fileName = 'precode.json';
     try {
-
       // Project directory
       if (!await utils.pathExists(this.path)) { this.error(`No s'ha trobat la carpeta del projecte '${this.path}'.`); }
       this.log(chalk.bold('Directori del projecte: ') + this.chalkFile(this.path));
 
       // 'precode.json'
-      if (!await utils.pathExists(this.path + '/' + fileName)) { this.error(`No s'ha trobat l'arxiu de configuració del projecte '${this.chalkFile(fileName)}'.`); }
-      this.log(`Carregant arxiu de configuració '${this.chalkFile(fileName)}'...`);
-      const content: string = await utils.fileToString(this.path + '/' + fileName);
-      if (!content) { this.error(`L'arxiu de configuració '${this.chalkFile(fileName)}' està buit!?!`); }
-      try { this.config = JSON.parse(content); } catch (error) {
-        this.error(`Error parsejant l'arxiu de configuració del projecte '${this.chalkFile(fileName)}'.`, false);
-        this.error(error);
+      if (await utils.pathExists(this.path + '/' + fileName)) {
+        this.log(`Carregant arxiu de configuració '${this.chalkFile(fileName)}'...`);
+        const content: string = await utils.fileToString(this.path + '/' + fileName);
+        if (content) {
+          try {
+            this.config = JSON.parse(content);
+          } catch (error) {
+            this.error(`Error parsejant l'arxiu de configuració del projecte '${this.chalkFile(fileName)}'.`, false);
+            this.error(error);
+          }
+        } else {
+          // this.error(`L'arxiu de configuració '${this.chalkFile(fileName)}' està buit!?!`);
+        }
+        if (this.config && this.config.git && this.config.git.token && !this.config.git.url.includes(`gitlab-ci-token:`)) {
+          const git = this.config.git;
+          git.url = git.url.replace(/(http[s]?:\/\/)(.*)/, `\$1gitlab-ci-token:${git.token}\@\$2`);
+          this.log(`Tokenitzant la url del git '${chalk.magenta(git.url)}'`);
+        }
+        if (content) { this.blob(chalk.grey(content)); }
+      } else {
+        // this.error(`No s'ha trobat l'arxiu de configuració del projecte '${this.chalkFile(fileName)}'.`);
       }
-
-      if (this.config.git && this.config.git.token && !this.config.git.url.includes(`gitlab-ci-token:`)) {
-        const git = this.config.git;
-        git.url = git.url.replace(/(http[s]?:\/\/)(.*)/, `\$1gitlab-ci-token:${git.token}\@\$2`);
-        this.log(`Tokenitzant la url del git '${chalk.magenta(git.url)}'`);
-      }
-      this.blob(chalk.grey(content));
 
       // utils.readdirp(this.path + '/src/app').then((value: string[]) => {
       //   console.log('dir => ', value);
@@ -172,13 +187,21 @@ export class CodeProject {
    * ```
    * @category Command
    */
-  async install(dependencies: string[]): Promise<any> {
+  async install(dependencies: any[]): Promise<any> {
     // Recordamos el directorio actual.
     const curDir = process.cwd();
     // Establecemos el directorio del proyecto como el directorio actual.
     process.chdir(this.path);
     // Install dependencies.
-    for (const dep of dependencies) { await this.execute(dep); }
+    for (const dep of dependencies) {
+      if (typeof dep === 'string') {
+        await this.execute(dep);
+      } else {
+        if (typeof dep === 'function') {
+          if (typeof dep.install === 'function') { await dep.install(this); }
+        }
+      }
+    }
     // Restablecemos el directorio actual.
     process.chdir(curDir);
   }
@@ -315,14 +338,13 @@ export class CodeProject {
     const fullName = this.rootPath(fileName);
 
     try {
-
       // Content
       if (!await utils.pathExists(fullName)) {
         this.log(`Creant arxiu '${this.chalkFile(fileName)}'...`);
 
       } else {
         if (!options.content) {
-          this.log(`Llegint arxiu '${this.chalkFile(fileName)}'...`);
+          this.verbose(`Llegint arxiu '${this.chalkFile(fileName)}'...`);
           options.content = await utils.fileToString(fullName);
 
         } else {
@@ -335,11 +357,11 @@ export class CodeProject {
         }
       }
 
+      // Imports
+      options.content = this.imports(fileName, options);
+
       // Replaces
       options.content = this.replaces(fileName, options);
-
-      // Imports
-      options.content = await this.imports(fileName, options);
 
       // Copy
       if (options.copy) {
@@ -360,91 +382,112 @@ export class CodeProject {
 
   /** @category Command */
   private replaces(fileName: string, options: FileOptions): string {
-    let content = options.content;
     if (options.replaces && options.replaces.length) {
-      this.log(`Substituint codi de l'arxiu '${this.chalkFile(fileName)}'...`);
+      this.log(`Actualitzant codi de l'arxiu '${this.chalkFile(fileName)}'...`);
+
+      const sourceFile: ts.SourceFile = this.getSourceFile(fileName, options.content);
+      const replacer: TextReplacer = new TextReplacer(options.content);
+
+      // Execute replaces.
       for (const action of options.replaces) {
         let descartado = false;
         if (!!action.contains) {
           if (typeof action.contains === 'string') { action.contains = new RegExp(action.contains); }
-          if (action.contains.test(content)) {
+          if (action.contains.test(options.content)) {
             descartado = true;
             this.verbose(`- S'ha descartat substituir l'expressió perquè ja existeix.`);
           }
         }
         if (!descartado) {
-          this.log(action.description ? '-' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()));
-          content = content.replace(action.match || '', action.replace || '');
+          if (typeof action.replace === 'function') {
+            this.log(action.description ? '- ' + action.description : `- Executant funció de substitució`);
+            action.replace(sourceFile, replacer);
+            options.content = replacer.apply(options.content);
+          } else {
+            this.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()));
+            options.content = options.content.replace(action.match || '', action.replace || '');
+          }
         }
       }
     } else {
       // this.verbose(`No s'ha definit cap substitució per a l'arxiu '${this.chalkFile(fileName)}'.`);
     }
-    return content;
+    return options.content;
   }
 
   /** @category Command */
-  private async imports(fileName: string, options: FileOptions): Promise<string> {
-    let content = options.content;
+  private imports(fileName: string, options: FileOptions): string {
     if (options.imports && options.imports.length) {
       this.log(`Modificant importacions de l'arxiu '${this.chalkFile(fileName)}'...`);
-      for (const item of options.imports) {
-        const add = [], remove = [];
-        if (!item.action) { item.action = 'add'; }
-        for (const specifier of item.specifiers) {
-          // Comprobamos si la clase ya está presente entre las importadas.
-          const exists = new RegExp(`((?:import[^}]*)(?: |\n|\t|,|\{)${specifier}(?= |,|\n|\})[^;]*(?:\'${item.source}\'[ ]*;))`, 'g');
-          if (!exists.test(content) && item.action === 'add') { add.push(specifier); }
-          // if (exists.test(content) && item.action === 'remove') { remove.push(specifier); }
-          if (item.action === 'remove') { remove.push(specifier); }
-        }
-        if (item.action === 'add') {
-          if (add.length > 0) {
-            console.log(add);
-            const classes: string = chalk.bold(add.join(', '));
-            // Comprobamos si existe una fila de importación del mismo paquete.
-            const existsSource = new RegExp(`import[^}]+\}\s*.*\'${item.source}\';`);
-            if (!existsSource.test(content)) {
-              this.log(`- Afegint fila d'importació per '${chalk.bold(item.source)}'...`);
-              // Busquem totes les importaciones com un sol bloc $1=(espais + import) + $2=(un darrer bloc d'espais)
-              const search = `(((\s|\n)*import[^;]*;)*)((\s|\n)*)`;
-              const replace = `\$1\nimport \{ ${item.specifiers.join(', ')} \} from '${item.source}';\n\n`;
-              content = content.replace(new RegExp(search), replace);
+
+      const sourceFile: ts.SourceFile = this.getSourceFile(fileName, options.content);
+      const replacer: TextReplacer = new TextReplacer(options.content);
+
+      // Get declared imports.
+      const declared: any[] = this.filterNodes(sourceFile.statements, ts.SyntaxKind.ImportDeclaration, { firstOnly: false }).map((node: ts.ImportDeclaration) => ({
+        specifiers: node.importClause.getText().replace('{', '').replace('}', '').split(',').map((e: any) => e.trim()),
+        source: node.moduleSpecifier.getText(),
+        pos: node.pos,
+        end: node.end,
+      }));
+      // Reference last import.
+      const lastImport = declared.length ? declared[declared.length - 1] : undefined;
+
+      // Execute import actions.
+      for (const i of options.imports) {
+        // Buscamos todas las importaciones declaradas del módulo actual.
+        const found = declared.filter((d: any) => d.source === `'${i.source}'`);
+        // Default value.
+        if (!i.action) { i.action = 'add'; }
+
+        if (i.action === 'add') {
+          if (found.length) {
+            const add: any[] = [];
+            // Filtramos los specifier que no están en ninguna importación.
+            i.specifiers.map(s => { if (found.filter(f => f.specifiers.includes(s)).length === 0) { add.push(s); } });
+            if (add.length) {
+              this.log(`- Afegint ${chalk.bold(add.join(', '))} a la fila existent de '${chalk.bold(i.source)}'`);
+              const newImport = `\nimport \{ ${found[0].specifiers.concat(add).join(', ')} \} from '${i.source}';`;
+              replacer.replaceNode(found[0], newImport);
 
             } else {
-              this.log(`- Afegint ${chalk.bold(add.join(', '))} a la fila existent de '${chalk.bold(item.source)}'`);
-              const search = `(import[^}]+)?.*( \}.*\'${item.source}\';)`;
-              const replace = `\$1, ${add.join(', ')}\$2`;
-              content = content.replace(new RegExp(search), replace);
+              this.verbose(`- Ja existeix la importació de '${chalk.bold(i.source)}'`);
             }
           } else {
-            this.verbose(`- Ja existeix la importació de '${chalk.bold(item.source)}'`);
+            this.log(`- Afegint fila d'importació per '${chalk.bold(i.source)}'...`);
+            const newImport = `\nimport \{ ${i.specifiers.join(', ')} \} from '${i.source}';`;
+            replacer.insertAfter(lastImport, newImport);
           }
 
-        } else if (item.action === 'remove') {
-          console.log('remove => ', remove);
-          if (remove.length > 0) {
-            // TODO: remove import
-            // const search = `((\s|\n)*import \{ AppRoutingModule \} from '\.\/app\-routing\.module'\;)`;
-            // const replace = ``;
-            // content = content.replace(new RegExp(search), replace);
-            // TODO: check empty import line
-            const search = `((\s|\n)*import(\s|\n)*\{(\s|\n)*\}(\s|\n)*from(\s|\n)*\'${item.source}\'\;)`;
-            const replace = ``;
-            content = content.replace(new RegExp(search), replace);
-            this.log(`- NOT IMPLEMENTED !!! Eliminant importació de '${chalk.bold(item.source)}'...`);
+        } else if (i.action === 'remove') {
+          if (found.length) {
+            // Repasamos cada import para quitar los specifiers indicados.
+            found.map(f => {
+              // Quitamos los specifier que hay que eliminar de la importación.
+              const rest: any[] = f.specifiers.filter((s: any) => !i.specifiers.includes(s));
+              const remove: any[] = f.specifiers.filter((s: any) => i.specifiers.includes(s));
+              if (rest.length) {
+                this.log(`- Eliminant ${chalk.bold(remove.join(', '))} de la fila de '${chalk.bold(i.source)}'`);
+                const newImport = `\nimport \{ ${rest.join(', ')} \} from '${i.source}';`;
+                replacer.replaceNode(f, newImport);
+              } else {
+                this.log(`- Eliminant importació de '${chalk.bold(i.source)}'...`);
+                replacer.deleteNode(f);
+              }
+            });
           } else {
-            this.verbose(`- Ja no existeix la importació de '${chalk.bold(item.source)}'`);
+            this.verbose(`- Ja no existeix la importació de '${chalk.bold(i.source)}'`);
           }
-
         } else {
-          this.warning(`No es reconeix el tipus d'acció '${item.action}' per la importació de '${chalk.bold(item.source)}'`);
+          this.warning(`No es reconeix el tipus d'acció '${i.action}' per la importació de '${chalk.bold(i.source)}'`);
         }
       }
+      options.content = replacer.apply();
+
     } else {
       // this.verbose(`No s'ha definit cap importació per a l'arxiu '${this.chalkFile(fileName)}'.`);
     }
-    return content;
+    return options.content;
   }
 
   /**
@@ -668,11 +711,143 @@ export class CodeProject {
 
 
   // --------------------------------------------------------------------------------
+  //  Abstract Syntax Tree
+  // --------------------------------------------------------------------------------
+
+  /** Obtiene el contenido del archivo indicado y devuelve una estructura de código fuente `ts.SourceFile`. */
+  getSourceFile(fileName: string, content?: string): ts.SourceFile {
+    return ts.createSourceFile(fileName, content || fs.readFileSync(fileName, 'utf-8'), ts.ScriptTarget.Latest, true);
+  }
+
+  /** Atraviesa el AST en busca de un nodo con la declaración de la clase indicada. */
+  getClassDeclaration(name: string, source: any, throwError = true): ts.ClassDeclaration {
+    const classe: ts.ClassDeclaration = this.findNode(source, (node: ts.Node): boolean =>
+      node.kind === ts.SyntaxKind.ClassDeclaration
+      && (node as ts.ClassDeclaration).name.text === name
+    ) as ts.ClassDeclaration;
+    if (!classe && throwError) { this.error(`No s'ha trobat la classe '${chalk.bold('AppModule')}'.`, false); return undefined; }
+    return classe;
+  }
+
+  /** Devuelve una de las propiedades `imports`, `providers`, `entryComponents` o `declarations` del decorador de clase `@NgModule`. */
+  getNgModuleProperty(classe: ts.ClassDeclaration, propName: string, throwError = true): ts.PropertyAssignment {
+    const deco = classe.decorators.find(d => ((d.expression  as ts.CallExpression).expression as ts.Identifier).text === 'NgModule');
+    if (!deco) {
+      if (throwError) { this.error(`No s'ha trobat el decorador de classe '${chalk.bold('@NgModule')}'.`, false); }
+      return undefined;
+    }
+    const obj = (deco.expression  as ts.CallExpression).arguments[0] as ts.ObjectLiteralExpression;
+    const prop = obj.properties.find((p: ts.PropertyAssignment) => p.name.getText() === propName) as ts.PropertyAssignment;
+    if (!prop) {
+      if (throwError) { this.error(`No s'ha trobat la propietat '${chalk.bold(propName)}' al decorador de classe '${chalk.bold('@NgModule')}'.`, false); }
+      return undefined;
+    }
+    return prop;
+  }
+
+  /** Función que atraviesa el AST en busca de ocurrencias. */
+  filterNodes(nodes: any, filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): ts.Node[] {
+    if (!Array.isArray(nodes)) { nodes = [nodes]; }
+    if (typeof filter !== 'function' && !Array.isArray(filter)) { filter = [filter]; }
+    if (!options) { options = {}; }
+    if (options.recursive === undefined) { options.recursive = false; }
+    if (options.firstOnly === undefined) { options.firstOnly = true; }
+
+    const results: (ts.Node | ts.Statement)[] = [];
+
+    for (const node of nodes) {
+      if (!results.length || !options.firstOnly) {
+
+        if (typeof filter === 'function') {
+          if (filter(node)) { results.push(node); }
+        } else if (Array.isArray(filter)) {
+          if ((filter as ts.SyntaxKind[]).includes(node.kind)) { results.push(node); }
+        }
+        if (results.length && options.firstOnly) { return results; }
+
+        if (options.recursive) {
+          node.forEachChild((child: ts.Node | ts.Statement) => {
+            if (!results.length || !options.firstOnly) {
+              results.push(...this.filterNodes(child, filter, options));
+            }
+          });
+        }
+      }
+    }
+    return results;
+  }
+
+  /** Función que atraviesa el AST en busca de la primera ocurrencia. */
+  findNode(nodes: any, filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): ts.Node {
+    const results = this.filterNodes(nodes, filter, { firstOnly: true });
+    return results && results.length ? results[0] : undefined;
+  }
+
+
+  // --------------------------------------------------------------------------------
+  //  MySQL
+  // --------------------------------------------------------------------------------
+
+  /**
+   * Abre un pool para la ejecución de múltiples consultas durante el script.
+   * ```typescript
+   * await project.connect({
+   *   connectionLimit : 10,
+   *   host: 'db.myhost.com',
+   *   user: 'myuser',
+   *   password: '1234',
+   *   database: 'mydatabase'
+   * });
+   * ```
+   *
+   * Al terminar la última consulta debería liberarse la conexión:
+   * ```typescript
+   * con.release();
+   * ```
+   */
+  async connect(config: string | mysql.ConnectionConfig | mysql.PoolConfig): Promise<mysql.Connection | mysql.PoolConnection> {
+    return new Promise<any>((resolve: any, reject: any) => {
+      const pool: mysql.Pool = mysql.createPool(config);
+      pool.getConnection(async (err: mysql.MysqlError, connection: mysql.PoolConnection) => {
+        if (err) { reject(err); }
+        // Referenciamos la conexión para ejecutar futuras consultas.
+        this.connection = connection;
+        this.verbose('MySQL connected!');
+        resolve(connection);
+      });
+    });
+  }
+
+  /** Ejecuta una consulta a través de la conexión actual.  */
+  async query(sql: string): Promise<any> {
+    return new Promise<any>((resolve: any, reject: any) => {
+      if (!this.connection) { this.error('No hay ninguna conexión abierta.'); }
+      this.connection.query(sql, (err, results) => {
+        if (err) { reject(err); }
+        resolve(results);
+      });
+    });
+  }
+
+  /** Cierra la conexión actual. */
+  async closeConnection() {
+    if (this.connection) {
+      if (typeof (this.connection as any).release === 'function') {
+        (this.connection as mysql.PoolConnection).release();
+        this.verbose('MySQL connection closed!');
+      } else if (typeof (this.connection as any).end === 'function') {
+        (this.connection as mysql.Connection).end();
+        this.verbose('MySQL connection closed!');
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------------------
   //  Log & Error
   // --------------------------------------------------------------------------------
 
   /** @category Log */
-  private log(message: string, data?: any) {
+  log(message: string, data?: any) {
     // if (Prompt.verbose) {
       if (data === undefined) {
         console.log(message);
@@ -683,7 +858,7 @@ export class CodeProject {
   }
 
   /** @category Log */
-  private verbose(message: string, data?: any) {
+  verbose(message: string, data?: any) {
     if (Prompt.verbose) {
       if (data === undefined) {
         console.log(message);
@@ -694,32 +869,32 @@ export class CodeProject {
   }
 
   /** @category Log */
-  private blob(content: string) {
+  blob(content: string) {
     if (Prompt.verbose) {
       console.log(this.line + '\n' + content + this.line);
     }
   }
 
   /** @category Log */
-  private warning(message: string): void {
+  warning(message: string): void {
     console.log(chalk.bold.yellow('WARN: ') + chalk.yellow(message) + '\n');
   }
 
   /** @category Log */
-  private error(error: any, exit = true): void {
+  error(error: any, exit = true): void {
     const message = typeof error === 'string' ? error : error.error || error.message || 'Error desconegut';
     console.log(chalk.bold.red('ERROR: ') + chalk.red(message) + (exit ? `\n\n${this.line}\n` : ''));
     if (exit) { process.exit(1); }
   }
 
   /** @category Log */
-  private chalkFile(fileName: string, relativeTo?: string): string {
+  chalkFile(fileName: string, relativeTo?: string): string {
     const i = relativeTo ? this.relative(fileName, relativeTo) : fileName.lastIndexOf('/');
     if (i > 0) {
       const base = fileName.substr(0, i + 1);
       const name = fileName.substr(i + 1);
-      // return chalk.blue(base) + chalk.bold.cyan(name);
-      return chalk.rgb(0, 92, 36)(base) + chalk.bold.green(name);
+      // return chalk.blue(base) + chalk.bold.blue(name);
+      return chalk.green(base) + chalk.bold.green(name);
 
     } else {
       // return chalk.cyan(fileName);
@@ -728,7 +903,7 @@ export class CodeProject {
   }
 
   /** @category Log */
-  private relative(from: string, to: string) {
+  relative(from: string, to: string) {
     let i = 0;
     while (i < Math.min(from.length, to.length)) {
       if (from.charAt(i) !== to.charAt(i)) { return i - 1; }
