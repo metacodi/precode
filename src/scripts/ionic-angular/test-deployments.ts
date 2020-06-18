@@ -3,9 +3,9 @@
 
 /* --------------------------------------------------------------------------------
  *
- *  npx ts-node src/scripts/ionic-angular/install-modules.ts -v
- *  npx ts-node src/scripts/ionic-angular/install-modules.ts -d C:\Users\Jordi\work\metacodi\tools\precode\ -v
- *  npx ts-node src/scripts/ionic-angular/install-modules.ts -f src/app/app.module.ts -v
+ *  npx ts-node src/scripts/ionic-angular/test-deployments.ts -v
+ *  npx ts-node src/scripts/ionic-angular/test-deployments.ts -d C:\Users\Jordi\work\metacodi\tools\test-project\frontend -v
+ *  npx ts-node src/scripts/ionic-angular/test-deployments.ts -f src/app/app.module.ts -v
  *
  * -------------------------------------------------------------------------------- */
 
@@ -16,8 +16,10 @@ import Prompt from 'commander';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import { CodeProject, TextReplacer } from '../../code';
-import { i18n } from '../../code/modules/i18n';
+import { i18n } from '../../code/deployments/ionic-angular/i18n';
 import * as mysql from 'mysql';
+import { Terminal } from '../../utils/terminal';
+import { TypescriptProject } from '../../code/typescript-project';
 
 // --------------------------------------------------------------------------------
 //  Arguments
@@ -44,7 +46,7 @@ if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt
 // // console.log('Prompt.directory', Prompt.directory);
 // // console.log('__dirname', __dirname);
 // // console.log('Prompt.directory || __dirname', Prompt.directory || __dirname);
-const project: CodeProject = new CodeProject(Prompt.directory || __dirname, __dirname, Prompt.system || 'dos');
+const project: TypescriptProject = new TypescriptProject(Prompt.directory || __dirname);
 
 project.initialize().then(async () => {
 
@@ -62,8 +64,16 @@ project.initialize().then(async () => {
 
   // await project.closeConnection();
 
-  project.install([i18n, i18n]).then(() => {
-    console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n${project.line}\n`);
+  // i18n.deploy(project).then(() => {
+  //   console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n${Terminal.line}\n`);
+  // });
+
+  const Di18n = new i18n(project);
+  Di18n.deploy();
+  Di18n.test();
+
+  project.install([Di18n]).then(() => {
+    console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n${Terminal.line}\n`);
   });
 
 

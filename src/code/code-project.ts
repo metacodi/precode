@@ -6,11 +6,13 @@ import * as path from 'path';
 import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
 import { exec } from 'child_process'; // const { exec } = require('child_process');
-import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DirentType } from './code-project-types';
+import { FileOptions, FolderOptions, CloneOptions, CurlOptions, ResourceType } from './code-project-types';
 import { of } from 'rxjs';
 // import * as ts from 'typescript';
 import * as mysql from 'mysql';
-import { createCallChain } from 'typescript';
+import { Terminal } from '../utils/terminal';
+import { Resource } from '../utils/resource';
+
 
 
 
@@ -36,7 +38,7 @@ import { createCallChain } from 'typescript';
  * #!/usr/bin/env node
  * /// <reference types="node" />
  *
- * import { CodeProject } from 'src/code';
+ * import { CodeProject } from '@metacodi/precode';
  * import Prompt from 'commander';
  *
  * Prompt
@@ -80,8 +82,8 @@ export class CodeProject {
   config: any;
   /** Indica el sistema operatiu actual. */
   os: string;
-  /** Debug helper */
-  line = `--------------------------------------------------------------------------------`;
+  // /** Debug helper */
+  // line = `--------------------------------------------------------------------------------`;
   /** Referència a la connexió mysql oberta. */
   connection: mysql.Connection | mysql.PoolConnection;
 
@@ -95,11 +97,11 @@ export class CodeProject {
       this.name = name || this.projectPath.split('/').pop();
 
       // this.initialize().then(result => {
-      //   this.log('Initialized!');
+      //   Terminal.log('Initialized!');
       // });
 
     } catch (error) {
-      this.error(error);
+      Terminal.error(error);
     }
   }
 
@@ -122,39 +124,39 @@ export class CodeProject {
     const fileName = 'precode.json';
     try {
       // Project directory
-      if (!await utils.pathExists(this.projectPath)) { this.error(`No s'ha trobat la carpeta del projecte '${this.projectPath}'.`); }
-      this.log(chalk.bold('Directori del projecte: ') + this.chalkFile(this.projectPath));
+      if (!await utils.pathExists(this.projectPath)) { Terminal.error(`No s'ha trobat la carpeta del projecte '${this.projectPath}'.`); }
+      Terminal.log(chalk.bold('Directori del projecte: ') + Terminal.chalkFile(this.projectPath));
 
-      // 'precode.json'
-      if (await utils.pathExists(this.projectPath + '/' + fileName)) {
-        this.log(`Carregant arxiu de configuració '${this.chalkFile(fileName)}'...`);
-        const content: string = await utils.fileToString(this.projectPath + '/' + fileName);
-        if (content) {
-          try {
-            this.config = JSON.parse(content);
-          } catch (error) {
-            this.error(`Error parsejant l'arxiu de configuració del projecte '${this.chalkFile(fileName)}'.`, false);
-            this.error(error);
-          }
-        } else {
-          // this.error(`L'arxiu de configuració '${this.chalkFile(fileName)}' està buit!?!`);
-        }
-        if (this.config && this.config.git && this.config.git.token && !this.config.git.url.includes(`gitlab-ci-token:`)) {
-          const git = this.config.git;
-          git.url = git.url.replace(/(http[s]?:\/\/)(.*)/, `\$1gitlab-ci-token:${git.token}\@\$2`);
-          this.log(`Tokenitzant la url del git '${chalk.magenta(git.url)}'`);
-        }
-        if (content) { this.blob(chalk.grey(content)); }
-      } else {
-        // this.error(`No s'ha trobat l'arxiu de configuració del projecte '${this.chalkFile(fileName)}'.`);
-      }
+      // // 'precode.json'
+      // if (await utils.pathExists(this.projectPath + '/' + fileName)) {
+      //   Terminal.log(`Carregant arxiu de configuració '${Terminal.chalkFile(fileName)}'...`);
+      //   const content: string = await utils.fileToString(this.projectPath + '/' + fileName);
+      //   if (content) {
+      //     try {
+      //       this.config = JSON.parse(content);
+      //     } catch (error) {
+      //       Terminal.error(`Error parsejant l'arxiu de configuració del projecte '${Terminal.chalkFile(fileName)}'.`, false);
+      //       Terminal.error(error);
+      //     }
+      //   } else {
+      //     // Terminal.error(`L'arxiu de configuració '${Terminal.chalkFile(fileName)}' està buit!?!`);
+      //   }
+      //   if (this.config && this.config.git && this.config.git.token && !this.config.git.url.includes(`gitlab-ci-token:`)) {
+      //     const git = this.config.git;
+      //     git.url = git.url.replace(/(http[s]?:\/\/)(.*)/, `\$1gitlab-ci-token:${git.token}\@\$2`);
+      //     Terminal.log(`Tokenitzant la url del git '${chalk.magenta(git.url)}'`);
+      //   }
+      //   if (content) { this.blob(chalk.grey(content)); }
+      // } else {
+      //   // Terminal.error(`No s'ha trobat l'arxiu de configuració del projecte '${Terminal.chalkFile(fileName)}'.`);
+      // }
 
       // utils.readdirp(this.projectPath + '/src/app').then((value: string[]) => {
       //   console.log('dir => ', value);
       // })
 
     } catch (error) {
-      this.error(error);
+      Terminal.error(error);
     }
   }
 
@@ -186,7 +188,7 @@ export class CodeProject {
         await this.execute(dep);
       } else {
         if (typeof dep === 'function') {
-          if (typeof dep.install === 'function') { await dep.install(this); }
+          if (typeof dep.deploy === 'function') { await dep.deploy(this); }
         }
       }
     }
@@ -215,9 +217,9 @@ export class CodeProject {
     // Si l'arxiu no existeix intentem enrutar-lo.
     const fullName = this.rootPath(fileName, fromPath === 'project' ? this.projectPath : this.scriptPath);
     if (!await utils.pathExists(fullName)) {
-      this.error(`No s'ha trobat l'arxiu '${this.chalkFile(fullName)}'...`);
+      Terminal.error(`No s'ha trobat l'arxiu '${Terminal.chalkFile(fullName)}'...`);
     } else {
-      // this.verbose(`Llegint arxiu '${this.chalkFile(fullName)}'...`);
+      // Terminal.verbose(`Llegint arxiu '${Terminal.chalkFile(fullName)}'...`);
       return utils.fileToString(fullName);
     }
   }
@@ -303,15 +305,15 @@ export class CodeProject {
     try {
       // Content
       if (!await utils.pathExists(fullName)) {
-        this.log(`Creant arxiu '${this.chalkFile(fileName)}'...`);
+        Terminal.log(`Creant arxiu '${Terminal.chalkFile(fileName)}'...`);
 
       } else {
         if (!options.content) {
-          this.verbose(`Llegint arxiu '${this.chalkFile(fileName)}'...`);
+          Terminal.verbose(`Llegint arxiu '${Terminal.chalkFile(fileName)}'...`);
           options.content = await utils.fileToString(fullName);
 
         } else {
-          this.log(`Actualitzant arxiu '${this.chalkFile(fileName)}'...`);
+          Terminal.log(`Actualitzant arxiu '${Terminal.chalkFile(fileName)}'...`);
           if (options.appendRatherThanOverwrite) {
             // Append content
             const content: string = await utils.fileToString(fullName) || '';
@@ -328,25 +330,25 @@ export class CodeProject {
 
       // Copy
       if (options.copy) {
-        this.log(`Copiant arxiu a '${this.chalkFile(options.copy)}'...`);
-        fs.writeFileSync(this.pathConcat(this.projectPath, options.copy), options.content);
+        Terminal.log(`Copiant arxiu a '${Terminal.chalkFile(options.copy)}'...`);
+        fs.writeFileSync(Resource.concat(this.projectPath, options.copy), options.content);
       }
 
       // Save
       fs.writeFileSync(fullName, options.content);
 
-      this.blob(chalk.grey(options.content));
+      Terminal.blob(chalk.grey(options.content));
       return options.content;
 
     } catch (error) {
-      this.error(error);
+      Terminal.error(error);
     }
   }
 
   /** @category Command */
   protected replaces(fileName: string, options: FileOptions): string {
     if (options.replaces && options.replaces.length) {
-      this.log(`Actualitzant codi de l'arxiu '${this.chalkFile(fileName)}'...`);
+      Terminal.log(`Actualitzant codi de l'arxiu '${Terminal.chalkFile(fileName)}'...`);
 
       // Execute replaces.
       for (const action of options.replaces) {
@@ -355,20 +357,20 @@ export class CodeProject {
           if (typeof action.skip === 'string') { action.skip = new RegExp(action.skip); }
           if (action.skip.test(options.content)) {
             descartado = true;
-            this.verbose(`- S'ha descartat substituir l'expressió perquè ja existeix.`);
+            Terminal.verbose(`- S'ha descartat substituir l'expressió perquè ja existeix.`);
           }
         }
         if (!descartado) {
           if (typeof action.replace === 'function') {
             // For inherited classes that use AST for replacements.
           } else {
-            this.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()));
+            Terminal.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()));
             options.content = options.content.replace(action.match || '', action.replace || '');
           }
         }
       }
     } else {
-      // this.verbose(`No s'ha definit cap substitució per a l'arxiu '${this.chalkFile(fileName)}'.`);
+      // Terminal.verbose(`No s'ha definit cap substitució per a l'arxiu '${Terminal.chalkFile(fileName)}'.`);
     }
     return options.content;
   }
@@ -403,27 +405,27 @@ export class CodeProject {
 
     if (await utils.pathExists(fullName)) {
       if (options.action === 'remove') {
-        this.log(`Eliminant la carpeta '${this.chalkFile(folderName)}'...`);
+        Terminal.log(`Eliminant la carpeta '${Terminal.chalkFile(folderName)}'...`);
         const command = `rm -Rf ${fullName}`;
         return await this.execute(command);
 
       } else {
-        this.verbose(`Ja existeix la carpeta '${this.chalkFile(folderName)}'`);
+        Terminal.verbose(`Ja existeix la carpeta '${Terminal.chalkFile(folderName)}'`);
         return true;
       }
 
     } else {
       if (options.action === 'add') {
-        this.log(`Creant la carpeta '${this.chalkFile(folderName)}'...`);
+        Terminal.log(`Creant la carpeta '${Terminal.chalkFile(folderName)}'...`);
         const command = `mkdir ${fullName}`;
         return await this.execute(command);
 
       } else if (options.action === 'remove') {
-        this.log(`La carpeta ja estava eliminada '${this.chalkFile(folderName)}'`);
+        Terminal.log(`La carpeta ja estava eliminada '${Terminal.chalkFile(folderName)}'`);
         return true;
 
       } else {
-        this.warning(`No es reconeix el tipus d'acció '${options.action}' per la carpeta '${this.chalkFile(folderName)}'`);
+        Terminal.warning(`No es reconeix el tipus d'acció '${options.action}' per la carpeta '${Terminal.chalkFile(folderName)}'`);
         return false;
       }
     }
@@ -448,8 +450,11 @@ export class CodeProject {
    * @category Command
    */
   async clone(options: CloneOptions): Promise<any> {
+
+    const git = { url: this.config.git.url, token: this.config.git.token };
+
     // git clone https://gitlab-ci-token:TOKEN@gitlab.codi.ovh/tools/app-core src/app/core
-    const from = options.from.startsWith('http') ? options.from : `${this.config.git.url}/${options.from}`;
+    const from = options.from.startsWith('http') ? options.from : `${git.url}/${options.from}`;
     const to = this.rootPath(options.to);
     if (options.removePreviousFolder === undefined) { options.removePreviousFolder = true; }
     if (options.removePreviousFolder && await utils.pathExists(to)) {
@@ -457,7 +462,7 @@ export class CodeProject {
       await this.remove(options.to);
     }
     const command = `git clone ${from} ${to}`;
-    this.log(`Clonant repositori '${this.chalkFile(from.replace(`gitlab-ci-token:${this.config.git.token}@`, ''))}'...`);
+    Terminal.log(`Clonant repositori '${Terminal.chalkFile(from.replace(`gitlab-ci-token:${git.token}@`, ''))}'...`);
     return await this.execute(command);
   }
 
@@ -482,6 +487,8 @@ export class CodeProject {
    */
   async curl(options: CurlOptions): Promise<string> {
     if (options.headers === undefined) { options.headers = [] as any; }
+    const token = this.config.git.token;
+
     // curl -sb --request GET --header 'PRIVATE-TOKEN: $GITLAB_PRIVATE_TOKEN' https://gitlab.codi.ovh/tools/app-core src/app/core
     const method = options.method || 'GET';
     //// Ex: headers: [{ name: 'PRIVATE-TOKEN', value: project.config.git.token }]
@@ -491,7 +498,7 @@ export class CodeProject {
     const url = options.url || '';
     const to = this.rootPath(options.to);
     const command = `curl -sb --request ${method} ${headers} ${url} ${to}`;
-    this.log(`Curl ${method} '${this.chalkFile(url.replace(`--header 'PRIVATE-TOKEN: ${this.config.git.token}`, ''))}'...`);
+    Terminal.log(`Curl ${method} '${Terminal.chalkFile(url.replace(`--header 'PRIVATE-TOKEN: ${token}`, ''))}'...`);
     return await this.execute(command);
   }
 
@@ -516,13 +523,13 @@ export class CodeProject {
     const to = this.rootPath(toPath);
     if (!await utils.pathExists(from)) {
       if (!await utils.pathExists(to)) {
-        this.warning(`No s'ha trobat la carpeta d'origen '${this.chalkFile(fromPath)}'.`);
+        Terminal.warning(`No s'ha trobat la carpeta d'origen '${Terminal.chalkFile(fromPath)}'.`);
       } else {
-        this.verbose(`La carpeta ja estava moguda a '${this.chalkFile(fromPath)}'.`);
+        Terminal.verbose(`La carpeta ja estava moguda a '${Terminal.chalkFile(fromPath)}'.`);
       }
     } else {
       const command = this.os === 'linux' ? `mv ${from} ${to}` : `move ${from} ${to}`;
-      this.log(`Movent de '${this.chalkFile(fromPath, toPath)}' fins a ${this.chalkFile(toPath, fromPath)}'...`);
+      Terminal.log(`Movent de '${Terminal.chalkFile(fromPath, toPath)}' fins a ${Terminal.chalkFile(toPath, fromPath)}'...`);
       return await this.execute(command);
     }
   }
@@ -556,18 +563,18 @@ export class CodeProject {
       if (stat.isFile()) {
         // File
         const command = this.os === 'linux' ? `rm -Rf ${fullName}` : `del "${fullName}"`;
-        this.log(`Eliminant '${this.chalkFile(name)}'...`);
+        Terminal.log(`Eliminant '${Terminal.chalkFile(name)}'...`);
         return await this.execute(command);
 
       } else {
         // Folder
         const command = this.os === 'linux' ? `rm -Rf ${fullName}` : `rmdir /Q /S "${fullName}"`;
-        this.log(`Eliminant '${this.chalkFile(name)}'...`);
+        Terminal.log(`Eliminant '${Terminal.chalkFile(name)}'...`);
         return await this.execute(command);
       }
 
     } else {
-      this.verbose(`La carpeta no existeix '${this.chalkFile(fullName)}'.`);
+      Terminal.verbose(`La carpeta no existeix '${Terminal.chalkFile(fullName)}'.`);
       return await of().toPromise();
     }
   }
@@ -577,15 +584,15 @@ export class CodeProject {
    */
   async execute(command: string): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      this.log(`${chalk.blue(command)}`);
+      Terminal.log(`${chalk.blue(command)}`);
       exec(command, (error, stdout, stderr) => {
         if (error) {
-          this.error(error);
+          Terminal.error(error);
           reject(false);
 
         } else {
-          if (stdout) { this.log(stdout); }
-          if (stderr) { this.log(chalk.yellow(`${stderr}`)); }
+          if (stdout) { Terminal.log(stdout); }
+          if (stderr) { Terminal.log(chalk.yellow(`${stderr}`)); }
           resolve(true);
         }
       });
@@ -602,135 +609,58 @@ export class CodeProject {
    * @category Path
    */
   rootPath(fileName: string, folder?: string): string {
-    if (!!folder && this.isAccessible(this.pathConcat(folder, fileName))) { return this.normalizePath(this.pathConcat(folder, fileName)); }
-    if (this.isAccessible(this.pathConcat(this.projectPath, fileName))) { return this.normalizePath(this.pathConcat(this.projectPath, fileName)); }
-    return this.normalizePath(fileName);
-    // return this.normalizePath(utils.existsSync(fileName) ? fileName : this.pathConcat(folder ? folder : this.projectPath, fileName));
+    if (!!folder && Resource.isAccessible(Resource.concat(folder, fileName))) { return Resource.normalize(Resource.concat(folder, fileName)); }
+    if (Resource.isAccessible(Resource.concat(this.projectPath, fileName))) { return Resource.normalize(Resource.concat(this.projectPath, fileName)); }
+    return Resource.normalize(fileName);
+    // return Resource.normalize(utils.existsSync(fileName) ? fileName : Resource.concat(folder ? folder : this.projectPath, fileName));
   }
 
-  /** Encadena amb una barra (`/`) la ruta i l'arxiu indicats.
-   * @category Path
-   */
-  pathConcat(folder: string, fileName: string): string {
-    if (!folder) { return fileName; }
-    if (!fileName) { return folder; }
-    const concat: string = folder.endsWith('/') || folder.endsWith('\\') ? '' : '/';
-    const file = fileName.startsWith('/') || fileName.startsWith('\\') ? fileName.substr(1) : fileName;
-    return this.normalizePath(folder + concat + file);
-  }
+  // /** Encadena amb una barra (`/`) la ruta i l'arxiu indicats.
+  //  * @category Path
+  //  */
+  // pathConcat(folder: string, fileName: string): string {
+  //   if (!folder) { return fileName; }
+  //   if (!fileName) { return folder; }
+  //   const concat: string = folder.endsWith('/') || folder.endsWith('\\') ? '' : '/';
+  //   const file = fileName.startsWith('/') || fileName.startsWith('\\') ? fileName.substr(1) : fileName;
+  //   return Resource.normalize(folder + concat + file);
+  // }
 
-  /** Remplaza todos las barras por contrabarras.
-   * @category Path
-   */
-  normalizePath(fileName: string, concat = '\\') {
-    return fileName.replace(new RegExp('/', 'g'), concat);
-  }
+  // /** Remplaza todos las barras por contrabarras.
+  //  * @category Path
+  //  */
+  // normalize(fileName: string, concat = '\\') {
+  //   return fileName.replace(new RegExp('/', 'g'), concat);
+  // }
 
-  /**
-   * Obtiene firmación detallada de las carpetas y los archivos del directorio actual.
-   * ```typescript
-   * const resources = [
-   *   {
-   *     name: 'tsconfig.ts',
-   *     size: 0,
-   *     created: '2020-06-06',
-   *     modified: '2020-06-06',
-   *     isDirectory: false,
-   *     isFile: true,
-   *     extension: '.ts',
-   *   }
-   * ]
-   * ```
-   * @param extra Indica si se obtendrá información más detallada de los recursos a través de una llamada a `fs.statSync`.
-   */
-  discover(resource: string, options?: { ignore?: string | RegExp, extra?: boolean, recursive?: boolean }, indent = ''): DirentType | DirentType[] {
-    if (!options) { options = {}; }
-    if (options.ignore === undefined) { options.ignore = 'node_modules|.git'; }
-    if (options.extra === undefined) { options.extra = false; }
-    if (options.recursive === undefined) { options.recursive = false; }
 
-    const fullName = this.rootPath(resource);
-    if (!fs.existsSync(fullName) || !this.isAccessible(fullName)) { this.error(`No existeix el recurs '${this.chalkFile(resource)}'`); return []; }
-    // console.log('fullName => ', fullName);
+  // /** Abre un archivo JSON y lo decodifica. */
+  // openJson(fileName: string): any {
+  //   try {
+  //     return JSON.parse(fs.readFileSync(fileName).toString());
 
-    const resourceIsDirectory = fs.lstatSync(fullName).isDirectory();
-    const dirents: any[] = resourceIsDirectory ? fs.readdirSync(fullName) : [ resource ];
-    const content: DirentType[] = [];
-    // console.log('resourceIsDirectory => ', resourceIsDirectory);
-    // console.log('dirents => ', JSON.stringify(dirents, null, '  '));
+  //   } catch (err) {
+  //     // Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.chalkFile(fileName)}'.`, false);
+  //     return undefined;
+  //   }
+  // }
 
-    for (let dirent of Object.values(dirents)) {
-      const isDirent = typeof dirent !== 'string';
-      const name = isDirent ? dirent.name : path.basename(dirent);
-      const fileName = path.join(fullName, name);
-      // console.log('dirent => ', JSON.stringify(dirent, null, '  '));
-      // console.log('isDirent => ', isDirent);
-      // console.log('name => ', name);
-
-      let valid = true;
-      if (options.ignore) {
-        if (typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
-        valid = !options.ignore.test(name);
-      }
-      // console.log('valid => ', valid);
-      // console.log('this.isAccessible(path.resolve(name)) => ', this.isAccessible(fileName));
-      if (valid && this.isAccessible(fileName)) {
-        dirent = isDirent ? dirent : fs.statSync(fileName);
-        // console.log('dirent => ', JSON.stringify(dirent, null, '  '));
-
-        const info: DirentType = {
-          name,
-          isDirectory: dirent.isDirectory(),
-          isFile: dirent.isFile(),
-          extension: dirent.isDirectory() ? '' : path.extname(name),
-        };
-        if (options.extra) {
-          const isStat = dirent.size !== undefined && dirent.birthtime !== undefined && dirent.mtime !== undefined;
-          const stat = isStat ? dirent : fs.statSync(fileName);
-          const { size, birthtime, mtime } = stat;
-          info.size = size;
-          info.created = birthtime;
-          info.modified = mtime;
-        }
-        console.log(indent + (info.isDirectory ? '+ ' : '  ') + info.name);
-        // NOTA: Aprovechamos el bucle de inicialización de DirentType tb cuando el recurso a explorar es un archivo.
-        // Ahora tras la primera vuelta salimos devoliendo un objeto en lugar de un array.
-        if (resourceIsDirectory) { content.push(info); } else { return info; }
-        // -> Llamada recursiva
-        // console.log('info.isDirectory => ', info.isDirectory);
-        // console.log('options.recursive => ', options.recursive);
-        if (info.isDirectory && options.recursive) { info.children = this.discover(fileName, options, indent + '  ') as DirentType[]; }
-      }
-    }
-    return content;
-  }
-
-  openJsonFile(fileName: string): any {
-    try {
-      return JSON.parse(fs.readFileSync(fileName).toString());
-
-    } catch (err) {
-      // this.error(`Error parsejant l'arxiu JSON '${this.chalkFile(fileName)}'.`, false);
-      return undefined;
-    }
-  }
-
-  /** Indica si un recurso existe y es accesible. */
-  isAccessible(resource: string): boolean {
-    try { fs.accessSync(resource, fs.constants.F_OK); return true; } catch (err) { return false; }
-  }
-  /** Indica si el usuario actual tiene permisos de lectura sobre el recurso. */
-  isReadable(resource: string): boolean {
-    try { fs.accessSync(resource, fs.constants.R_OK); return true; } catch (err) { return false; }
-  }
-  /** Indica si el usuario actual tiene permisos de escritura sobre el recurso. */
-  isWriteable(resource: string): boolean {
-    try { fs.accessSync(resource, fs.constants.W_OK); return true; } catch (err) { return false; }
-  }
-  /** Indica si el recurso es de solo lectura. */
-  isReadOnly(resource: string): boolean {
-    return this.isAccessible(resource) && this.isReadable(resource) && !this.isWriteable(resource);
-  }
+  // /** Indica si un recurso existe y es accesible. */
+  // isAccessible(resource: string): boolean {
+  //   try { fs.accessSync(resource, fs.constants.F_OK); return true; } catch (err) { return false; }
+  // }
+  // /** Indica si el usuario actual tiene permisos de lectura sobre el recurso. */
+  // isReadable(resource: string): boolean {
+  //   try { fs.accessSync(resource, fs.constants.R_OK); return true; } catch (err) { return false; }
+  // }
+  // /** Indica si el usuario actual tiene permisos de escritura sobre el recurso. */
+  // isWriteable(resource: string): boolean {
+  //   try { fs.accessSync(resource, fs.constants.W_OK); return true; } catch (err) { return false; }
+  // }
+  // /** Indica si el recurso es de solo lectura. */
+  // isReadOnly(resource: string): boolean {
+  //   return Resource.isAccessible(resource) && this.isReadable(resource) && !this.isWriteable(resource);
+  // }
 
 
 
@@ -741,7 +671,7 @@ export class CodeProject {
   /**
    * Abre un pool para la ejecución de múltiples consultas durante el script.
    * ```typescript
-   * await project.connect({
+   * const con = await project.connect({
    *   connectionLimit : 10,
    *   host: 'db.myhost.com',
    *   user: 'myuser',
@@ -750,7 +680,7 @@ export class CodeProject {
    * });
    * ```
    *
-   * Al terminar la última consulta debería liberarse la conexión:
+   * Al terminar la última consulta debe liberarse la conexión:
    * ```typescript
    * con.release();
    * ```
@@ -762,7 +692,7 @@ export class CodeProject {
         if (err) { reject(err); }
         // Referenciamos la conexión para ejecutar futuras consultas.
         this.connection = connection;
-        this.verbose('MySQL connected!');
+        Terminal.verbose('MySQL connected!');
         resolve(connection);
       });
     });
@@ -771,7 +701,7 @@ export class CodeProject {
   /** Ejecuta una consulta a través de la conexión actual.  */
   async query(sql: string): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
-      if (!this.connection) { this.error('No hay ninguna conexión abierta.'); }
+      if (!this.connection) { Terminal.error('No hay ninguna conexión abierta.'); }
       this.connection.query(sql, (err, results) => {
         if (err) { reject(err); }
         resolve(results);
@@ -784,85 +714,85 @@ export class CodeProject {
     if (this.connection) {
       if (typeof (this.connection as any).release === 'function') {
         (this.connection as mysql.PoolConnection).release();
-        this.verbose('MySQL connection closed!');
+        Terminal.verbose('MySQL connection closed!');
       } else if (typeof (this.connection as any).end === 'function') {
         (this.connection as mysql.Connection).end();
-        this.verbose('MySQL connection closed!');
+        Terminal.verbose('MySQL connection closed!');
       }
     }
   }
 
 
 
-  // --------------------------------------------------------------------------------
-  //  Log & Error
-  // --------------------------------------------------------------------------------
+  // // --------------------------------------------------------------------------------
+  // //  Log & Error
+  // // --------------------------------------------------------------------------------
 
-  /** @category Log */
-  log(message: string, data?: any) {
-    // if (Prompt.verbose) {
-      if (data === undefined) {
-        console.log(message);
-      } else {
-        console.log(message, data);
-      }
-    // }
-  }
+  // /** @category Log */
+  // log(message: string, data?: any) {
+  //   // if (Prompt.verbose) {
+  //     if (data === undefined) {
+  //       console.log(message);
+  //     } else {
+  //       console.log(message, data);
+  //     }
+  //   // }
+  // }
 
-  /** @category Log */
-  verbose(message: string, data?: any) {
-    if (Prompt.verbose) {
-      if (data === undefined) {
-        console.log(message);
-      } else {
-        console.log(message, data);
-      }
-    }
-  }
+  // /** @category Log */
+  // verbose(message: string, data?: any) {
+  //   if (Prompt.verbose) {
+  //     if (data === undefined) {
+  //       console.log(message);
+  //     } else {
+  //       console.log(message, data);
+  //     }
+  //   }
+  // }
 
-  /** @category Log */
-  blob(content: string) {
-    if (Prompt.verbose) {
-      console.log(this.line + '\n' + content + this.line);
-    }
-  }
+  // /** @category Log */
+  // blob(content: string) {
+  //   if (Prompt.verbose) {
+  //     console.log(this.line + '\n' + content + this.line);
+  //   }
+  // }
 
-  /** @category Log */
-  warning(message: string): void {
-    console.log(chalk.bold.yellow('WARN: ') + chalk.yellow(message) + '\n');
-  }
+  // /** @category Log */
+  // warning(message: string): void {
+  //   console.log(chalk.bold.yellow('WARN: ') + chalk.yellow(message) + '\n');
+  // }
 
-  /** @category Log */
-  error(error: any, exit = true): void {
-    const message = typeof error === 'string' ? error : error.error || error.message || 'Error desconegut';
-    console.log(chalk.bold.red('ERROR: ') + chalk.red(message) + (exit ? `\n\n${this.line}\n` : ''));
-    if (exit) { process.exit(1); }
-  }
+  // /** @category Log */
+  // error(error: any, exit = true): void {
+  //   const message = typeof error === 'string' ? error : error.error || error.message || 'Error desconegut';
+  //   console.log(chalk.bold.red('ERROR: ') + chalk.red(message) + (exit ? `\n\n${this.line}\n` : ''));
+  //   if (exit) { process.exit(1); }
+  // }
 
-  /** @category Log */
-  chalkFile(fileName: string, relativeTo?: string): string {
-    const i = relativeTo ? this.relative(fileName, relativeTo) : fileName.lastIndexOf('/');
-    if (i > 0) {
-      const base = fileName.substr(0, i + 1);
-      const name = fileName.substr(i + 1);
-      // return chalk.blue(base) + chalk.bold.blue(name);
-      return chalk.green(base) + chalk.bold.green(name);
+  // /** @category Log */
+  // chalkFile(fileName: string, relativeTo?: string): string {
+  //   const i = relativeTo ? this.relative(fileName, relativeTo) : fileName.lastIndexOf('/');
+  //   if (i > 0) {
+  //     const base = fileName.substr(0, i + 1);
+  //     const name = fileName.substr(i + 1);
+  //     // return chalk.blue(base) + chalk.bold.blue(name);
+  //     return chalk.green(base) + chalk.bold.green(name);
 
-    } else {
-      // return chalk.cyan(fileName);
-      return chalk.green(fileName);
-    }
-  }
+  //   } else {
+  //     // return chalk.cyan(fileName);
+  //     return chalk.green(fileName);
+  //   }
+  // }
 
-  /** @category Log */
-  relative(from: string, to: string) {
-    let i = 0;
-    while (i < Math.min(from.length, to.length)) {
-      if (from.charAt(i) !== to.charAt(i)) { return i - 1; }
-      i++;
-    }
-    return i - 1;
-  }
+  // /** @category Log */
+  // relative(from: string, to: string) {
+  //   let i = 0;
+  //   while (i < Math.min(from.length, to.length)) {
+  //     if (from.charAt(i) !== to.charAt(i)) { return i - 1; }
+  //     i++;
+  //   }
+  //   return i - 1;
+  // }
 
 }
 

@@ -4,15 +4,19 @@ import { TextReplacer } from './text-replacer';
 
 export type ActionType = 'add' | 'remove';
 
-export interface DirentType {
+export type ProjectType = 'typescript' | 'php';
+
+export interface ResourceType {
   name: string;
+  path: string;
+  fullName: string;
   size?: number;
   created?: Date;
   modified?: Date;
   isDirectory: boolean;
   isFile: boolean;
   extension: string;
-  children?: DirentType[];
+  children?: ResourceType[];
 }
 
 /** Describe los detalles de una acción de sustitución de código. */

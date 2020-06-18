@@ -13,7 +13,13 @@ import { AppRoutingModule } from './app-routing.module';
 @NgModule({
   declarations: [AppComponent],
   entryComponents: [],
-  imports: [BrowserModule, IonicModule.forRoot(), AppRoutingModule, GoogleMapsModule],
+  imports: [BrowserModule, IonicModule.forRoot(), AppRoutingModule, GoogleMapsModule, HttpClientModule, TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),
+        deps: [HttpClient]
+      }
+    })],
   providers: [
     StatusBar,
     SplashScreen,
