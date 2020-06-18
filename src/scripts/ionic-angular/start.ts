@@ -14,7 +14,7 @@ import Prompt from 'commander';
 // import { RegularFileNode, DirectoryNode, FileNode } from "@ionic/utils-fs";
 
 import { CodeProject } from '../../code/code-project';
-import { CodeProjectConfig } from '../../code/code-types';
+// import { CodeProjectConfig } from '../../code/code-project-types';
 import * as resource from './resources/resources';
 import fs from 'fs';
 
@@ -43,26 +43,26 @@ const project: CodeProject = new CodeProject(Prompt.directory, __dirname, Prompt
 
 project.initialize().then(async () => {
 
-  const app: CodeProjectConfig['app'] = project.config.app;
-  const api: CodeProjectConfig['api'] = project.config.api;
-  const git: CodeProjectConfig['git'] = project.config.git;
+  // const app: CodeProjectConfig['app'] = project.config.app;
+  // const api: CodeProjectConfig['api'] = project.config.api;
+  // const git: CodeProjectConfig['git'] = project.config.git;
 
-  if (!api.url) { api.url = { dev: '', pro: '' }; }
-  if (!api.url.dev) { api.url.dev = ''; }
-  if (!api.url.pro) { api.url.pro = ''; }
+  // if (!api.url) { api.url = { dev: '', pro: '' }; }
+  // if (!api.url.dev) { api.url.dev = ''; }
+  // if (!api.url.pro) { api.url.pro = ''; }
 
   // --------------------------------------------------------------------------------
 
-  await project.file('src/tslint.json', { contentFromFile: 'resources/tslint.json' });
+  // await project.file('src/tslint.json', { contentFromFile: 'resources/tslint.json' });
 
-  await project.file('src/config.ts', { content: await project.read(`resources/config.ts`),
-    replaces: [
-      { contains: `(?:name):\s*\'(?:${app.name})\'`, match: `{{app.name}}`, replace: app.name, },
-      { contains: `(?:package):\s*\'(?:${app.package})\'`, match: `{{app.package}}`, replace: app.package, },
-      { contains: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.pro}}`, replace: api.url.pro, },
-      { contains: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.dev}}`, replace: api.url.dev, },
-    ],
-  });
+  // await project.file('src/config.ts', { content: await project.read(`resources/config.ts`),
+  //   replaces: [
+  //     { contains: `(?:name):\s*\'(?:${app.name})\'`, match: `{{app.name}}`, replace: app.name, },
+  //     { contains: `(?:package):\s*\'(?:${app.package})\'`, match: `{{app.package}}`, replace: app.package, },
+  //     { contains: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.pro}}`, replace: api.url.pro, },
+  //     { contains: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.dev}}`, replace: api.url.dev, },
+  //   ],
+  // });
 
 
   // await project.install([
@@ -71,10 +71,10 @@ project.initialize().then(async () => {
   // ]);
 
 
-  await project.install([
-    `npm install @ionic/storage --save`,
-    // `ionic cordova plugin add cordova-sqlite-storage`,
-  ]);
+  // await project.install([
+  //   `npm install @ionic/storage --save`,
+  //   // `ionic cordova plugin add cordova-sqlite-storage`,
+  // ]);
 
 
   // await project.install([

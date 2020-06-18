@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs'; // const fs = require('fs');
-import chalk from 'chalk'; // const chalk = require('chalk');
 import * as utils from '@ionic/utils-fs/dist/index.js';
+import * as path from 'path';
+import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
 import { exec } from 'child_process'; // const { exec } = require('child_process');
-import { CodeProjectConfig, FileOptions, FolderOptions, CloneOptions, CurlOptions, PropertyValue } from './code-types';
+import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DirentType } from './code-project-types';
 import { of } from 'rxjs';
-import * as ts from 'typescript';
+// import * as ts from 'typescript';
 import * as mysql from 'mysql';
-import { TextReplacer, TextReplacement } from './text-replacer';
-import { isFunction } from 'util';
+import { createCallChain } from 'typescript';
+
 
 
 // --------------------------------------------------------------------------------
@@ -18,7 +19,7 @@ import { isFunction } from 'util';
 // --------------------------------------------------------------------------------
 
 /**
- * Gestiona un projecte de codi typescript.
+ * Gestiona un projecte de codi typescript, php, etc.
  *
  * Implementa mètodes per a les principals tasques de scripting:
  *
@@ -28,88 +29,70 @@ import { isFunction } from 'util';
  * - clonar repositoris a les carpetes del projecte.
  * - executar ordres a la consola.
  *
- * A la ubicació del projecte s'espera trobar un arxiu `precode.json` amb la configuració del projecte.
- * Aquest arxiu ha de tenir l'estructura del tipus `CodeProjectConfig`:
- * ```typescript
- * export interface CodeProjectConfig {
- *   app: { name: string; package: string; };
- *   api?: { url: { dev: string; pro: string; }, version?: string };
- *   git?: { url: string; token?: string; };
- *   dependencies?: ProjectDependency[];
- * }
- *
- * export interface ProjectDependency {
- *   name: string;
- *   url: string;
- *   dependencies: ProjectDependency[];
- * }
- * ```
- *
- * `precode.json`
- * ```json
- * {
- *   "app": {
- *     "name": "test-ionic-project",
- *     "package": "com.test-ionic-project.app"
- *   },
- *   "git": {
- *     "url": "http://gitlab.codi.ovh",
- *     "token": "ZEYAt5UZyeyiZ6PyXBLP"
- *   }
- * }
- * ```
- *
- * Al crear una nova instància s'ha de passar la ubicació del projecte:
- * ```typescript
- * const project: CodeProject = new CodeProject(Prompt.directory);
- * ```
- *
  * **Usage**
  *
- * Exemple de script `ts-node` per inicialitzar un projecte `ionic`:
+ * Exemple de script per a `ts-node` que modifica un projecte:
  * ```typescript
- * const project: CodeProject = new CodeProject(Prompt.directory);
- * const git: CodeProjectConfig['git'] = project.config.git;
+ * #!/usr/bin/env node
+ * /// <reference types="node" />
+ *
+ * import { CodeProject } from 'src/code';
+ * import Prompt from 'commander';
+ *
+ * Prompt
+ *   .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
+ *   .option('-s, --system <system>', 'Sistema operativo: windows | linux')
+ *   .option('-v, --verbose', 'Log verbose')
+ *   ;
+ * Prompt.parse(process.argv);
+ *
+ * const project: CodeProject = new CodeProject(Prompt.directory, __dirname, Prompt.system);
+ * const git = { "url": "http://gitlab.codi.ovh", "token": "ZEYAt5UZyeyiZ6PyXBLP" }
  *
  * project.initialize().then(async () => {
- *
- *   await project.execute(`npm i @types/node --save-dev`);
- *
+ *   // Instal·la un package al projecte.
+ *   await project.install(`npm i @types/node --save-dev`);
+ *   // Clona un repositori a dins d'una carpeta del projecte.
  *   await project.clone({ from: `${git.url}/tools/app-core.git`, to: 'src/app/core' });
- *
+ *   // Mou una carpeta del projecte.
  *   await project.move('src/app/home', 'src/app/modules/home');
- *
+ *   // Crea una carpeta.
  *   await project.folder('src/assets/fonts');
+ *   // Crea un fitxer (si no existeix) i n'estableix el seu contingut.
  *   await project.file('src/theme/fonts.scss', { content: resource.Fonts });
- *
  * });
  * ```
  *
- * Per executar-lo des del terminal:
+ * Per executar un script des del terminal:
  * ```bash
- * npx ts-node ionic/start.ts -d C:\work\apps\test
+ * npx ts-node my-script.ts -d C:\apps\test
  * ```
  */
 export class CodeProject {
 
+  /** Nom del projecte */
   name: string;
-  path: string;
+  /** Carpeta del projecte. */
+  projectPath: string;
+  /** Ubicació de l'script des d'on s'executa la instància de la clase. */
   scriptPath: string;
-  config: CodeProjectConfig;
-  line = `--------------------------------------------------------------------------------`;
+  /** @deprecated */
+  config: any;
+  /** Indica el sistema operatiu actual. */
   os: string;
-
-  /** Referencia a la conexión abierta del pool. */
+  /** Debug helper */
+  line = `--------------------------------------------------------------------------------`;
+  /** Referència a la connexió mysql oberta. */
   connection: mysql.Connection | mysql.PoolConnection;
 
 
   /** @category Init */
-  constructor(path: string, scriptPath: string, os: string, name?: string) {
+  constructor(projectPath: string, scriptPath: string, os?: string, name?: string) {
     try {
-      this.path = path;
+      this.projectPath = projectPath;
       this.scriptPath = scriptPath;
       this.os = os || 'linux';
-      this.name = name || path.split('/').pop();
+      this.name = name || this.projectPath.split('/').pop();
 
       // this.initialize().then(result => {
       //   this.log('Initialized!');
@@ -139,13 +122,13 @@ export class CodeProject {
     const fileName = 'precode.json';
     try {
       // Project directory
-      if (!await utils.pathExists(this.path)) { this.error(`No s'ha trobat la carpeta del projecte '${this.path}'.`); }
-      this.log(chalk.bold('Directori del projecte: ') + this.chalkFile(this.path));
+      if (!await utils.pathExists(this.projectPath)) { this.error(`No s'ha trobat la carpeta del projecte '${this.projectPath}'.`); }
+      this.log(chalk.bold('Directori del projecte: ') + this.chalkFile(this.projectPath));
 
       // 'precode.json'
-      if (await utils.pathExists(this.path + '/' + fileName)) {
+      if (await utils.pathExists(this.projectPath + '/' + fileName)) {
         this.log(`Carregant arxiu de configuració '${this.chalkFile(fileName)}'...`);
-        const content: string = await utils.fileToString(this.path + '/' + fileName);
+        const content: string = await utils.fileToString(this.projectPath + '/' + fileName);
         if (content) {
           try {
             this.config = JSON.parse(content);
@@ -166,7 +149,7 @@ export class CodeProject {
         // this.error(`No s'ha trobat l'arxiu de configuració del projecte '${this.chalkFile(fileName)}'.`);
       }
 
-      // utils.readdirp(this.path + '/src/app').then((value: string[]) => {
+      // utils.readdirp(this.projectPath + '/src/app').then((value: string[]) => {
       //   console.log('dir => ', value);
       // })
 
@@ -174,6 +157,11 @@ export class CodeProject {
       this.error(error);
     }
   }
+
+
+  // --------------------------------------------------------------------------------
+  //  Scripting tasks
+  // --------------------------------------------------------------------------------
 
   /**
    * Instal·la les dependències indicades al directori del projecte.
@@ -191,7 +179,7 @@ export class CodeProject {
     // Recordamos el directorio actual.
     const curDir = process.cwd();
     // Establecemos el directorio del proyecto como el directorio actual.
-    process.chdir(this.path);
+    process.chdir(this.projectPath);
     // Install dependencies.
     for (const dep of dependencies) {
       if (typeof dep === 'string') {
@@ -223,40 +211,15 @@ export class CodeProject {
    * ```
    * @category Command
    */
-  async read(fileName: string, rootPath?: 'project' | 'script'): Promise<string> {
+  async read(fileName: string, fromPath?: 'project' | 'script'): Promise<string> {
     // Si l'arxiu no existeix intentem enrutar-lo.
-    const fullName = this.rootPath(fileName, rootPath === 'project' ? this.path : this.scriptPath);
+    const fullName = this.rootPath(fileName, fromPath === 'project' ? this.projectPath : this.scriptPath);
     if (!await utils.pathExists(fullName)) {
       this.error(`No s'ha trobat l'arxiu '${this.chalkFile(fullName)}'...`);
     } else {
       // this.verbose(`Llegint arxiu '${this.chalkFile(fullName)}'...`);
       return utils.fileToString(fullName);
     }
-  }
-
-  /** Si la ruta de l'arxiu no és absoluta, s'enruta amb la ubicació del projecte.
-   * @category Path
-   */
-  rootPath(fileName: string, path?: string): string {
-    return this.normalizePath(utils.existsSync(fileName) ? fileName : this.pathConcat(path ? path : this.path, fileName));
-  }
-
-  /** Encadena amb una barra (`/`) la ruta i l'arxiu indicats.
-   * @category Path
-   */
-  pathConcat(path: string, fileName: string): string {
-    if (!path) { return fileName; }
-    if (!fileName) { return path; }
-    const concat: string = path.endsWith('/') || path.endsWith('\\') ? '' : '/';
-    const file = fileName.startsWith('/') || fileName.startsWith('\\') ? fileName.substr(1) : fileName;
-    return this.normalizePath(path + concat + file);
-  }
-
-  /** Remplaza todos las barras por contrabarras.
-   * @category Path
-   */
-  normalizePath(fileName: string, concat = '\\') {
-    return fileName.replace(new RegExp('/', 'g'), concat);
   }
 
   /**
@@ -357,8 +320,8 @@ export class CodeProject {
         }
       }
 
-      // Imports
-      options.content = this.imports(fileName, options);
+      // // Imports
+      // options.content = this.imports(fileName, options);
 
       // Replaces
       options.content = this.replaces(fileName, options);
@@ -366,7 +329,7 @@ export class CodeProject {
       // Copy
       if (options.copy) {
         this.log(`Copiant arxiu a '${this.chalkFile(options.copy)}'...`);
-        fs.writeFileSync(this.pathConcat(this.path, options.copy), options.content);
+        fs.writeFileSync(this.pathConcat(this.projectPath, options.copy), options.content);
       }
 
       // Save
@@ -381,28 +344,23 @@ export class CodeProject {
   }
 
   /** @category Command */
-  private replaces(fileName: string, options: FileOptions): string {
+  protected replaces(fileName: string, options: FileOptions): string {
     if (options.replaces && options.replaces.length) {
       this.log(`Actualitzant codi de l'arxiu '${this.chalkFile(fileName)}'...`);
-
-      const sourceFile: ts.SourceFile = this.getSourceFile(fileName, options.content);
-      const replacer: TextReplacer = new TextReplacer(options.content);
 
       // Execute replaces.
       for (const action of options.replaces) {
         let descartado = false;
-        if (!!action.contains) {
-          if (typeof action.contains === 'string') { action.contains = new RegExp(action.contains); }
-          if (action.contains.test(options.content)) {
+        if (!!action.skip) {
+          if (typeof action.skip === 'string') { action.skip = new RegExp(action.skip); }
+          if (action.skip.test(options.content)) {
             descartado = true;
             this.verbose(`- S'ha descartat substituir l'expressió perquè ja existeix.`);
           }
         }
         if (!descartado) {
           if (typeof action.replace === 'function') {
-            this.log(action.description ? '- ' + action.description : `- Executant funció de substitució`);
-            action.replace(sourceFile, replacer);
-            options.content = replacer.apply(options.content);
+            // For inherited classes that use AST for replacements.
           } else {
             this.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()));
             options.content = options.content.replace(action.match || '', action.replace || '');
@@ -411,81 +369,6 @@ export class CodeProject {
       }
     } else {
       // this.verbose(`No s'ha definit cap substitució per a l'arxiu '${this.chalkFile(fileName)}'.`);
-    }
-    return options.content;
-  }
-
-  /** @category Command */
-  private imports(fileName: string, options: FileOptions): string {
-    if (options.imports && options.imports.length) {
-      this.log(`Modificant importacions de l'arxiu '${this.chalkFile(fileName)}'...`);
-
-      const sourceFile: ts.SourceFile = this.getSourceFile(fileName, options.content);
-      const replacer: TextReplacer = new TextReplacer(options.content);
-
-      // Get declared imports.
-      const declared: any[] = this.filterNodes(sourceFile.statements, ts.SyntaxKind.ImportDeclaration, { firstOnly: false }).map((node: ts.ImportDeclaration) => ({
-        specifiers: node.importClause.getText().replace('{', '').replace('}', '').split(',').map((e: any) => e.trim()),
-        source: node.moduleSpecifier.getText(),
-        pos: node.pos,
-        end: node.end,
-      }));
-      // Reference last import.
-      const lastImport = declared.length ? declared[declared.length - 1] : undefined;
-
-      // Execute import actions.
-      for (const i of options.imports) {
-        // Buscamos todas las importaciones declaradas del módulo actual.
-        const found = declared.filter((d: any) => d.source === `'${i.source}'`);
-        // Default value.
-        if (!i.action) { i.action = 'add'; }
-
-        if (i.action === 'add') {
-          if (found.length) {
-            const add: any[] = [];
-            // Filtramos los specifier que no están en ninguna importación.
-            i.specifiers.map(s => { if (found.filter(f => f.specifiers.includes(s)).length === 0) { add.push(s); } });
-            if (add.length) {
-              this.log(`- Afegint ${chalk.bold(add.join(', '))} a la fila existent de '${chalk.bold(i.source)}'`);
-              const newImport = `\nimport \{ ${found[0].specifiers.concat(add).join(', ')} \} from '${i.source}';`;
-              replacer.replaceNode(found[0], newImport);
-
-            } else {
-              this.verbose(`- Ja existeix la importació de '${chalk.bold(i.source)}'`);
-            }
-          } else {
-            this.log(`- Afegint fila d'importació per '${chalk.bold(i.source)}'...`);
-            const newImport = `\nimport \{ ${i.specifiers.join(', ')} \} from '${i.source}';`;
-            replacer.insertAfter(lastImport, newImport);
-          }
-
-        } else if (i.action === 'remove') {
-          if (found.length) {
-            // Repasamos cada import para quitar los specifiers indicados.
-            found.map(f => {
-              // Quitamos los specifier que hay que eliminar de la importación.
-              const rest: any[] = f.specifiers.filter((s: any) => !i.specifiers.includes(s));
-              const remove: any[] = f.specifiers.filter((s: any) => i.specifiers.includes(s));
-              if (rest.length) {
-                this.log(`- Eliminant ${chalk.bold(remove.join(', '))} de la fila de '${chalk.bold(i.source)}'`);
-                const newImport = `\nimport \{ ${rest.join(', ')} \} from '${i.source}';`;
-                replacer.replaceNode(f, newImport);
-              } else {
-                this.log(`- Eliminant importació de '${chalk.bold(i.source)}'...`);
-                replacer.deleteNode(f);
-              }
-            });
-          } else {
-            this.verbose(`- Ja no existeix la importació de '${chalk.bold(i.source)}'`);
-          }
-        } else {
-          this.warning(`No es reconeix el tipus d'acció '${i.action}' per la importació de '${chalk.bold(i.source)}'`);
-        }
-      }
-      options.content = replacer.apply();
-
-    } else {
-      // this.verbose(`No s'ha definit cap importació per a l'arxiu '${this.chalkFile(fileName)}'.`);
     }
     return options.content;
   }
@@ -710,78 +593,145 @@ export class CodeProject {
   }
 
 
+
   // --------------------------------------------------------------------------------
-  //  Abstract Syntax Tree
+  //  File system
   // --------------------------------------------------------------------------------
 
-  /** Obtiene el contenido del archivo indicado y devuelve una estructura de código fuente `ts.SourceFile`. */
-  getSourceFile(fileName: string, content?: string): ts.SourceFile {
-    return ts.createSourceFile(fileName, content || fs.readFileSync(fileName, 'utf-8'), ts.ScriptTarget.Latest, true);
+  /** Si la ruta de l'arxiu no és absoluta, s'enruta amb la ubicació del projecte.
+   * @category Path
+   */
+  rootPath(fileName: string, folder?: string): string {
+    if (!!folder && this.isAccessible(this.pathConcat(folder, fileName))) { return this.normalizePath(this.pathConcat(folder, fileName)); }
+    if (this.isAccessible(this.pathConcat(this.projectPath, fileName))) { return this.normalizePath(this.pathConcat(this.projectPath, fileName)); }
+    return this.normalizePath(fileName);
+    // return this.normalizePath(utils.existsSync(fileName) ? fileName : this.pathConcat(folder ? folder : this.projectPath, fileName));
   }
 
-  /** Atraviesa el AST en busca de un nodo con la declaración de la clase indicada. */
-  getClassDeclaration(name: string, source: any, throwError = true): ts.ClassDeclaration {
-    const classe: ts.ClassDeclaration = this.findNode(source, (node: ts.Node): boolean =>
-      node.kind === ts.SyntaxKind.ClassDeclaration
-      && (node as ts.ClassDeclaration).name.text === name
-    ) as ts.ClassDeclaration;
-    if (!classe && throwError) { this.error(`No s'ha trobat la classe '${chalk.bold('AppModule')}'.`, false); return undefined; }
-    return classe;
+  /** Encadena amb una barra (`/`) la ruta i l'arxiu indicats.
+   * @category Path
+   */
+  pathConcat(folder: string, fileName: string): string {
+    if (!folder) { return fileName; }
+    if (!fileName) { return folder; }
+    const concat: string = folder.endsWith('/') || folder.endsWith('\\') ? '' : '/';
+    const file = fileName.startsWith('/') || fileName.startsWith('\\') ? fileName.substr(1) : fileName;
+    return this.normalizePath(folder + concat + file);
   }
 
-  /** Devuelve una de las propiedades `imports`, `providers`, `entryComponents` o `declarations` del decorador de clase `@NgModule`. */
-  getNgModuleProperty(classe: ts.ClassDeclaration, propName: string, throwError = true): ts.PropertyAssignment {
-    const deco = classe.decorators.find(d => ((d.expression  as ts.CallExpression).expression as ts.Identifier).text === 'NgModule');
-    if (!deco) {
-      if (throwError) { this.error(`No s'ha trobat el decorador de classe '${chalk.bold('@NgModule')}'.`, false); }
-      return undefined;
-    }
-    const obj = (deco.expression  as ts.CallExpression).arguments[0] as ts.ObjectLiteralExpression;
-    const prop = obj.properties.find((p: ts.PropertyAssignment) => p.name.getText() === propName) as ts.PropertyAssignment;
-    if (!prop) {
-      if (throwError) { this.error(`No s'ha trobat la propietat '${chalk.bold(propName)}' al decorador de classe '${chalk.bold('@NgModule')}'.`, false); }
-      return undefined;
-    }
-    return prop;
+  /** Remplaza todos las barras por contrabarras.
+   * @category Path
+   */
+  normalizePath(fileName: string, concat = '\\') {
+    return fileName.replace(new RegExp('/', 'g'), concat);
   }
 
-  /** Función que atraviesa el AST en busca de ocurrencias. */
-  filterNodes(nodes: any, filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): ts.Node[] {
-    if (!Array.isArray(nodes)) { nodes = [nodes]; }
-    if (typeof filter !== 'function' && !Array.isArray(filter)) { filter = [filter]; }
+  /**
+   * Obtiene firmación detallada de las carpetas y los archivos del directorio actual.
+   * ```typescript
+   * const resources = [
+   *   {
+   *     name: 'tsconfig.ts',
+   *     size: 0,
+   *     created: '2020-06-06',
+   *     modified: '2020-06-06',
+   *     isDirectory: false,
+   *     isFile: true,
+   *     extension: '.ts',
+   *   }
+   * ]
+   * ```
+   * @param extra Indica si se obtendrá información más detallada de los recursos a través de una llamada a `fs.statSync`.
+   */
+  discover(resource: string, options?: { ignore?: string | RegExp, extra?: boolean, recursive?: boolean }, indent = ''): DirentType | DirentType[] {
     if (!options) { options = {}; }
+    if (options.ignore === undefined) { options.ignore = 'node_modules|.git'; }
+    if (options.extra === undefined) { options.extra = false; }
     if (options.recursive === undefined) { options.recursive = false; }
-    if (options.firstOnly === undefined) { options.firstOnly = true; }
 
-    const results: (ts.Node | ts.Statement)[] = [];
+    const fullName = this.rootPath(resource);
+    if (!fs.existsSync(fullName) || !this.isAccessible(fullName)) { this.error(`No existeix el recurs '${this.chalkFile(resource)}'`); return []; }
+    // console.log('fullName => ', fullName);
 
-    for (const node of nodes) {
-      if (!results.length || !options.firstOnly) {
+    const resourceIsDirectory = fs.lstatSync(fullName).isDirectory();
+    const dirents: any[] = resourceIsDirectory ? fs.readdirSync(fullName) : [ resource ];
+    const content: DirentType[] = [];
+    // console.log('resourceIsDirectory => ', resourceIsDirectory);
+    // console.log('dirents => ', JSON.stringify(dirents, null, '  '));
 
-        if (typeof filter === 'function') {
-          if (filter(node)) { results.push(node); }
-        } else if (Array.isArray(filter)) {
-          if ((filter as ts.SyntaxKind[]).includes(node.kind)) { results.push(node); }
+    for (let dirent of Object.values(dirents)) {
+      const isDirent = typeof dirent !== 'string';
+      const name = isDirent ? dirent.name : path.basename(dirent);
+      const fileName = path.join(fullName, name);
+      // console.log('dirent => ', JSON.stringify(dirent, null, '  '));
+      // console.log('isDirent => ', isDirent);
+      // console.log('name => ', name);
+
+      let valid = true;
+      if (options.ignore) {
+        if (typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
+        valid = !options.ignore.test(name);
+      }
+      // console.log('valid => ', valid);
+      // console.log('this.isAccessible(path.resolve(name)) => ', this.isAccessible(fileName));
+      if (valid && this.isAccessible(fileName)) {
+        dirent = isDirent ? dirent : fs.statSync(fileName);
+        // console.log('dirent => ', JSON.stringify(dirent, null, '  '));
+
+        const info: DirentType = {
+          name,
+          isDirectory: dirent.isDirectory(),
+          isFile: dirent.isFile(),
+          extension: dirent.isDirectory() ? '' : path.extname(name),
+        };
+        if (options.extra) {
+          const isStat = dirent.size !== undefined && dirent.birthtime !== undefined && dirent.mtime !== undefined;
+          const stat = isStat ? dirent : fs.statSync(fileName);
+          const { size, birthtime, mtime } = stat;
+          info.size = size;
+          info.created = birthtime;
+          info.modified = mtime;
         }
-        if (results.length && options.firstOnly) { return results; }
-
-        if (options.recursive) {
-          node.forEachChild((child: ts.Node | ts.Statement) => {
-            if (!results.length || !options.firstOnly) {
-              results.push(...this.filterNodes(child, filter, options));
-            }
-          });
-        }
+        console.log(indent + (info.isDirectory ? '+ ' : '  ') + info.name);
+        // NOTA: Aprovechamos el bucle de inicialización de DirentType tb cuando el recurso a explorar es un archivo.
+        // Ahora tras la primera vuelta salimos devoliendo un objeto en lugar de un array.
+        if (resourceIsDirectory) { content.push(info); } else { return info; }
+        // -> Llamada recursiva
+        // console.log('info.isDirectory => ', info.isDirectory);
+        // console.log('options.recursive => ', options.recursive);
+        if (info.isDirectory && options.recursive) { info.children = this.discover(fileName, options, indent + '  ') as DirentType[]; }
       }
     }
-    return results;
+    return content;
   }
 
-  /** Función que atraviesa el AST en busca de la primera ocurrencia. */
-  findNode(nodes: any, filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): ts.Node {
-    const results = this.filterNodes(nodes, filter, { firstOnly: true });
-    return results && results.length ? results[0] : undefined;
+  openJsonFile(fileName: string): any {
+    try {
+      return JSON.parse(fs.readFileSync(fileName).toString());
+
+    } catch (err) {
+      // this.error(`Error parsejant l'arxiu JSON '${this.chalkFile(fileName)}'.`, false);
+      return undefined;
+    }
   }
+
+  /** Indica si un recurso existe y es accesible. */
+  isAccessible(resource: string): boolean {
+    try { fs.accessSync(resource, fs.constants.F_OK); return true; } catch (err) { return false; }
+  }
+  /** Indica si el usuario actual tiene permisos de lectura sobre el recurso. */
+  isReadable(resource: string): boolean {
+    try { fs.accessSync(resource, fs.constants.R_OK); return true; } catch (err) { return false; }
+  }
+  /** Indica si el usuario actual tiene permisos de escritura sobre el recurso. */
+  isWriteable(resource: string): boolean {
+    try { fs.accessSync(resource, fs.constants.W_OK); return true; } catch (err) { return false; }
+  }
+  /** Indica si el recurso es de solo lectura. */
+  isReadOnly(resource: string): boolean {
+    return this.isAccessible(resource) && this.isReadable(resource) && !this.isWriteable(resource);
+  }
+
 
 
   // --------------------------------------------------------------------------------
@@ -841,6 +791,8 @@ export class CodeProject {
       }
     }
   }
+
+
 
   // --------------------------------------------------------------------------------
   //  Log & Error

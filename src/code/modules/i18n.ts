@@ -4,15 +4,16 @@
 import chalk from 'chalk'; // const chalk = require('chalk');
 import * as ts from 'typescript';
 import { CodeProject, TextReplacer } from '../../code';
+import { TypescriptProject } from '../typescript-project';
 
-/**
- * Define como instalar un módulo de código en un proyecto.
- */
-export interface ModuleInstallation {
-  // name: string;
-  // project: CodeProject;
-  install(project: CodeProject): Promise<void>;
-}
+// /**
+//  * Define como instalar un módulo de código en un proyecto.
+//  */
+// export interface ModuleInstallation {
+//   // name: string;
+//   // project: CodeProject;
+//   install(project: CodeProject): Promise<void>;
+// }
 
 /**
  * i18n - Translate Module
@@ -23,32 +24,35 @@ export interface ModuleInstallation {
  * ```
  */
 // tslint:disable-next-line: class-name
-export class i18n implements ModuleInstallation {
+export class i18n {
+// export class i18n implements ModuleInstallation {
 
   public static title = 'i18n - Translate Module';
 
-  public static async install(project: CodeProject): Promise<void> {
+  public static async install(project: TypescriptProject): Promise<void> {
 
     console.log(project.line + '\n' + '  ' + chalk.blueBright(chalk.bold(i18n.title)) + '\n' + project.line);
 
-    // await project.install([
-    //   `npm install @ngx-translate/core --save`,
-    //   `npm install @ngx-translate/http-loader --save`,
-    // ]);
+    await project.install([
+      `npm install @ngx-translate/core --save`,
+      `npm install @ngx-translate/http-loader --save`,
+    ]);
 
-    // await project.folder('src/assets/i18n');
-    // await project.file('src/assets/i18n/es.json', { contentFromFile: 'resources/i18n/es.json' });
+    await project.folder('src/assets/i18n');
+    await project.file('src/assets/i18n/es.json', { contentFromFile: 'resources/i18n/es.json' });
+
+    await project.fileImports('src/app/app.module.ts', [
+      { specifiers: [ 'TranslateModule', 'TranslateLoader' ], source: '@ngx-translate/core' },
+      { specifiers: [ 'TranslateHttpLoader' ], source: '@ngx-translate/http-loader' },
+      { specifiers: [ 'HttpClientModule', 'HttpClient' ], source: '@angular/common/http' },
+    ]);
 
     await project.file('src/app/app.module.ts', {
-      imports: [
-        { specifiers: [ 'TranslateModule', 'TranslateLoader' ], source: '@ngx-translate/core' },
-        { specifiers: [ 'TranslateHttpLoader' ], source: '@ngx-translate/http-loader' },
-        { specifiers: [ 'HttpClientModule', 'HttpClient' ], source: '@angular/common/http' },
-      ],
-      replaces: [{
+      replaces: [
+        {
         description: `Afegint importacions ${chalk.bold('HttpClientModule, TranslateModule')} al decorador '${chalk.bold('@NgModule')}'...`,
         replace: (file: ts.SourceFile, replacer: TextReplacer) => {
-          const classe = project.getClassDeclaration('AppModule', file.statements);
+          const classe = project.findClassDeclaration('AppModule', file.statements);
           const prop = project.getNgModuleProperty(classe, 'imports');
           const value = prop.initializer as ts.ArrayLiteralExpression;
           // Insertem al final (end) retrocedint un caràcter per estar dins dels paréntesis (ej: '[]')
@@ -69,10 +73,10 @@ export class i18n implements ModuleInstallation {
     console.log(project.line);
   }
 
-  constructor(public project: CodeProject) {}
+  // constructor(public project: CodeProject) {}
 
-  public async install(project?: CodeProject): Promise<void> {
-    this.project = project || this.project;
-    return i18n.install(this.project);
-  }
+  // public async install(project?: CodeProject): Promise<void> {
+  //   this.project = project || this.project;
+  //   return i18n.install(this.project);
+  // }
 }

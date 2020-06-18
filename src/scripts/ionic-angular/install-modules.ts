@@ -12,9 +12,7 @@
 
 import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
-// import { RegularFileNode, DirectoryNode, FileNode } from "@ionic/utils-fs";
 
-// import fs from 'fs';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import { CodeProject, TextReplacer } from '../../code';
@@ -50,55 +48,24 @@ const project: CodeProject = new CodeProject(Prompt.directory || __dirname, __di
 
 project.initialize().then(async () => {
 
-  await project.connect({
-    connectionLimit : 10,
-    host: 'mysql-5703.dinaserver.com',
-    user: 'pre_user_db',
-    password: 'JCW4xe8xa5d7f',
-    database: 'pre_excel_db'
-  });
+  // await project.connect({
+  //   connectionLimit : 10,
+  //   host: 'mysql-5703.dinaserver.com',
+  //   user: 'pre_user_db',
+  //   password: 'JCW4xe8xa5d7f',
+  //   database: 'pre_excel_db'
+  // });
 
   // const results = await project.query('SELECT idreg, name FROM `roles`');
 
   // console.log('results => ', JSON.stringify(results, null, '  '));
 
-  await project.closeConnection();
+  // await project.closeConnection();
 
-//   // project.install([i18n, i18n]);
-//   // console.log(project.chalkFile('src/app/app.module.ts'));
-//   // project.file('src/app/api.json', {
-//   project.file('src/app/api.php', {
-//     replaces: [{
-//       description: 'test json',
-//       replace: (file: ts.SourceFile, replacer: TextReplacer) => {
-//         const visit = (node: ts.Node, indent = '') => {
-//           console.log(indent + node.kind + '=' + ts.SyntaxKind[node.kind]);
-//           console.log(node.getText());
-//           // console.log(node);
-//           // console.log(indent + node.kind + '=' + ts.SyntaxKind[node.kind]);
-//           node.forEachChild(n => visit(n, indent + '  '));
-//           // if (node.kind !== 279) {
-//           //   node.forEachChild(n => visit(n, indent += '  '));
-//           // } else {
-//           //   // console.log(indent + node.getText());
-//           //   console.log(node);
-//           // }
-//         };
-//         // visit(file);
-//         file.forEachChild(n => visit(n));
-//         // // file.statements[0].forEachChild(n => visit(n));
-//         // const stat = file.statements[0] as ts.ExpressionStatement;
-//         // console.log(stat.getText());
-//         // const obj = stat.expression as ts.ObjectLiteralExpression;
-//         // const entity = obj.properties[0] as ts.PropertyAssignment;
-//         // console.log('property name = ', entity.name);
-//         // visit(entity);
-//       }
-//     }]
-//   });
+  project.install([i18n, i18n]).then(() => {
+    console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n${project.line}\n`);
+  });
 
-
-  console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n${project.line}\n`);
 
 });
 
