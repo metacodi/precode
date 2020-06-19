@@ -1,6 +1,7 @@
 import chalk from 'chalk';
-import { Terminal } from '../utils/terminal';
+import { Terminal } from './utils/terminal';
 import { TypescriptProject } from './typescript-project';
+import { TestOptions } from './typescript-project-types';
 
 
 /**
@@ -10,9 +11,17 @@ export abstract class CodeDeployment {
 
   /** Títol del procés de desplegament de codi. */
   abstract title: string;
-
   /** Referència al projecte principal on es desplegarà el codi implementat. */
   readonly project: TypescriptProject;
+
+  /** Inicializa l'argument `options` a les funcions de test. */
+  static defaultTestOptions(options?: TestOptions): TestOptions {
+    if (!options) { options = {}; }
+    if (options.resolveOnFail === undefined) { options.resolveOnFail = true; }
+    if (options.echo === undefined) { options.echo = true; }
+    if (options.verbose === undefined) { options.verbose = false; }
+    return options;
+  }
 
   constructor(project: TypescriptProject) {
     this.project = project;
@@ -29,5 +38,6 @@ export abstract class CodeDeployment {
    * @param project Si no s'indica un projecte aleshores s'utilitza la referència obtinguda pel constructor.
    */
   abstract async test(project?: TypescriptProject): Promise<boolean>;
+
 
 }

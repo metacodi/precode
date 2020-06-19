@@ -14,3 +14,9 @@ export interface FileImport {
   source: string;
   action?: ActionType;
 }
+
+export interface TestOptions {
+  resolveOnFail?: boolean;
+  echo?: boolean;
+  verbose?: boolean;
+}

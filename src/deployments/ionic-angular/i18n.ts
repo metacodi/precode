@@ -1,9 +1,12 @@
 import chalk from 'chalk'; // const chalk = require('chalk');
 import * as ts from 'typescript';
-import { CodeProject, TextReplacer } from '../..';
+import * as fs from 'fs';
+import { CodeProject } from '../..';
 import { TypescriptProject } from '../../typescript-project';
-import { Terminal } from '../../../utils/terminal';
+import { Terminal } from '../../utils/terminal';
+import { TextReplacer } from '../../utils/text-replacer';
 import { CodeDeployment } from '../../code-deployment';
+import { TestOptions } from '../../typescript-project-types';
 
 
 /**
@@ -26,8 +29,6 @@ export class i18n extends CodeDeployment {
   async deploy(project?: TypescriptProject): Promise<boolean> {
     if (!project) { project = this.project; }
     return new Promise<boolean>(async (resolve: any, reject: any) => {
-
-      Terminal.title(this.title);
 
       await project.install([
         `npm install @ngx-translate/core --save`,
@@ -66,41 +67,35 @@ export class i18n extends CodeDeployment {
         }]
       });
 
-      Terminal.line();
-
+      // TODO: app-core ? check app-language.service
       resolve(true);
     });
   }
 
-  async test(project?: TypescriptProject, options?: { resolveOnFail?: boolean, verbose?: boolean }): Promise<boolean> {
+  async test(project?: TypescriptProject, options?: TestOptions): Promise<boolean> {
     return new Promise<boolean>((resolve: any, reject: any) => {
-      if (!options) { options = {}; }
-      if (options.resolveOnFail === undefined) { options.resolveOnFail = true; }
-      if (options.verbose === undefined) { options.verbose = false; }
-      const { verbose, resolveOnFail } = options;
+      options = CodeDeployment.defaultTestOptions(options);
+      const { echo, verbose, resolveOnFail } = options;
 
       if (!project) { project = this.project; }
 
-      Terminal.title(`Testing ${this.title}`);
-
-      if (!project.testDependency('@ngx-translate/core', { verbose }) && resolveOnFail) { resolve(false); return; }
-      if (!project.testDependency('@ngx-translate/http-loader', { verbose }) && resolveOnFail) { resolve(false); return; }
+      if (!project.testDependency('@angular/common', options) && resolveOnFail) { resolve(false); return; }
+      if (!project.testDependency('@ngx-translate/core', options) && resolveOnFail) { resolve(false); return; }
+      if (!project.testDependency('@ngx-translate/http-loader', options) && resolveOnFail) { resolve(false); return; }
 
       const file: ts.SourceFile = project.getSourceFile('src/app/app.module.ts');
 
-      if (!project.testImport(file, 'TranslateModule', '@ngx-translate/core', { verbose }) && resolveOnFail) { resolve(false); return; }
-      if (!project.testImport(file, 'TranslateLoader', '@ngx-translate/core', { verbose }) && resolveOnFail) { resolve(false); return; }
-      if (!project.testImport(file, 'TranslateHttpLoader', '@ngx-translate/http-loader', { verbose }) && resolveOnFail) { resolve(false); return; }
-      if (!project.testImport(file, 'HttpClientModule', '@ngx-translate/http-loader', { verbose }) && resolveOnFail) { resolve(false); return; }
-      if (!project.testImport(file, 'HttpClient', '@ngx-translate/http-loader', { verbose }) && resolveOnFail) { resolve(false); return; }
+      if (!project.testImport(file, 'TranslateModule', '@ngx-translate/core', options) && resolveOnFail) { resolve(false); return; }
+      if (!project.testImport(file, 'TranslateLoader', '@ngx-translate/core', options) && resolveOnFail) { resolve(false); return; }
+      if (!project.testImport(file, 'TranslateHttpLoader', '@ngx-translate/http-loader', options) && resolveOnFail) { resolve(false); return; }
+      if (!project.testImport(file, 'HttpClientModule', '@angular/common/http', options) && resolveOnFail) { resolve(false); return; }
+      if (!project.testImport(file, 'HttpClient', '@angular/common/http', options) && resolveOnFail) { resolve(false); return; }
 
       const classe = project.findClassDeclaration('AppModule', file.statements);
       const prop = project.getNgModuleProperty(classe, 'imports');
 
       if (!project.testNgNModuleProperty(prop, 'HttpClientModule', i => i.getText() === 'HttpClientModule', options) && resolveOnFail) { resolve(false); return; }
       if (!project.testNgNModuleProperty(prop, 'TranslateModule', i => i.getText().startsWith('TranslateModule'), options) && resolveOnFail) { resolve(false); return; }
-
-      Terminal.line();
 
       resolve(true);
     });

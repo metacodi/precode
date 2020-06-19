@@ -17,6 +17,8 @@ import { CodeProject } from '../../code/code-project';
 // import { CodeProjectConfig } from '../../code/code-project-types';
 import * as resource from './resources/resources';
 import fs from 'fs';
+import { TypescriptProject } from '../../code/typescript-project';
+import { Terminal } from '../../utils/terminal';
 
 
 // --------------------------------------------------------------------------------
@@ -39,7 +41,7 @@ console.clear();
 //  Install
 // --------------------------------------------------------------------------------
 
-const project: CodeProject = new CodeProject(Prompt.directory, __dirname, Prompt.system);
+const project = new TypescriptProject(Prompt.directory);
 
 project.initialize().then(async () => {
 
@@ -100,20 +102,20 @@ project.initialize().then(async () => {
   ]);
   await project.folder('src/assets/i18n');
   await project.file('src/assets/i18n/es.json', { contentFromFile: 'resources/i18n/es.json' });
+  await project.fileImports('src/app/app.module.ts', [
+    { action: 'add', specifiers: [ 'TranslateModule', 'TranslateLoader' ], source: '@ngx-translate/core' },
+    { action: 'add', specifiers: [ 'TranslateHttpLoader' ], source: '@ngx-translate/http-loader' },
+    { action: 'add', specifiers: [ 'HttpClientModule', 'HttpClient' ], source: '@angular/common/http' },
+  ]);
   await project.file('src/app/app.module.ts', {
-    imports: [
-      { action: 'add', specifiers: [ 'TranslateModule', 'TranslateLoader' ], source: '@ngx-translate/core' },
-      { action: 'add', specifiers: [ 'TranslateHttpLoader' ], source: '@ngx-translate/http-loader' },
-      { action: 'add', specifiers: [ 'HttpClientModule', 'HttpClient' ], source: '@angular/common/http' },
-    ],
     replaces: [{
       description: 'Afegint importació de HttpClientModule al mòdul de traducció...',
-      contains: /(\@NgModule\(\{(?:.|\r|\n)*)(?:HttpClientModule)/,
+      skip: /(\@NgModule\(\{(?:.|\r|\n)*)(?:HttpClientModule)/,
       match: /(\@NgModule\(\{(?:.|\r|\n)*\n  imports(?:(\s)*)\:(?:(\s)*)\[)(?:\n?)*(?:\s?)*/,
       replace: `\$1\n    HttpClientModule,\n    `,
     }, {
       description: 'Afegint importació de TranslateModule al mòdul de traducció...',
-      contains: /(\@NgModule\(\{(?:.|\r|\n)*)(?:TranslateModule.forRoot\()/,
+      skip: /(\@NgModule\(\{(?:.|\r|\n)*)(?:TranslateModule.forRoot\()/,
       match: /(\@NgModule\(\{(?:.|\r|\n)*\n  imports(?:(\s)*)\:(?:(\s)*)\[)(?:\n?)*(?:\s?)*/,
       replace: `\$1\n    TranslateModule.forRoot({\n      loader: {\n        provide: TranslateLoader,\n        useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),\n        deps: [HttpClient]\n      }\n    }),\n    `,
     }],
@@ -125,12 +127,12 @@ project.initialize().then(async () => {
   //   ],
   //   replaces: [{
   //     description: 'Afegint translate.setDefaultLang al component d\'inici...',
-  //     contains: /this.translate.setDefaultLang/,
+  //     skip: /this.translate.setDefaultLang/,
   //     match: /(initializeApp\(\)(?:(\s)*)\{)(?:(\s|\n)?)*(?:\s?)*/,
   //     replace: `\$1\n    this.translate.setDefaultLang(AppConfig.language.default);\n    `,
   //   },{
   //     description: 'Afegint translate al constructor...',
-  //     contains: /translate: TranslateService/,
+  //     skip: /translate: TranslateService/,
   //     match: /(constructor\()/,
   //     replace: `\$1\n    public translate: TranslateService,`,
   //   }],
@@ -146,29 +148,29 @@ project.initialize().then(async () => {
 
   // await project.remove('src/app/app-routing.module.ts');
 
-  await project.file('src/app/app.module.ts', {
-    imports: [
-      { action: 'remove', specifiers: [ 'AppRoutingModule' ], source: './app-routing.module' },
-      // { specifiers: [ 'Routes' ], source: '@angular/router' },
-    ],
-    // replaces: [{
-    //   match: /(\@NgModule\(\{(?:.|\r|\n)*)(?:AppRoutingModule(?:,?))((.|\n)*)/,
-    //   replace: '\$1\$2',
-    // }, {
-    //   contains: 'const routes: Routes = ',
-    //   match: /(((\s|\n)*import[^;]*;)*)((\s|\n)*)/,
-    //   replace: `\$1\n${resource.homeRoutes}\n`,
-    // }],
-  });
+  await project.fileImports('src/app/app.module.ts', [
+    { action: 'remove', specifiers: [ 'AppRoutingModule' ], source: './app-routing.module' },
+    // { specifiers: [ 'Routes' ], source: '@angular/router' },
+  ]),
+  // await project.file('src/app/app.module.ts', {
+  //   replaces: [{
+  //     match: /(\@NgModule\(\{(?:.|\r|\n)*)(?:AppRoutingModule(?:,?))((.|\n)*)/,
+  //     replace: '\$1\$2',
+  //   }, {
+  //     skip: 'const routes: Routes = ',
+  //     match: /(((\s|\n)*import[^;]*;)*)((\s|\n)*)/,
+  //     replace: `\$1\n${resource.homeRoutes}\n`,
+  //   }],
+  // });
 
   // --------------------------------------------------------------------------------
 
   // await project.file('src/app/model.ts', { content: resource.model,
   //   replaces: [
-  //     { contains: `(?:name):\s*\'(?:${app.name})\'`, match: `{{app.name}}`, replace: app.name, },
-  //     { contains: `(?:id):\s*\'(?:${app.package})\'`, match: `{{app.package}}`, replace: app.package, },
-  //     // { contains: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.pro}}`, replace: api.url.pro, },
-  //     // { contains: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.dev}}`, replace: api.url.dev, },
+  //     { skip: `(?:name):\s*\'(?:${app.name})\'`, match: `{{app.name}}`, replace: app.name, },
+  //     { skip: `(?:id):\s*\'(?:${app.package})\'`, match: `{{app.package}}`, replace: app.package, },
+  //     // { skip: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.pro}}`, replace: api.url.pro, },
+  //     // { skip: `(?:url):\s*\'(?:${api.url})\'`, match: `{{api.url.dev}}`, replace: api.url.dev, },
   //   ],
   // });
 
@@ -185,17 +187,17 @@ project.initialize().then(async () => {
   // // await project.file('src/environments/environment.ts', {
   // //   replaces: [{
   // //     description: `Afegint la propietat 'debugEnabled' a sota de 'production'.`,
-  // //     contains: /debugEnabled/,
+  // //     skip: /debugEnabled/,
   // //     match: /(production:\s*(?:true|false))(?:,?)/,
   // //     replace: '\$1,\n  debugEnabled: true',
   // //   }, {
   // //     description: `Afegint la informació de l'api.`,
-  // //     contains: /\s*api:\s*{\s*url:/,
+  // //     skip: /\s*api:\s*{\s*url:/,
   // //       match: /(debugEnabled:\s*(?:true|false))(?:,?)/,
   // //       replace: `\$1,\n  api: \{\n    url: \'${api.url.dev}\',\n\  },`,
   // //     }, {
   // //     description: `Afegint la informació de l'app.`,
-  // //     contains: /\s*app:\s*{\s*(?:name|id):/,
+  // //     skip: /\s*app:\s*{\s*(?:name|id):/,
   // //     match: /(debugEnabled:\s*(?:true|false))(?:,?)/,
   // //     replace: `\$1,\n  app: \{\n    name: \'${project.name}\',\n    id: ${app.id},\n\  },`,
   // //   }],
@@ -222,6 +224,7 @@ project.initialize().then(async () => {
   // //   }],
   // // });
 
-  console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n${project.line}\n`);
+  console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n`);
+  Terminal.line();
 
 });

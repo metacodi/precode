@@ -12,12 +12,11 @@ import Prompt from 'commander';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import * as path from 'path';
-import { CodeProject, TextReplacer } from '../../code';
-import { i18n } from '../../code/deployments/ionic-angular/i18n';
+import { i18n } from '../../src/deployments/ionic-angular/i18n';
 import * as mysql from 'mysql';
-import { TypescriptProject } from '../../code/typescript-project';
-import { Terminal } from '../../utils/terminal';
-import { Resource } from '../../utils/resource';
+import { TypescriptProject } from '../../src/typescript-project';
+import { Terminal } from '../../src/utils/terminal';
+import { Resource } from '../../src/utils/resource';
 
 
 // --------------------------------------------------------------------------------
@@ -43,33 +42,33 @@ if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt
 //  Test Project
 // --------------------------------------------------------------------------------
 
-Terminal.line();
+Terminal.title('TESTING TYPESCRIPT PROJECT', 'cyan');
 
 const project: TypescriptProject = new TypescriptProject(Prompt.directory || __dirname);
 
 project.initialize().then(async () => {
 
-  // Terminal.log(`${chalk.green(chalk.bold('√'))} No s'ha trobat instal·lada la dependència '${chalk.bold('@ngx-translate/core')}'.`);
-  // Terminal.log(`${chalk.red(chalk.bold('x'))} No s'ha trobat instal·lada la dependència '${chalk.bold('@ngx-translate/core')}'.`);
-
   // await project.install(['npm i --save @ngx-translate/core']);
-  // Terminal.line();
 
-  // Terminal.title('hola');
+  // project.install([i18n]);
   const Di18n = new i18n(project);
+  Terminal.title(Di18n.title, 'blue');
   // Di18n.deploy();
   Di18n.test(project, { resolveOnFail: false, verbose: true });
-//   Terminal.line();
-//   // console.log(path.join(Prompt.directory, 'tsconfig.json'));
-//   // Terminal.line();
-//   // const info = Resource.discover(path.join(Prompt.directory, 'tsconfig.json'));
-//   // Terminal.line();
-//   console.log(chalk.bold(Prompt.directory));
-//   const info = Resource.discover(Prompt.directory, { recursive: true, ignore: 'node_modules|\.git|out' });
-//   // console.log(JSON.stringify(project.config, null, '  '));
-//   // console.log(JSON.stringify(info, null, '  '));
-//   // console.log(project.discoverFolder(Prompt.directory));
-//   // console.log(TypescriptProject.discoverProjects(Prompt.directory));
 
-//   Terminal.line();
+  //   Terminal.line();
+  //   // console.log(path.join(Prompt.directory, 'tsconfig.json'));
+  //   // Terminal.line();
+  //   // const info = Resource.discover(path.join(Prompt.directory, 'tsconfig.json'));
+  //   // Terminal.line();
+  //   console.log(chalk.bold(Prompt.directory));
+  //   const info = Resource.discover(Prompt.directory, { recursive: true, ignore: 'node_modules|\.git|out' });
+  //   // console.log(JSON.stringify(project.config, null, '  '));
+  //   // console.log(JSON.stringify(info, null, '  '));
+  //   // console.log(project.discoverFolder(Prompt.directory));
+  //   // console.log(TypescriptProject.discoverProjects(Prompt.directory));
+
+  // Terminal.line();
+  Terminal.line('cyan');
+
 });

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as ts from 'typescript';
-import { TextReplacer } from './text-replacer';
+import { TextReplacer } from './utils/text-replacer';
 
 export type ActionType = 'add' | 'remove';
 

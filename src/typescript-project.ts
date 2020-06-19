@@ -4,11 +4,12 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as utils from '@ionic/utils-fs/dist/index.js';
-import { TextReplacer } from './text-replacer';
+import { TextReplacer } from './utils/text-replacer';
 import { FileOptions, FolderOptions, CloneOptions, CurlOptions, ResourceType } from './code-project-types';
-import { FileImport } from './typescript-project-types';
-import { Terminal } from '../utils/terminal';
-import { Resource } from '../utils/resource';
+import { FileImport, TestOptions } from './typescript-project-types';
+import { Terminal } from './utils/terminal';
+import { Resource } from './utils/resource';
+import { CodeDeployment } from './code-deployment';
 
 
 /**
@@ -40,15 +41,13 @@ export class TypescriptProject extends CodeProject {
 
   /** Comrpoba si la carpeta indicada és l'arrel d'un projecte de tipus Typescript. */
   static isProjectFolder(folder: string): boolean {
-    // Obtenemos el contenido de la carpeta.
+    // Obtenim el contingut de la carpeta arrel del projecte.
     const resources = Resource.discover(folder) as ResourceType[];
-    // Comprobamos si existe el archivo de configuración del proyecto.
+    // Comprpovem si existeix l'arxiu de configuració del projecte.
     return !!resources.find(d => d.name === 'tsconfig.json');
   }
 
-  constructor(folder: string) {
-    super(folder, __dirname);
-  }
+  constructor(folder: string) { super(folder, __dirname); }
 
   /**
    * Inicialitza el projecte:
@@ -60,14 +59,14 @@ export class TypescriptProject extends CodeProject {
     return new Promise<any>((resolve: any, reject: any) => {
       try {
         // Project directory
-        if (!fs.existsSync(this.projectPath)) { Terminal.error(`No s'ha trobat la carpeta del projecte '${this.projectPath}'.`); reject(); }
-        if (!TypescriptProject.isProjectFolder(this.projectPath)) { Terminal.error(`La carpeta '${Terminal.chalkFile(this.projectPath)}' no es d'un projecte typescript`); }
-        Terminal.log(chalk.bold('Directori del projecte: ') + Terminal.chalkFile(this.projectPath));
+        if (!fs.existsSync(this.projectPath)) { Terminal.error(`No s'ha trobat la carpeta del projecte ${chalk.bold(this.projectPath)}`); reject(); }
+        if (!TypescriptProject.isProjectFolder(this.projectPath)) { Terminal.error(`La carpeta ${Terminal.file(this.projectPath)} no és d'un projecte typescript`); }
+        Terminal.log(chalk.bold('Directori del projecte: ') + Terminal.file(this.projectPath));
 
         // Config files.
-        Terminal.log(`Carregant arxiu '${Terminal.chalkFile(chalk.bold('tsconfig.json'))}' de configuració...`);
+        Terminal.verbose(`Carregant arxiu ${Terminal.file(chalk.bold('tsconfig.json'))} de configuració...`);
         this.tsconfig = Resource.openJson(this.rootPath('tsconfig.json'));
-        Terminal.log(`Carregant arxiu '${Terminal.chalkFile(chalk.bold('package.json'))}' de configuració...`);
+        Terminal.verbose(`Carregant arxiu ${Terminal.file(chalk.bold('package.json'))} de configuració...`);
         this.package = Resource.openJson(this.rootPath('package.json'));
 
         // Nombre del proyecto.
@@ -95,23 +94,22 @@ export class TypescriptProject extends CodeProject {
   }
 
   /** Passa el test */
-  testDependency(name: string, options?: { verbose?: boolean }): boolean {
-    if (!options) { options = {}; }
-    // if (options.continueOnError === undefined) { options.continueOnError = false; }
-    if (options.verbose === undefined) { options.verbose = false; }
+  testDependency(name: string, options?: TestOptions): boolean {
+    options = CodeDeployment.defaultTestOptions(options);
 
     if (!this.hasDependency(name)) {
-      Terminal.fail(`Falta la dependència '${chalk.bold(name)}'.`);
+      if (options.echo) { Terminal.fail(`Falta la dependència ${chalk.bold(name)}.`); }
       return false;
 
     } else {
-      if (options.verbose) { Terminal.success(`Dependència '${chalk.bold(name)}' instal·lada correctament.`); }
+      if (options.echo && options.verbose) { Terminal.success(`Dependència instal·lada ${chalk.bold(name)}.`); }
       return true;
     }
   }
 
+
   // --------------------------------------------------------------------------------
-  //  Source file
+  //  Imports
   // --------------------------------------------------------------------------------
 
   /**
@@ -128,13 +126,13 @@ export class TypescriptProject extends CodeProject {
   fileImports(fileName: string, imports: FileImport[], fileContent?: string): string {
 
     const fullName = this.rootPath(fileName);
-    if (!fs.existsSync(fullName)) { Terminal.error(`No existeix l'arxiu '${Terminal.chalkFile(fileName)}'`); return fileContent; }
+    if (!fs.existsSync(fullName)) { Terminal.error(`No existeix l'arxiu ${Terminal.file(fileName)}`); return fileContent; }
 
-    if (!fileContent) { Terminal.verbose(`Llegint arxiu '${Terminal.chalkFile(fileName)}'...`); }
+    if (!fileContent) { Terminal.verbose(`Llegint arxiu ${Terminal.file(fileName)}...`); }
     let content: string = fileContent || fs.readFileSync(fullName, 'utf-8').toString();
 
     if (imports && imports.length) {
-      Terminal.log(`Modificant importacions de l'arxiu '${Terminal.chalkFile(fileName)}'...`);
+      Terminal.log(`Modificant importacions de l'arxiu ${Terminal.file(fileName)}...`);
 
       const sourceFile: ts.SourceFile = this.getSourceFile(fullName, content);
       const replacer: TextReplacer = new TextReplacer(content);
@@ -157,15 +155,15 @@ export class TypescriptProject extends CodeProject {
             // Filtramos los specifier que no están en ninguna importación.
             i.specifiers.map((s: any) => { if (found.filter(f => f.specifiers.includes(s)).length === 0) { add.push(s); } });
             if (add.length) {
-              Terminal.log(`- Afegint ${chalk.bold(add.join(', '))} a la fila existent de '${chalk.bold(i.source)}'`);
+              Terminal.success(`Afegint ${chalk.bold(add.join(', '))} a la fila existent de ${chalk.bold(i.source)}`);
               const newImport = `\nimport \{ ${found[0].specifiers.concat(add).join(', ')} \} from '${i.source}';`;
               replacer.replaceNode(found[0], newImport);
 
             } else {
-              Terminal.verbose(`- Ja existeix la importació de '${chalk.bold(i.source)}'`);
+              Terminal.verbose(`- Ja existeix la importació de ${chalk.bold(i.source)}`);
             }
           } else {
-            Terminal.log(`- Afegint fila d'importació per '${chalk.bold(i.source)}'...`);
+            Terminal.success(`Afegint fila d'importació per '${chalk.bold(i.source)}'...`);
             const newImport = `\nimport \{ ${i.specifiers.join(', ')} \} from '${i.source}';`;
             replacer.insertAfter(lastImport, newImport);
           }
@@ -178,25 +176,25 @@ export class TypescriptProject extends CodeProject {
               const rest: any[] = f.specifiers.filter((s: any) => !i.specifiers.includes(s));
               const remove: any[] = f.specifiers.filter((s: any) => i.specifiers.includes(s));
               if (rest.length) {
-                Terminal.log(`- Eliminant ${chalk.bold(remove.join(', '))} de la fila de '${chalk.bold(i.source)}'`);
+                Terminal.success(`Eliminant ${chalk.bold(remove.join(', '))} de la fila de ${chalk.bold(i.source)}`);
                 const newImport = `\nimport \{ ${rest.join(', ')} \} from '${i.source}';`;
                 replacer.replaceNode(f, newImport);
               } else {
-                Terminal.log(`- Eliminant importació de '${chalk.bold(i.source)}'...`);
+                Terminal.success(`Eliminant importació de ${chalk.bold(i.source)}...`);
                 replacer.deleteNode(f);
               }
             });
           } else {
-            Terminal.verbose(`- Ja no existeix la importació de '${chalk.bold(i.source)}'`);
+            Terminal.verbose(`- Ja no existeix la importació de ${chalk.bold(i.source)}`);
           }
         } else {
-          Terminal.warning(`No es reconeix el tipus d'acció '${i.action}' per la importació de '${chalk.bold(i.source)}'`);
+          Terminal.warning(`No es reconeix el tipus d'acció '${i.action}' per la importació de ${chalk.bold(i.source)}`);
         }
       }
       content = replacer.apply();
 
     } else {
-      // Terminal.verbose(`No s'ha definit cap importació per a l'arxiu '${Terminal.chalkFile(fileName)}'.`);
+      // Terminal.verbose(`No s'ha definit cap importació per a l'arxiu '${Terminal.file(fileName)}'.`);
     }
     return content;
   }
@@ -212,23 +210,30 @@ export class TypescriptProject extends CodeProject {
   }
 
   /** Comprueba si la importación está declarada. */
-  testImport(file: ts.SourceFile, specifier: string, source: string, options?: { verbose?: boolean }): boolean {
+  testImport(file: ts.SourceFile, specifier: string, source: string, options?: TestOptions): boolean {
+    options = CodeDeployment.defaultTestOptions(options);
     const imports: any[] = this.getImports(file);
+    const fileName = path.relative(this.projectPath, file.fileName);
 
-    if (!imports.find(i => i.source === source && i.specifiers.includes(specifier))) {
-      Terminal.fail(`No s'ha trobat la importació de '${chalk.bold(specifier)}'.`);
+    if (!imports.find(i => i.source === `'${source}'` && i.specifiers.includes(specifier))) {
+      if (options.echo) { Terminal.fail(`Falta la importació de ${chalk.bold(specifier)} a l'arxiu ${Terminal.file(fileName)}.`); }
       return false;
 
     } else {
-      if (options.verbose) { Terminal.success(`Importació correcta de '${chalk.bold(specifier)}'.`); }
+      if (options.echo && options.verbose) { Terminal.success(`Importació correcta de ${chalk.bold(specifier)} a l'arxiu ${Terminal.file(fileName)}.`); }
       return true;
     }
   }
 
+
+  // --------------------------------------------------------------------------------
+  //  replaces
+  // --------------------------------------------------------------------------------
+
   /** @category Command */
   protected replaces(fileName: string, options: FileOptions): string {
     if (options.replaces && options.replaces.length) {
-      Terminal.log(`Actualitzant codi de l'arxiu '${Terminal.chalkFile(fileName)}'...`);
+      Terminal.log(`Actualitzant codi de l'arxiu '${Terminal.file(fileName)}'...`);
 
       const sourceFile: ts.SourceFile = this.getSourceFile(fileName, options.content);
       const replacer: TextReplacer = new TextReplacer(options.content);
@@ -255,7 +260,7 @@ export class TypescriptProject extends CodeProject {
         }
       }
     } else {
-      // Terminal.verbose(`No s'ha definit cap substitució per a l'arxiu '${Terminal.chalkFile(fileName)}'.`);
+      // Terminal.verbose(`No s'ha definit cap substitució per a l'arxiu '${Terminal.file(fileName)}'.`);
     }
     return options.content;
   }
@@ -267,7 +272,9 @@ export class TypescriptProject extends CodeProject {
 
   /** Obtiene el contenido del archivo indicado y devuelve una estructura de código fuente `ts.SourceFile`. */
   getSourceFile(fileName: string, content?: string): ts.SourceFile {
-    return ts.createSourceFile(fileName, content || fs.readFileSync(fileName, 'utf-8'), ts.ScriptTarget.Latest, true);
+    const fullName = this.rootPath(fileName);
+    if (!fs.existsSync(fullName)) { Terminal.error(`No existeix l'arxiu ${Terminal.file(fileName)}`); return undefined; }
+    return ts.createSourceFile(fullName, content || fs.readFileSync(fullName, 'utf-8'), ts.ScriptTarget.Latest, true);
   }
 
   /** Atraviesa el AST en busca de un nodo con la declaración de la clase indicada. */
@@ -297,14 +304,16 @@ export class TypescriptProject extends CodeProject {
   }
 
   /** Comproba una propietat del decorador. */
-  testNgNModuleProperty(prop: ts.PropertyAssignment, module: string, test: ((i: ts.Expression) => boolean), options?: { verbose?: boolean }): boolean {
+  testNgNModuleProperty(prop: ts.PropertyAssignment, module: string, test: ((i: ts.Expression) => boolean), options?: TestOptions): boolean {
+    options = CodeDeployment.defaultTestOptions(options);
+
     const value = prop.initializer as ts.ArrayLiteralExpression;
 
     if (!value.elements.find(i => test(i))) {
-      Terminal.fail(`No s'ha trobat la importació '${chalk.bold(module)}' al decorador '${chalk.bold('@NgModule')}'.`);
+      if (options.echo) { Terminal.fail(`Falta la importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
       return false;
     } else {
-      if (options.verbose) { Terminal.success(`Importació correcta de '${chalk.bold(module)}' al decorador '${chalk.bold('@NgModule')}'.`); }
+      if (options.echo && options.verbose) { Terminal.success(`Importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
       return true;
     }
 

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { ResourceType } from '../code';
 import { Terminal } from './terminal';
+import { ResourceType } from '../code-project-types';
 
 /**
  *
@@ -32,7 +32,7 @@ export class Resource {
       return JSON.parse(fs.readFileSync(fileName).toString());
 
     } catch (err) {
-      // Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.chalkFile(fileName)}'.`, false);
+      // Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
       return undefined;
     }
   }
@@ -84,7 +84,7 @@ export class Resource {
     if (options.recursive === undefined) { options.recursive = false; }
     if (typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
 
-    if (!fs.existsSync(resource) || !Resource.isAccessible(resource)) { Terminal.error(`No existeix el recurs '${Terminal.chalkFile(resource)}'`); return []; }
+    if (!fs.existsSync(resource) || !Resource.isAccessible(resource)) { Terminal.error(`No existeix el recurs '${Terminal.file(resource)}'`); return []; }
 
     const content: ResourceType[] = [];
     const resourceIsDirectory = fs.lstatSync(resource).isDirectory();
