@@ -3,22 +3,22 @@
 
 /* --------------------------------------------------------------------------------
  *
- *  npx ts-node src/scripts/ionic-angular/test-deployments.ts -v
- *  npx ts-node src/scripts/ionic-angular/test-deployments.ts -d C:\Users\Jordi\work\metacodi\tools\test-project\frontend -v
- *  npx ts-node src/scripts/ionic-angular/test-deployments.ts -f src/app/app.module.ts -v
+ *  npx ts-node scripts/ionic-angular/test-deployments.ts -v
+ *  npx ts-node scripts/ionic-angular/test-deployments.ts -d C:\Users\Jordi\work\metacodi\taxi\apps\pre\frontend -v
+ *  npx ts-node scripts/ionic-angular/test-deployments.ts -d C:\Users\Jordi\work\metacodi\tools\test-project\frontend -v
+ *  npx ts-node scripts/ionic-angular/test-deployments.ts -f src/app/app.module.ts -v
  *
  * -------------------------------------------------------------------------------- */
 
-
 import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
-
 import * as fs from 'fs';
 import * as ts from 'typescript';
-import { i18n } from '../../src/deployments/ionic-angular/i18n';
-import * as mysql from 'mysql';
+
 import { Terminal } from '../../src/utils/terminal';
-import { TypescriptProject } from '../../src/typescript-project';
+
+import { AngularProject } from '../../src/projects/angular-project';
+import { i18n } from '../../src/deployments/angular/i18n';
 
 
 // --------------------------------------------------------------------------------
@@ -37,6 +37,8 @@ Prompt.parse(process.argv);
 
 console.clear();
 
+Terminal.title('Test Deployments', 'magenta');
+
 if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
 
 
@@ -44,7 +46,7 @@ if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt
 //  Test Deployments
 // --------------------------------------------------------------------------------
 
-const project: TypescriptProject = new TypescriptProject(Prompt.directory || __dirname);
+const project = new AngularProject(Prompt.directory || __dirname);
 
 project.initialize().then(async () => {
 
@@ -67,13 +69,16 @@ project.initialize().then(async () => {
   //   Terminal.line();
   // });
 
-  const Di18n = new i18n(project);
-  // Di18n.deploy();
-  Di18n.test();
+  const options = { onlyTest: false, resolveOnFail: false, verbose: Prompt.verbose || false };
+  const Di18n = new i18n();
+  Terminal.title(`Test ${Di18n.title}`);
+  await Di18n.deploy(project, options);
 
   // project.install([Di18n]).then(() => {
   //   console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n`);
   //   Terminal.line();
   // });
+
+  Terminal.line();
 
 });

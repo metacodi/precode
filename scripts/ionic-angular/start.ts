@@ -85,7 +85,7 @@ project.initialize().then(async () => {
   // ]);
   // await project.file('src/app/app.module.ts', {
   //   imports: [
-  //     { action: 'add', specifiers: [ 'Network' ], source: '@ionic-native/network/ngx' },
+  //     { action: 'add', specifiers: [ 'Network' ], module: '@ionic-native/network/ngx' },
   //   ],
   //   replaces: [{
   //     description: 'Afegint el preveïdor Network...',
@@ -103,9 +103,9 @@ project.initialize().then(async () => {
   await project.folder('src/assets/i18n');
   await project.file('src/assets/i18n/es.json', { contentFromFile: 'resources/i18n/es.json' });
   await project.fileImports('src/app/app.module.ts', [
-    { action: 'add', specifiers: [ 'TranslateModule', 'TranslateLoader' ], source: '@ngx-translate/core' },
-    { action: 'add', specifiers: [ 'TranslateHttpLoader' ], source: '@ngx-translate/http-loader' },
-    { action: 'add', specifiers: [ 'HttpClientModule', 'HttpClient' ], source: '@angular/common/http' },
+    { action: 'add', specifiers: [ 'TranslateModule', 'TranslateLoader' ], module: '@ngx-translate/core' },
+    { action: 'add', specifiers: [ 'TranslateHttpLoader' ], module: '@ngx-translate/http-loader' },
+    { action: 'add', specifiers: [ 'HttpClientModule', 'HttpClient' ], module: '@angular/common/http' },
   ]);
   await project.file('src/app/app.module.ts', {
     replaces: [{
@@ -123,7 +123,7 @@ project.initialize().then(async () => {
 
   // await project.file('src/app/app.component.ts', {
   //   imports: [
-  //     { action: 'add', specifiers: ['TranslateService'], source: '@ngx-translate/core' }
+  //     { action: 'add', specifiers: ['TranslateService'], module: '@ngx-translate/core' }
   //   ],
   //   replaces: [{
   //     description: 'Afegint translate.setDefaultLang al component d\'inici...',
@@ -149,8 +149,8 @@ project.initialize().then(async () => {
   // await project.remove('src/app/app-routing.module.ts');
 
   await project.fileImports('src/app/app.module.ts', [
-    { action: 'remove', specifiers: [ 'AppRoutingModule' ], source: './app-routing.module' },
-    // { specifiers: [ 'Routes' ], source: '@angular/router' },
+    { action: 'remove', specifiers: [ 'AppRoutingModule' ], module: './app-routing.module' },
+    // { specifiers: [ 'Routes' ], module: '@angular/router' },
   ]),
   // await project.file('src/app/app.module.ts', {
   //   replaces: [{

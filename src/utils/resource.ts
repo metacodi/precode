@@ -1,7 +1,20 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Terminal } from './terminal';
-import { ResourceType } from '../code-project-types';
+
+
+export interface ResourceType {
+  name: string;
+  path: string;
+  fullName: string;
+  size?: number;
+  created?: Date;
+  modified?: Date;
+  isDirectory: boolean;
+  isFile: boolean;
+  extension: string;
+  children?: ResourceType[];
+}
 
 /**
  *
@@ -26,16 +39,60 @@ export class Resource {
     return fileName.replace(new RegExp('/', 'g'), concat);
   }
 
-  /** Obre un arxiu JSON i el decodifica. */
-  static openJson(fileName: string): any {
+  /**
+   * Llegeix el contingut d'un arxiu i intenta parsejar-lo comrpovant l'extensió.
+   *
+   * Per exemple, si l'arxiu és un de tipus `json` aleshores es retorna el resultat de
+   * `JSON.parse(content)`
+   */
+  static open(fileName: string): any {
     try {
-      return JSON.parse(fs.readFileSync(fileName).toString());
+      // Obtenim el contingut de l'arxiu.
+      const content = fs.readFileSync(fileName).toString();
+
+      // Parsejem el contingut.
+      const file = Resource.discover(fileName) as ResourceType;
+      if (file.extension === '.json') {
+        return JSON.parse(content);
+      }
+
+      return content;
 
     } catch (err) {
-      // Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
+      Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
       return undefined;
     }
   }
+
+  static save(fileName: string, content: string | object, options?: fs.WriteFileOptions): boolean {
+    try {
+      if (!options) { options = {}; }
+
+      // Parsejem el contingut.
+      const file = Resource.discover(fileName) as ResourceType;
+      if (file.extension === '.json' && typeof content === 'object') {
+        content = JSON.stringify(content);
+      }
+
+      fs.writeFileSync(fileName, content, options);
+      return true;
+
+    } catch (err) {
+      Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
+      return false;
+    }
+  }
+
+  // /** Obre un arxiu JSON i el decodifica. */
+  // static open(fileName: string): any {
+  //   try {
+  //     return JSON.parse(fs.readFileSync(fileName).toString());
+
+  //   } catch (err) {
+  //     // Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
+  //     return undefined;
+  //   }
+  // }
 
   /** Indica si un recurs existeix i a més és accessible. */
   static isAccessible(resource: string): boolean {

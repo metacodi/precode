@@ -95,16 +95,16 @@ export class Terminal {
    * Escriu un text amb un check verd davant.
    * @category Test result
    */
-  static success(message: string): void {
-    Terminal.log(`${chalk.bold.green('√')} ${message}`);
+  static success(message: string, check = '√'): void {
+    Terminal.log(`${chalk.bold.green(check)} ${message}`);
   }
 
   /**
    * Escriu un text amb una creu vermella davant.
    * @category Test result
    */
-  static fail(error: string): void {
-    Terminal.log(`${chalk.bold.red('x')} ${error}`);
+  static fail(error: string, check = 'x'): void {
+    Terminal.log(`${chalk.bold.red(check)} ${error}`);
   }
 
 

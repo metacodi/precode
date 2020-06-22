@@ -1,19 +1,16 @@
 #!/usr/bin/env node
 
-import * as fs from 'fs'; // const fs = require('fs');
+import * as fs from 'fs';
 import * as utils from '@ionic/utils-fs/dist/index.js';
 import * as path from 'path';
-import chalk from 'chalk'; // const chalk = require('chalk');
-import Prompt from 'commander';
-import { exec } from 'child_process'; // const { exec } = require('child_process');
-import { FileOptions, FolderOptions, CloneOptions, CurlOptions, ResourceType } from './code-project-types';
+import chalk from 'chalk';
+import { exec } from 'child_process';
+import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions } from './types';
 import { of } from 'rxjs';
-// import * as ts from 'typescript';
 import * as mysql from 'mysql';
-import { Terminal } from './utils/terminal';
-import { Resource } from './utils/resource';
-import { CodeDeployment } from './code-deployment';
-import { TestOptions } from './typescript-project-types';
+import { Terminal } from '../utils/terminal';
+import { Resource, ResourceType } from '../utils/resource';
+import { CodeDeployment } from '../deployments/abstract/code-deployment';
 
 
 
@@ -88,6 +85,57 @@ export class CodeProject {
   /** Referència a la connexió mysql oberta. */
   connection: mysql.Connection | mysql.PoolConnection;
 
+  /** Executa una ordre directament al terminal.
+   * @category Command
+   */
+  static async execute(command: string): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      Terminal.log(`${chalk.blue(command)}`);
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          Terminal.error(error);
+          reject(false);
+
+        } else {
+          if (stdout) { Terminal.log(stdout); }
+          if (stderr) { Terminal.log(chalk.yellow(`${stderr}`)); }
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  /**
+   * Instal·la les dependències indicades al directori del projecte.
+   *
+   * **Usage**
+   * ```typescript
+   * await project.install([
+   *   `npm install @ionic-native/keyboard --save`,
+   *   `ionic cordova plugin add cordova-plugin-ionic-keyboard`,
+   * ]);
+   * ```
+   * @category Command
+   */
+  static async install(folder: string, dependencies: any[]): Promise<any> {
+    // Recordamos el directorio actual.
+    const curDir = process.cwd();
+    // Establecemos el directorio del proyecto como el directorio actual.
+    process.chdir(folder);
+    // Install dependencies.
+    for (const dep of dependencies) {
+      if (typeof dep === 'string') {
+        await CodeProject.execute(dep);
+      }
+    }
+    // Restablecemos el directorio actual.
+    process.chdir(curDir);
+  }
+
+
+  // --------------------------------------------------------------------------------
+  //  constructor . initialize
+  // --------------------------------------------------------------------------------
 
   /** @category Init */
   constructor(projectPath: string, scriptPath: string, os?: string, name?: string) {
@@ -123,42 +171,25 @@ export class CodeProject {
    */
   async initialize(): Promise<any> {
     const fileName = 'precode.json';
-    try {
-      // Project directory
-      if (!await utils.pathExists(this.projectPath)) { Terminal.error(`No s'ha trobat la carpeta del projecte '${this.projectPath}'.`); }
-      Terminal.log(chalk.bold('Directori del projecte: ') + Terminal.file(this.projectPath));
+    return new Promise<any>((resolve: any, reject: any) => {
+      try {
+        // Project directory
+        if (!fs.existsSync(this.projectPath)) { Terminal.error(`No s'ha trobat la carpeta del projecte ${chalk.bold(this.projectPath)}`); reject(); }
+        Terminal.log(chalk.bold('Directori del projecte: ') + Terminal.file(this.projectPath));
 
-      // // 'precode.json'
-      // if (await utils.pathExists(this.projectPath + '/' + fileName)) {
-      //   Terminal.log(`Carregant arxiu de configuració '${Terminal.file(fileName)}'...`);
-      //   const content: string = await utils.fileToString(this.projectPath + '/' + fileName);
-      //   if (content) {
-      //     try {
-      //       this.config = JSON.parse(content);
-      //     } catch (error) {
-      //       Terminal.error(`Error parsejant l'arxiu de configuració del projecte '${Terminal.file(fileName)}'.`, false);
-      //       Terminal.error(error);
-      //     }
-      //   } else {
-      //     // Terminal.error(`L'arxiu de configuració '${Terminal.file(fileName)}' està buit!?!`);
-      //   }
-      //   if (this.config && this.config.git && this.config.git.token && !this.config.git.url.includes(`gitlab-ci-token:`)) {
-      //     const git = this.config.git;
-      //     git.url = git.url.replace(/(http[s]?:\/\/)(.*)/, `\$1gitlab-ci-token:${git.token}\@\$2`);
-      //     Terminal.log(`Tokenitzant la url del git '${chalk.magenta(git.url)}'`);
-      //   }
-      //   if (content) { this.blob(chalk.grey(content)); }
-      // } else {
-      //   // Terminal.error(`No s'ha trobat l'arxiu de configuració del projecte '${Terminal.file(fileName)}'.`);
-      // }
+        // if (this.config && this.config.git && this.config.git.token && !this.config.git.url.includes(`gitlab-ci-token:`)) {
+        //   const git = this.config.git;
+        //   git.url = git.url.replace(/(http[s]?:\/\/)(.*)/, `\$1gitlab-ci-token:${git.token}\@\$2`);
+        //   Terminal.log(`Tokenitzant la url del git '${chalk.magenta(git.url)}'`);
+        // }
 
-      // utils.readdirp(this.projectPath + '/src/app').then((value: string[]) => {
-      //   console.log('dir => ', value);
-      // })
+        resolve(true);
 
-    } catch (error) {
-      Terminal.error(error);
-    }
+      } catch (error) {
+        Terminal.error(error);
+        reject(error);
+      }
+    });
   }
 
 
@@ -179,22 +210,7 @@ export class CodeProject {
    * @category Command
    */
   async install(dependencies: any[]): Promise<any> {
-    // Recordamos el directorio actual.
-    const curDir = process.cwd();
-    // Establecemos el directorio del proyecto como el directorio actual.
-    process.chdir(this.projectPath);
-    // Install dependencies.
-    for (const dep of dependencies) {
-      if (typeof dep === 'string') {
-        await this.execute(dep);
-      } else {
-        if (typeof dep === 'function') {
-          if (typeof dep.deploy === 'function') { await dep.deploy(this); }
-        }
-      }
-    }
-    // Restablecemos el directorio actual.
-    process.chdir(curDir);
+    return CodeProject.install(this.projectPath, dependencies);
   }
 
   /**
@@ -282,12 +298,10 @@ export class CodeProject {
    *
    * Si es tracta d'un arxiu de codi `typescript` podrem afegir o treure importacions:
    * ```typescript
-   * await project.file('src/app/app.module.ts', {
-   *   imports: [
-   *     { action: 'remove', specifiers: [ 'AppRoutingModule' ], source: './app-routing.module' },
-   *     { action: 'add', specifiers: [ 'Routes' ], source: '@angular/router' },
-   *   ],
-   * });
+   * await project.fileImports('src/app/app.module.ts', [
+   *   { action: 'remove', specifiers: [ 'AppRoutingModule' ], module: './app-routing.module' },
+   *   { action: 'add', specifiers: [ 'Routes' ], module: '@angular/router' },
+   * ]);
    * ```
    *
    * @param fileName Nom de l'arxiu relatiu a la carpeta del projecte.
@@ -565,13 +579,13 @@ export class CodeProject {
         // File
         const command = this.os === 'linux' ? `rm -Rf ${fullName}` : `del "${fullName}"`;
         Terminal.log(`Eliminant '${Terminal.file(name)}'...`);
-        return await this.execute(command);
+        return await CodeProject.execute(command);
 
       } else {
         // Folder
         const command = this.os === 'linux' ? `rm -Rf ${fullName}` : `rmdir /Q /S "${fullName}"`;
         Terminal.log(`Eliminant '${Terminal.file(name)}'...`);
-        return await this.execute(command);
+        return await CodeProject.execute(command);
       }
 
     } else {
@@ -584,22 +598,8 @@ export class CodeProject {
    * @category Command
    */
   async execute(command: string): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
-      Terminal.log(`${chalk.blue(command)}`);
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          Terminal.error(error);
-          reject(false);
-
-        } else {
-          if (stdout) { Terminal.log(stdout); }
-          if (stderr) { Terminal.log(chalk.yellow(`${stderr}`)); }
-          resolve(true);
-        }
-      });
-    });
+    return CodeProject.execute(command);
   }
-
 
 
   // --------------------------------------------------------------------------------
@@ -617,16 +617,16 @@ export class CodeProject {
     // return Resource.normalize(utils.existsSync(fileName) ? fileName : Resource.concat(folder ? folder : this.projectPath, fileName));
   }
 
-  // --------------------------------------------------------------------------------
-  //  Test
-  // --------------------------------------------------------------------------------
+  testFileExists(fileName: string, options?: DeploymentOptions): boolean {
+    options = CodeDeployment.extendOptions(options);
 
-  testFile(fileName: string, options?: TestOptions): boolean {
-    options = CodeDeployment.defaultTestOptions(options);
+    const fullName = this.rootPath(fileName);
+    const folder = path.dirname(fullName);
+    const name = path.basename(fileName);
 
-    const resources = Resource.discover(this.projectPath) as ResourceType[];
+    const resources = Resource.discover(folder) as ResourceType[];
 
-    if (!resources.find(r => r.isFile && r.name === fileName)) {
+    if (!resources.find(r => r.isFile && r.name === name)) {
       if (options.echo) { Terminal.fail(`No s'ha trobat l'arxiu ${Terminal.file(fileName)}.`); }
       return false;
     } else {
@@ -634,6 +634,7 @@ export class CodeProject {
       return true;
     }
   }
+
 
   // --------------------------------------------------------------------------------
   //  MySQL
@@ -672,7 +673,7 @@ export class CodeProject {
   /** Ejecuta una consulta a través de la conexión actual.  */
   async query(sql: string): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
-      if (!this.connection) { Terminal.error('No hay ninguna conexión abierta.'); }
+      if (!this.connection) { Terminal.error('No hay ninguna conexión abierta.'); reject(); }
       this.connection.query(sql, (err, results) => {
         if (err) { reject(err); }
         resolve(results);
