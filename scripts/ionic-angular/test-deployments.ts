@@ -18,7 +18,7 @@ import * as ts from 'typescript';
 import { Terminal } from '../../src/utils/terminal';
 
 import { AngularProject } from '../../src/projects/angular-project';
-import { i18n } from '../../src/deployments/angular/i18n';
+import { I18n } from '../../src/deployments/angular/i18n';
 
 
 // --------------------------------------------------------------------------------
@@ -70,11 +70,11 @@ project.initialize().then(async () => {
   // });
 
   const options = { onlyTest: false, resolveOnFail: false, verbose: Prompt.verbose || false };
-  const Di18n = new i18n();
-  Terminal.title(`Test ${Di18n.title}`);
-  await Di18n.deploy(project, options);
+  const i18n = new I18n();
+  Terminal.title(`Test ${i18n.title}`);
+  await i18n.deploy(project, options);
 
-  // project.install([Di18n]).then(() => {
+  // project.install([i18n]).then(() => {
   //   console.log(`\n${chalk.bold('Procés finalitzat amb èxit!!')}\n\n`);
   //   Terminal.line();
   // });

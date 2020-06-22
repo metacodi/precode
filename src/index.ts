@@ -29,10 +29,10 @@ export { TypescriptImport } from './deployments/typescript/typescript-import';
 
 /* Angular */
 export { AngularNgModule } from './deployments/angular/angular-ngModule';
-export { i18n } from './deployments/angular/i18n';
+export { I18n } from './deployments/angular/i18n';
 
 /* Ionic + Angular */
-export { PushCapacitor } from './deployments/ionic-angular/push-capacitor';
+export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacitor/push-capacitor';
 
 
 // ---------------------------------------------------------------------------------------------------

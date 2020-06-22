@@ -10,26 +10,18 @@ import { TypescriptProject } from '../../../../projects/typescript-project';
 import { TypescriptDeployment } from '../../../abstract/typescript-deployment';
 
 import { TypescriptDependency } from '../../../typescript/typescript-dependency';
-import { TypescriptCapacitor } from '../../../typescript/typescript-capacitor';
 import { FileExists } from '../../../basics/file-exists';
 import { TypescriptImport } from '../../../typescript/typescript-import';
 import { AngularNgModule } from '../../../angular/angular-ngModule';
 
 
-/**
- * Push notifications plugin
- *
- * Instal·la el mòdul de notificacions push del capacitor
- * ```typescript
- * const push = mew CalendarCapacitor(project);
- * push.deploy();
- * ```
- */
-export class CalendarCapacitor extends TypescriptDeployment {
+/** Instal·la el mòdul de notificacions push del capacitor. */
+export class CalendarCordova extends TypescriptDeployment {
 
-  title = 'Push Notifications with Capacitor';
+  title = 'Calendar Cordova Plugin with Capacitor';
 
-  // preRequisites = [ new TypescriptCapacitor() ];
+  readme = 'https://github.com/metacodi/test/blob/master/capacitor/calendar/README.md';
+
 
   constructor(data?: { [key: string]: any; }, project?: TypescriptProject, options?: DeploymentOptions) {
     super(data, project, options);
@@ -47,17 +39,12 @@ export class CalendarCapacitor extends TypescriptDeployment {
 
       const tasks: any[] = [
 
-        new TypescriptCapacitor(),
-
         new TypescriptDependency({ install: '@ionic-native/calendar', type: '--save' }),
-
         new TypescriptDependency({ install: 'npm install cordova-plugin-calendar', type: '--save' }),
 
         new TypescriptImport({ file: appModule, import: 'Calendar', from: '@ionic-native/calendar/ngx' }),
 
         new AngularNgModule({ file: appModule, ngModule: 'AppModule', property: 'providers', element: 'Calendar', test: (e: any) => e.getText() === 'HttpClientModule' }),
-
-        new FileExists({ fileName: 'platforms/ios/build/emulator/MyApp.app/Info.plist' }, ),
 
         new FileExists({
           fileName: project.rootPath('platforms/ios/build/emulator/MyApp.app/Info.plist'),

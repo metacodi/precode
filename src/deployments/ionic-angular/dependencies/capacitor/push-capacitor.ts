@@ -14,20 +14,13 @@ import { TypescriptCapacitor } from '../../../typescript/typescript-capacitor';
 import { FileExists } from '../../../basics/file-exists';
 
 
-/**
- * Push notifications plugin
- *
- * Instal·la el mòdul de notificacions push del capacitor
- * ```typescript
- * const push = mew PushCapacitor(project);
- * push.deploy();
- * ```
- */
+/** Instal·la el mòdul de notificacions push del capacitor. */
 export class PushCapacitor extends TypescriptDeployment {
 
   title = 'Push Notifications with Capacitor';
 
-  // preRequisites = [ new TypescriptCapacitor() ];
+  readme = 'https://github.com/metacodi/test/blob/master/capacitor/pushnotifi/README.md';
+
 
   constructor(data?: { [key: string]: any; }, project?: TypescriptProject, options?: DeploymentOptions) {
     super(data, project, options);

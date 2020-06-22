@@ -4,24 +4,29 @@ import { Terminal } from '../../utils/terminal';
 
 import { CodeProject } from '../../projects/code-project';
 import { DeploymentOptions } from '../../projects/types';
+import { Url } from 'url';
+import { url } from 'inspector';
 
 
 /**
  * Classe abstracta que s'utilitza per definir un procés de desplagament de codi.
  */
 export abstract class CodeDeployment {
-// export class CodeDeployment {
 
   /** Títol del procés de desplegament de codi. */
   title: string;
+  /** Url per accedir a l'ajuda. */
+  readme: string;
+
   /** Referència al projecte principal on es desplegarà el codi implementat. */
   project: CodeProject;
   /** Opcions per parametritzar el desplegament de codi. */
   options: DeploymentOptions;
-  /** Desplegaments de codi que s'executaran com a part d'aquest però abans de les tasques propies. */
-  preRequisites: CodeDeployment[];
   /** Dades suplementàries necessàries per aquest desplegament de codi. */
   data: { [key: string]: any; };
+
+  // /** @experimental Desplegaments de codi que s'executaran com a part d'aquest però abans de les tasques propies. */
+  // preRequisites: CodeDeployment[];
 
   /** Inicializa l'argument `options` amb només aquelles propietats que falten per definir. */
   static extendOptions(options?: DeploymentOptions): DeploymentOptions {
@@ -32,7 +37,6 @@ export abstract class CodeDeployment {
     if (options.verbose === undefined) { options.verbose = false; }
     return options;
   }
-
 
   constructor(data?: { [key: string]: any; }, project?: CodeProject, options?: DeploymentOptions) {
     this.project = project;
@@ -45,7 +49,6 @@ export abstract class CodeDeployment {
    * @param project Si no s'indica un projecte aleshores s'utilitza la referència obtinguda pel constructor.
    */
   abstract async deploy(project?: CodeProject, options?: DeploymentOptions, data?: { [key: string]: any }): Promise<boolean>;
-
 
   /** Executa les tasques de desplegament de codi. */
   async run(tasks: any[], project?: CodeProject, options?: DeploymentOptions): Promise<boolean> {
