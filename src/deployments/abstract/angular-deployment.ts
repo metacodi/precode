@@ -1,5 +1,3 @@
-import * as ts from 'typescript';
-
 import { DeploymentOptions } from '../../projects/types';
 import { TypescriptDeployment } from './typescript-deployment';
 import { AngularProject } from '../../projects/angular-project';

@@ -44,7 +44,7 @@ export class CalendarCordova extends TypescriptDeployment {
 
         new TypescriptImport({ file: appModule, import: 'Calendar', from: '@ionic-native/calendar/ngx' }),
 
-        new AngularNgModule({ file: appModule, ngModule: 'AppModule', property: 'providers', element: 'Calendar', test: (e: any) => e.getText() === 'HttpClientModule' }),
+        new AngularNgModule({ file: appModule, ngModule: 'AppModule', property: 'providers', element: 'Calendar', test: (e: any) => e.getText() === 'Calendar' }),
 
         new FileExists({
           fileName: project.rootPath('platforms/ios/build/emulator/MyApp.app/Info.plist'),

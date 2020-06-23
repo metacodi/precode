@@ -13,12 +13,12 @@ import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
 // import { RegularFileNode, DirectoryNode, FileNode } from "@ionic/utils-fs";
 
-import { CodeProject } from '../../code/code-project';
+import { CodeProject } from '../../src/projects/code-project';
 // import { CodeProjectConfig } from '../../code/code-project-types';
 import * as resource from './resources/resources';
 import fs from 'fs';
-import { TypescriptProject } from '../../code/typescript-project';
-import { Terminal } from '../../utils/terminal';
+import { TypescriptProject } from '../../src/projects/typescript-project';
+import { Terminal } from '../../src/utils/terminal';
 
 
 // --------------------------------------------------------------------------------
@@ -96,30 +96,32 @@ project.initialize().then(async () => {
   // });
 
 
-  await project.install([
-    `npm install @ngx-translate/core --save`,
-    `npm install @ngx-translate/http-loader --save`,
-  ]);
-  await project.folder('src/assets/i18n');
-  await project.file('src/assets/i18n/es.json', { contentFromFile: 'resources/i18n/es.json' });
-  await project.fileImports('src/app/app.module.ts', [
-    { action: 'add', specifiers: [ 'TranslateModule', 'TranslateLoader' ], module: '@ngx-translate/core' },
-    { action: 'add', specifiers: [ 'TranslateHttpLoader' ], module: '@ngx-translate/http-loader' },
-    { action: 'add', specifiers: [ 'HttpClientModule', 'HttpClient' ], module: '@angular/common/http' },
-  ]);
-  await project.file('src/app/app.module.ts', {
-    replaces: [{
-      description: 'Afegint importació de HttpClientModule al mòdul de traducció...',
-      skip: /(\@NgModule\(\{(?:.|\r|\n)*)(?:HttpClientModule)/,
-      match: /(\@NgModule\(\{(?:.|\r|\n)*\n  imports(?:(\s)*)\:(?:(\s)*)\[)(?:\n?)*(?:\s?)*/,
-      replace: `\$1\n    HttpClientModule,\n    `,
-    }, {
-      description: 'Afegint importació de TranslateModule al mòdul de traducció...',
-      skip: /(\@NgModule\(\{(?:.|\r|\n)*)(?:TranslateModule.forRoot\()/,
-      match: /(\@NgModule\(\{(?:.|\r|\n)*\n  imports(?:(\s)*)\:(?:(\s)*)\[)(?:\n?)*(?:\s?)*/,
-      replace: `\$1\n    TranslateModule.forRoot({\n      loader: {\n        provide: TranslateLoader,\n        useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),\n        deps: [HttpClient]\n      }\n    }),\n    `,
-    }],
-  });
+  // await project.install([
+  //   `npm install @ngx-translate/core --save`,
+  //   `npm install @ngx-translate/http-loader --save`,
+  // ]);
+  // await project.folder('src/assets/i18n');
+  // await project.file('src/assets/i18n/es.json', { contentFromFile: 'resources/i18n/es.json' });
+  // await project.fileImports('src/app/app.module.ts', [
+  //   { action: 'add', specifiers: [ 'TranslateModule', 'TranslateLoader' ], module: '@ngx-translate/core' },
+  //   { action: 'add', specifiers: [ 'TranslateHttpLoader' ], module: '@ngx-translate/http-loader' },
+  //   { action: 'add', specifiers: [ 'HttpClientModule', 'HttpClient' ], module: '@angular/common/http' },
+  // ]);
+  // await project.file('src/app/app.module.ts', {
+  //   replaces: [{
+  //     description: 'Afegint importació de HttpClientModule al mòdul de traducció...',
+  //     skip: /(\@NgModule\(\{(?:.|\r|\n)*)(?:HttpClientModule)/,
+  //     match: /(\@NgModule\(\{(?:.|\r|\n)*\n  imports(?:(\s)*)\:(?:(\s)*)\[)(?:\n?)*(?:\s?)*/,
+  //     replace: `\$1\n    HttpClientModule,\n    `,
+  //   }, {
+  //     description: 'Afegint importació de TranslateModule al mòdul de traducció...',
+  //     skip: /(\@NgModule\(\{(?:.|\r|\n)*)(?:TranslateModule.forRoot\()/,
+  //     match: /(\@NgModule\(\{(?:.|\r|\n)*\n  imports(?:(\s)*)\:(?:(\s)*)\[)(?:\n?)*(?:\s?)*/,
+  //     replace: `\$1\n    TranslateModule.forRoot({\n      loader: {
+  //         provide: TranslateLoader,\n        useFactory: (http: HttpClient) =>
+  //         new TranslateHttpLoader(http, './assets/i18n/', '.json'),\n        deps: [HttpClient]\n      }\n    }),\n    `,
+  //   }],
+  // });
 
   // await project.file('src/app/app.component.ts', {
   //   imports: [
@@ -148,10 +150,11 @@ project.initialize().then(async () => {
 
   // await project.remove('src/app/app-routing.module.ts');
 
-  await project.fileImports('src/app/app.module.ts', [
-    { action: 'remove', specifiers: [ 'AppRoutingModule' ], module: './app-routing.module' },
-    // { specifiers: [ 'Routes' ], module: '@angular/router' },
-  ]),
+  // await project.fileImports('src/app/app.module.ts', [
+  //   { action: 'remove', specifiers: [ 'AppRoutingModule' ], module: './app-routing.module' },
+  //   // { specifiers: [ 'Routes' ], module: '@angular/router' },
+  // ]),
+
   // await project.file('src/app/app.module.ts', {
   //   replaces: [{
   //     match: /(\@NgModule\(\{(?:.|\r|\n)*)(?:AppRoutingModule(?:,?))((.|\n)*)/,

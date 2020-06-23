@@ -9,6 +9,7 @@ import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOption
 import { Terminal } from '../utils/terminal';
 import { Resource, ResourceType } from '../utils/resource';
 import { CodeDeployment } from '../deployments/abstract/code-deployment';
+import { TypescriptParser } from '../parsers/typescript-parser';
 
 
 /**
@@ -222,9 +223,9 @@ export class TypescriptProject extends CodeProject {
 
   /** Retorna una llista de les importacions de l'arxiu. */
   getImports(sourceFile: ts.SourceFile) {
-    return this.filterNodes(sourceFile.statements, ts.SyntaxKind.ImportDeclaration, { firstOnly: false }).map((node: ts.ImportDeclaration) => ({
+    return TypescriptParser.filter(sourceFile.statements, ts.SyntaxKind.ImportDeclaration, { firstOnly: false }).map((node: ts.ImportDeclaration) => ({
       // imports: node.importClause.getText().replace('{', '').replace('}', '').split(',').map((e: any) => e.split(' as ')[0].trim()),
-      // NOTA: `propertyName` se establece cuando hay un alias (Ej: HttpClientModule as client)
+      // NOTA: `propertyName` se establece cuando hay un alias (Ej: HttpClientModule as http)
       imports: (node.importClause.namedBindings as ts.NamedImports).elements.map((e: any) => e.propertyName ? e.propertyName.text : e.name.text),
       from: node.moduleSpecifier.getText(),
       pos: node.pos,
@@ -277,59 +278,22 @@ export class TypescriptProject extends CodeProject {
   //  Abstract Syntax Tree
   // --------------------------------------------------------------------------------
 
-  /** Obtiene el contenido del archivo indicado y devuelve una estructura de código fuente `ts.SourceFile`. */
+  /** Obté el conteingut de l'arxiu indicat i retorna una estructura del codi font `ts.SourceFile`. */
   getSourceFile(fileName: string, content?: string): ts.SourceFile {
     const fullName = this.rootPath(fileName);
-    if (!fs.existsSync(fullName)) { Terminal.error(`No existeix l'arxiu ${Terminal.file(fileName)}`); return undefined; }
-    return ts.createSourceFile(fullName, content || fs.readFileSync(fullName, 'utf-8'), ts.ScriptTarget.Latest, true);
+    const result = TypescriptParser.parse(fullName, content);
+    if (!result) { Terminal.error(`No existeix l'arxiu ${Terminal.file(fileName)}`); return undefined; }
+    return result;
   }
 
   /** Atraviesa el AST en busca de un nodo con la declaración de la clase indicada. */
   findClassDeclaration(name: string, source: any, throwError = true): ts.ClassDeclaration {
-    const classe: ts.ClassDeclaration = this.findNode(source, (node: ts.Node): boolean =>
-      node.kind === ts.SyntaxKind.ClassDeclaration
-      && (node as ts.ClassDeclaration).name.text === name
+    const classe = TypescriptParser.find(source, (node: ts.Node): boolean =>
+      node.kind === ts.SyntaxKind.ClassDeclaration && (node as ts.ClassDeclaration).name.text === name
     ) as ts.ClassDeclaration;
-    if (!classe && throwError) { Terminal.error(`No s'ha trobat la classe '${chalk.bold('AppModule')}'.`, false); return undefined; }
+    if (!classe && throwError) { Terminal.error(`No s'ha trobat la classe '${chalk.bold(name)}'.`, false); return undefined; }
     return classe;
   }
 
-  /** Función que atraviesa el AST en busca de ocurrencias. */
-  filterNodes(nodes: any, filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): ts.Node[] {
-    if (!Array.isArray(nodes)) { nodes = [nodes]; }
-    if (typeof filter !== 'function' && !Array.isArray(filter)) { filter = [filter]; }
-    if (!options) { options = {}; }
-    if (options.recursive === undefined) { options.recursive = false; }
-    if (options.firstOnly === undefined) { options.firstOnly = true; }
-
-    const results: (ts.Node | ts.Statement)[] = [];
-
-    for (const node of nodes) {
-      if (!results.length || !options.firstOnly) {
-
-        if (typeof filter === 'function') {
-          if (filter(node)) { results.push(node); }
-        } else if (Array.isArray(filter)) {
-          if ((filter as ts.SyntaxKind[]).includes(node.kind)) { results.push(node); }
-        }
-        if (results.length && options.firstOnly) { return results; }
-
-        if (options.recursive) {
-          node.forEachChild((child: ts.Node | ts.Statement) => {
-            if (!results.length || !options.firstOnly) {
-              results.push(...this.filterNodes(child, filter, options));
-            }
-          });
-        }
-      }
-    }
-    return results;
-  }
-
-  /** Función que atraviesa el AST en busca de la primera ocurrencia. */
-  findNode(nodes: any, filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): ts.Node {
-    const results = this.filterNodes(nodes, filter, { firstOnly: true });
-    return results && results.length ? results[0] : undefined;
-  }
 
 }

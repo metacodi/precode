@@ -69,7 +69,7 @@ project.initialize().then(async () => {
   //   Terminal.line();
   // });
 
-  const options = { onlyTest: false, resolveOnFail: false, verbose: Prompt.verbose || false };
+  const options = { onlyTest: true, resolveOnFail: false, verbose: Prompt.verbose || false };
   const i18n = new I18n();
   Terminal.title(`Test ${i18n.title}`);
   await i18n.deploy(project, options);

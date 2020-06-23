@@ -26,7 +26,7 @@ export class FileExists extends CodeDeployment {
 
       if (!Resource.isAccessible(fileName)) {
         if (options.echo) { Terminal.fail(`Falta l'arxiu ${Terminal.file(fileName)}.`); }
-        if (!options.onlyTest && !!help) { Terminal.log(help); }
+        if (help) { Terminal.log(help); }
         resolve(false);
 
       } else {

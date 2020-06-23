@@ -1,5 +1,3 @@
-import * as ts from 'typescript';
-
 import { DeploymentOptions } from '../../projects/types';
 import { AngularDeployment } from './angular-deployment';
 import { IonicAngularProject } from '../../projects/ionic-angular-project';

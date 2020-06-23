@@ -26,8 +26,10 @@ export class TypescriptCapacitor extends TypescriptDeployment {
       if (!data) { data = this.data; }
 
       const tasks: any[] = [
+
         new TypescriptDependency({ install: '@capacitor/core', type: '--save' }),
         new TypescriptDependency({ install: '@capacitor/cli', type: '--save-dev' }),
+
       ];
 
       resolve(await this.run(tasks, project, options));

@@ -21,7 +21,6 @@ export class PushCapacitor extends TypescriptDeployment {
 
   readme = 'https://github.com/metacodi/test/blob/master/capacitor/pushnotifi/README.md';
 
-
   constructor(data?: { [key: string]: any; }, project?: TypescriptProject, options?: DeploymentOptions) {
     super(data, project, options);
   }

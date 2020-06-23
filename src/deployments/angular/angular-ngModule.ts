@@ -15,7 +15,7 @@ import { AngularProject } from '../../projects/angular-project';
 import { AngularDeployment } from '../abstract/angular-deployment';
 import { TextReplacer } from '../../utils/text-replacer';
 
-/** Afegeix una codi a una de les propietats del decorador `ngModule` de la classe indicada. */
+/** Afegeix una expressió de codi a una de les propietats del decorador `ngModule` de la classe indicada. */
 export class AngularNgModule extends AngularDeployment {
 
   constructor(data?: AngularNgModuleType, project?: AngularProject, options?: DeploymentOptions) {
@@ -33,7 +33,6 @@ export class AngularNgModule extends AngularDeployment {
       const property: string = data.property;
       const element: string = data.element;
       const text: string = data.text || data.element;
-      // const test: (e: any) => boolean = data.test || ((e: any): boolean => );
       const test: (e: any) => boolean = data.test;
 
       const classe = project.findClassDeclaration(ngModule, file.statements);
@@ -42,11 +41,11 @@ export class AngularNgModule extends AngularDeployment {
 
       if (!value.elements.find(e => test(e))) {
         if (options.onlyTest) {
-          if (options.echo) { Terminal.fail(`Falta la importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
+          if (options.echo) { Terminal.fail(`Falta la importació ${chalk.bold(element)} al decorador ${chalk.bold('@NgModule')}.`); }
           resolve(false);
 
         } else {
-          if (options.echo) { Terminal.success(`Afegint la importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}...`); }
+          if (options.echo) { Terminal.success(`Afegint la importació ${chalk.bold(element)} al decorador ${chalk.bold('@NgModule')}...`); }
           // Insertem al final (end) retrocedint un caràcter per estar dins dels paréntesis (ej: '[]')
           const pos = value.end - 1;
           const comma = value.getText() === '[]' ? '' : ', ';
@@ -57,10 +56,9 @@ export class AngularNgModule extends AngularDeployment {
         }
 
       } else {
-        if (options.echo) { Terminal.success(`Importació correcta de ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
+        if (options.echo) { Terminal.success(`Importació correcta de ${chalk.bold(element)} al decorador ${chalk.bold('@NgModule')}.`); }
         resolve(true);
       }
     });
   }
-
 }

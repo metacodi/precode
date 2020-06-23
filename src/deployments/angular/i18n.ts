@@ -60,8 +60,7 @@ export class I18n extends AngularDeployment {
 
       ];
 
-      // TODO: Comprovar si està instal·lada la lliberia app-core i extendre el deploy per
-      // comprovar AppLanguageService, arxius de recursos, etc.
+      // TODO: app-core ? comprovar AppLanguageService, arxius de recursos 'es.json', ...
 
       resolve(await this.run(tasks, project, options));
     });

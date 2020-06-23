@@ -109,20 +109,20 @@ export class AngularProject extends TypescriptProject {
     return prop;
   }
 
-  /** Comprova una propietat del decorador. */
-  testNgModuleProperty(prop: ts.PropertyAssignment, module: string, test: ((i: ts.Expression) => boolean), options?: DeploymentOptions): boolean {
-    options = CodeDeployment.extendOptions(options);
+  // /** Comprova una propietat del decorador. */
+  // testNgModuleProperty(prop: ts.PropertyAssignment, module: string, test: ((i: ts.Expression) => boolean), options?: DeploymentOptions): boolean {
+  //   options = CodeDeployment.extendOptions(options);
 
-    const value = prop.initializer as ts.ArrayLiteralExpression;
+  //   const value = prop.initializer as ts.ArrayLiteralExpression;
 
-    if (!value.elements.find(i => test(i))) {
-      if (options.echo) { Terminal.fail(`Falta la importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
-      return false;
-    } else {
-      if (options.echo && options.verbose) { Terminal.success(`Importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
-      return true;
-    }
+  //   if (!value.elements.find(i => test(i))) {
+  //     if (options.echo) { Terminal.fail(`Falta la importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
+  //     return false;
+  //   } else {
+  //     if (options.echo && options.verbose) { Terminal.success(`Importació ${chalk.bold(module)} al decorador ${chalk.bold('@NgModule')}.`); }
+  //     return true;
+  //   }
 
-  }
+  // }
 
 }
