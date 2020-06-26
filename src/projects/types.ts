@@ -16,10 +16,45 @@ export type ProjectType = 'typescript' | 'angular' | 'php';
 //  Deployments
 // --------------------------------------------------------------------------------
 
+export interface FileExistsType {
+  fileName: string;
+  relativeTo?: string;
+  help?: string;
+}
+
+export interface CustomDeploymentType {
+  fn: any;
+  arguments?: any[];
+  description?: string;
+}
+
 export interface TypescriptDependencyType {
+  /**
+   * Si s'indica el nom d'un package (ex: '@capacitor/core') es genera la instrucció `npm install @capacitor/core --save`.
+   *
+   * Tb. es pot indicar la url d'un repositori (ej: 'https://github.com/fabiorogeriosj/cordova-plugin-sensors.git'), i en aquest cas serà
+   * necessari establir tb. la propietat `dependency`per indicar el nom del package i poder-ne comprovar l'estat d'instal·lació.
+   */
   install?: string;
   uninstall?: string;
+  /**
+   * Utilitzem aquesta propietat quan el nom del package no coincideix amb el valor de la propietat `install` o `uninstall`.
+   *
+   * Per exemple:
+   * ```bash
+   * new TypescriptDependency({ install: 'https://github.com/fabiorogeriosj/cordova-plugin-sensors.git', dependency: 'cordova-plugin-sensors' }),
+   * ```
+   */
+  dependency?: string;
   type?: '--save-dev' | '--save';
+}
+
+export interface TypescriptConstructorType {
+  file: ts.SourceFile;
+  class?: string;
+  modifier?: string;
+  identifier: string;
+  type: string;
 }
 
 export interface TypescriptImportType {

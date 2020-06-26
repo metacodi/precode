@@ -9,6 +9,7 @@ export class Terminal {
 
   /** Quan s'estableix a `false` les funcions `verbose` i `blob` no escriuen res per consola. */
   static verboseEnabled = true;
+  static indent = 0;
 
   // --------------------------------------------------------------------------------
   //  Log & Error
@@ -59,19 +60,13 @@ export class Terminal {
 
   /** @category Log */
   static file(fileName: string, relativeTo?: string): string {
-    // console.log(`fileName => `, fileName);
-    // console.log(`fileName.replace('\\', '/') => `, fileName.replace('\\', '/'));
-    // console.log(`fileName.replace('\\', '/').lastIndexOf('/') => `, fileName.replace('\\', '/').lastIndexOf('/'));
     const i = relativeTo ? Terminal.relative(fileName, relativeTo) : fileName.split('\\').join('/').lastIndexOf('/');
-    // const i = relativeTo ? Terminal.relative(fileName, relativeTo) : fileName.length - path.dirname(fileName).length;
     if (i > 0) {
       const base = fileName.substr(0, i + 1);
       const name = fileName.substr(i + 1);
-      // return chalk.blue(base) + chalk.bold.blue(name);
       return chalk.green(base) + chalk.bold.green(name);
 
     } else {
-      // return chalk.cyan(fileName);
       return chalk.green(fileName);
     }
   }
@@ -96,7 +91,8 @@ export class Terminal {
    * @category Test result
    */
   static success(message: string, check = '√'): void {
-    Terminal.log(`${chalk.bold.green(check)} ${message}`);
+    const indent = '  '.repeat(Terminal.indent);
+    Terminal.log(`${indent}${chalk.bold.green(check)} ${message}`);
   }
 
   /**
@@ -104,7 +100,8 @@ export class Terminal {
    * @category Test result
    */
   static fail(error: string, check = 'x'): void {
-    Terminal.log(`${chalk.bold.red(check)} ${error}`);
+    const indent = '  '.repeat(Terminal.indent);
+    Terminal.log(`${indent}${chalk.bold.red(check)} ${error}`);
   }
 
 

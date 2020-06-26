@@ -1,8 +1,9 @@
 import chalk from 'chalk';
+import path from 'path';
 
 import { CodeDeployment } from '../abstract/code-deployment';
 import { CodeProject } from '../../projects/code-project';
-import { DeploymentOptions } from '../../projects/types';
+import { DeploymentOptions, FileExistsType } from '../../projects/types';
 import { Terminal } from '../../utils/terminal';
 import { Resource } from '../../utils/resource';
 
@@ -11,7 +12,7 @@ import { Resource } from '../../utils/resource';
  */
 export class FileExists extends CodeDeployment {
 
-  constructor(data?: { [key: string]: any; }, project?: CodeProject, options?: DeploymentOptions) {
+  constructor(data?: FileExistsType, project?: CodeProject, options?: DeploymentOptions) {
     super(data, project, options);
   }
 
@@ -21,16 +22,18 @@ export class FileExists extends CodeDeployment {
       if (!project) { project = this.project; }
       if (!data) { data = this.data; }
 
-      const fileName = data.fileName;
+      const fullName = data.fileName;
+      const relativeTo = data.relativeTo || '';
+      const fileName =  path.relative(relativeTo, fullName);
       const help = data.help;
 
-      if (!Resource.isAccessible(fileName)) {
-        if (options.echo) { Terminal.fail(`Falta l'arxiu ${Terminal.file(fileName)}.`); }
+      if (!Resource.isAccessible(fullName)) {
+        if (options.echo) { Terminal.fail(`Falta l'arxiu ${Terminal.file(fileName, relativeTo)}.`); }
         if (help) { Terminal.log(help); }
         resolve(false);
 
       } else {
-        if (options.echo) { Terminal.success(`Existeix l'arxiu ${Terminal.file(fileName)}.`); }
+        if (options.echo) { Terminal.success(`Existeix l'arxiu ${Terminal.file(fileName, relativeTo)}.`); }
         resolve(true);
       }
     });

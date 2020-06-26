@@ -10,6 +10,10 @@ export class TypescriptParser {
   }
 
   static find(nodes: any, filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): ts.Node {
+    if (!options) { options = {}; }
+    if (options.recursive === undefined) { options.recursive = true; }
+    if (options.firstOnly === undefined) { options.firstOnly = true; }
+
     const results = TypescriptParser.filter(nodes, filter, options);
     return results && results.length ? results[0] : undefined;
   }
@@ -34,6 +38,7 @@ export class TypescriptParser {
         if (results.length && options.firstOnly) { return results; }
 
         if (options.recursive) {
+          if (node.forEachChild === undefined) { console.log('forEachChild is undefined for: ', node); }
           node.forEachChild((child: ts.Node | ts.Statement) => {
             if (!results.length || !options.firstOnly) {
               results.push(...TypescriptParser.filter(child, filter, options));

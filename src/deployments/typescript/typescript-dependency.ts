@@ -21,7 +21,7 @@ export class TypescriptDependency extends TypescriptDeployment {
       if (!project) { project = this.project; }
       if (!data) { data = this.data; }
 
-      const name = data.name || data.install || data.uninstall;
+      const name = data.dependency || data.install || data.uninstall;
       const action = data.install ? 'install' : 'uninstall';
       const type = data.type === '--save-dev' || data.type === '-D' ? '--save-dev' : '--save';
 

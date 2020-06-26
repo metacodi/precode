@@ -320,15 +320,15 @@ export class CodeProject {
     try {
       // Content
       if (!await utils.pathExists(fullName)) {
-        Terminal.log(`Creant arxiu '${Terminal.file(fileName)}'...`);
+        Terminal.success(`Creant arxiu '${Terminal.file(fileName)}'.`);
 
       } else {
         if (!options.content) {
-          Terminal.verbose(`Llegint arxiu '${Terminal.file(fileName)}'...`);
+          Terminal.verbose(`Llegint arxiu '${Terminal.file(fileName)}'.`);
           options.content = await utils.fileToString(fullName);
 
         } else {
-          Terminal.log(`Actualitzant arxiu '${Terminal.file(fileName)}'...`);
+          Terminal.success(`Actualitzant arxiu '${Terminal.file(fileName)}'.`);
           if (options.appendRatherThanOverwrite) {
             // Append content
             const content: string = await utils.fileToString(fullName) || '';
@@ -345,7 +345,7 @@ export class CodeProject {
 
       // Copy
       if (options.copy) {
-        Terminal.log(`Copiant arxiu a '${Terminal.file(options.copy)}'...`);
+        Terminal.success(`Copiant arxiu a '${Terminal.file(options.copy)}'.`);
         fs.writeFileSync(Resource.concat(this.projectPath, options.copy), options.content);
       }
 
@@ -360,10 +360,15 @@ export class CodeProject {
     }
   }
 
+  /** Comprova si existeix el recurs en el proijecte. */
+  exists(fileName: string): boolean {
+    return Resource.isAccessible(this.rootPath(fileName));
+  }
+
   /** @category Command */
   protected replaces(fileName: string, options: FileOptions): string {
     if (options.replaces && options.replaces.length) {
-      Terminal.log(`Actualitzant codi de l'arxiu '${Terminal.file(fileName)}'...`);
+      Terminal.log(`Actualitzant codi de l'arxiu '${Terminal.file(fileName)}'.`);
 
       // Execute replaces.
       for (const action of options.replaces) {
@@ -417,30 +422,31 @@ export class CodeProject {
     if (!options.action) { options.action = 'add'; }
 
     const fullName = this.rootPath(folderName);
+    const exists = await utils.pathExists(fullName);
 
     if (await utils.pathExists(fullName)) {
       if (options.action === 'remove') {
-        Terminal.log(`Eliminant la carpeta '${Terminal.file(folderName)}'...`);
+        Terminal.success(`  Eliminant la carpeta '${Terminal.file(folderName)}'.`);
         const command = `rm -Rf ${fullName}`;
         return await this.execute(command);
 
       } else {
-        Terminal.verbose(`Ja existeix la carpeta '${Terminal.file(folderName)}'`);
+        Terminal.verbose(`- Ja existeix la carpeta '${Terminal.file(folderName)}'`);
         return true;
       }
 
     } else {
       if (options.action === 'add') {
-        Terminal.log(`Creant la carpeta '${Terminal.file(folderName)}'...`);
+        Terminal.success(`  Creant la carpeta '${Terminal.file(folderName)}'.`);
         const command = `mkdir ${fullName}`;
         return await this.execute(command);
 
       } else if (options.action === 'remove') {
-        Terminal.log(`La carpeta ja estava eliminada '${Terminal.file(folderName)}'`);
+        Terminal.success(`  La carpeta ja estava eliminada '${Terminal.file(folderName)}'`);
         return true;
 
       } else {
-        Terminal.warning(`No es reconeix el tipus d'acció '${options.action}' per la carpeta '${Terminal.file(folderName)}'`);
+        Terminal.warning(`- No es reconeix el tipus d'acció '${options.action}' per la carpeta '${Terminal.file(folderName)}'`);
         return false;
       }
     }
@@ -610,11 +616,28 @@ export class CodeProject {
    * @category Path
    */
   rootPath(fileName: string, folder?: string): string {
-    if (!!folder && Resource.isAccessible(Resource.concat(folder, fileName))) { return Resource.normalize(Resource.concat(folder, fileName)); }
-    if (Resource.isAccessible(Resource.concat(this.projectPath, fileName))) { return Resource.normalize(Resource.concat(this.projectPath, fileName)); }
-    const normalized = Resource.normalize(fileName);
-    return Resource.normalize(fileName);
-    // return Resource.normalize(utils.existsSync(fileName) ? fileName : Resource.concat(folder ? folder : this.projectPath, fileName));
+    if (path.isAbsolute(fileName)) {
+      return fileName;
+
+    } else {
+      if (folder) { fileName = Resource.normalize(path.join(folder, fileName)); }
+      return Resource.normalize(Resource.concat(this.projectPath, fileName));
+    }
+    // console.log('rootPath => ', {
+    //   fileName,
+    //   folder,
+    //   'this.projectPath': this.projectPath,
+    //   'Resource.concat(folder, fileName)': Resource.concat(folder, fileName),
+    //   'Resource.concat(this.projectPath, fileName)': Resource.concat(this.projectPath, fileName),
+    //   'Resource.isAccessible(Resource.concat(folder, fileName))': Resource.isAccessible(Resource.concat(folder, fileName)),
+    //   'Resource.isAccessible(Resource.concat(this.projectPath, fileName))': Resource.isAccessible(Resource.concat(this.projectPath, fileName)),
+    //   'Resource.normalize(fileName)': Resource.normalize(fileName),
+    // });
+    // if (!!folder && Resource.isAccessible(Resource.concat(folder, fileName))) { return Resource.normalize(Resource.concat(folder, fileName)); }
+    // if (Resource.isAccessible(Resource.concat(this.projectPath, fileName))) { return Resource.normalize(Resource.concat(this.projectPath, fileName)); }
+    // const normalized = Resource.normalize(fileName);
+    // return Resource.normalize(fileName);
+    // // return Resource.normalize(utils.existsSync(fileName) ? fileName : Resource.concat(folder ? folder : this.projectPath, fileName));
   }
 
   testFileExists(fileName: string, options?: DeploymentOptions): boolean {
@@ -641,7 +664,7 @@ export class CodeProject {
   // --------------------------------------------------------------------------------
 
   /**
-   * Abre un pool para la ejecución de múltiples consultas durante el script.
+   * Obre un pool i obté una connexió que es pot aprofitar per a executar múltiples consultes.
    * ```typescript
    * const con = await project.connect({
    *   connectionLimit : 10,
@@ -652,7 +675,7 @@ export class CodeProject {
    * });
    * ```
    *
-   * Al terminar la última consulta debe liberarse la conexión:
+   * En acabat s'hauria d'alliberar la connexió del pool:
    * ```typescript
    * con.release();
    * ```
@@ -670,18 +693,24 @@ export class CodeProject {
     });
   }
 
-  /** Ejecuta una consulta a través de la conexión actual.  */
+  /** Executa una consulta a través de la connexió actual.  */
   async query(sql: string): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
-      if (!this.connection) { Terminal.error('No hay ninguna conexión abierta.'); reject(); }
-      this.connection.query(sql, (err, results) => {
-        if (err) { reject(err); }
-        resolve(results);
-      });
+      if (this.connection) {
+        this.connection.query(sql, (err, results) => {
+          if (err) { reject(err); }
+          resolve(results);
+        });
+
+      } else {
+        const error = 'No hi ha cap connexió oberta disponible.';
+        Terminal.error(error);
+        reject(error);
+      }
     });
   }
 
-  /** Cierra la conexión actual. */
+  /** Tanca la connexió actual. */
   async closeConnection() {
     if (this.connection) {
       if (typeof (this.connection as any).release === 'function') {

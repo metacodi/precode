@@ -11,6 +11,10 @@ export class PhpParser {
   }
 
   static find(nodes: any, filter: string | string[] | ((node: Node | Program) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): Node {
+    if (!options) { options = {}; }
+    if (options.recursive === undefined) { options.recursive = true; }
+    if (options.firstOnly === undefined) { options.firstOnly = true; }
+
     const results = PhpParser.filter(nodes, filter, options);
     return results && results.length ? results[0] : undefined;
   }
@@ -37,6 +41,7 @@ export class PhpParser {
         if (options.recursive) {
           // En funció del tipus de node: Program.children | Class.body | Method.body.children | ForEach.body.children | ...
           const children = Array.isArray(node.children) ? node.children : (Array.isArray(node.body) ? node.body : (node.body ? node.body.children : []));
+
           for (const child of children) {
             results.push(...PhpParser.filter(child, filter, options));
             if (results.length && options.firstOnly) { break; }

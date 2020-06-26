@@ -41,6 +41,7 @@ export class PushCapacitor extends TypescriptDeployment {
 
         new FileExists({
           fileName: project.rootPath('GoogleService-Info.plist'),
+          relativeTo: project.projectPath,
           help: `  → Download from ${chalk.blue('https://firebase.google.com/docs?authuser=0')}`
         }),
 
@@ -48,11 +49,9 @@ export class PushCapacitor extends TypescriptDeployment {
 
       // TODO: app-core ? check core/plugins/push.ts, contructor, notifications.service
 
-      resolve(await this.run(tasks, project, options));
-
       if (data && data.showTitle) { Terminal.line(); }
 
-      resolve(true);
+      resolve(await this.run(tasks, project, options));
     });
   }
 }

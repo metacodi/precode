@@ -13,6 +13,10 @@ export class XmlParser {
   }
 
   static find(nodes: any, match: string | string[] | ((node: any) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): any {
+    if (!options) { options = {}; }
+    if (options.recursive === undefined) { options.recursive = true; }
+    if (options.firstOnly === undefined) { options.firstOnly = true; }
+
     const results = XmlParser.filter(nodes, match, options);
     return results && results.length ? results[0] : undefined;
   }

@@ -44,7 +44,7 @@ export class TextReplacer {
    * replacer.insertAfter(node, newImport);
    * ```
    */
-  insertAfter(node: ts.Node | ts.Statement, text: string, priority = 0): TextReplacement {
+  insertAfter(node: ts.Node | ts.NodeArray<ts.Node> | ts.Statement, text: string, priority = 0): TextReplacement {
     const pos = node ? node.end : 0;
     return this.insert(pos, text, priority);
   }
@@ -58,7 +58,7 @@ export class TextReplacer {
    * replacer.insertBefore(node, newImport);
    * ```
    */
-  insertBefore(node: ts.Node | ts.Statement, text: string, priority = 0): TextReplacement {
+  insertBefore(node: ts.Node | ts.NodeArray<ts.Node> | ts.Statement, text: string, priority = 0): TextReplacement {
     const pos = node ? node.pos : 0;
     return this.insert(pos, text, priority);
   }
@@ -86,7 +86,7 @@ export class TextReplacer {
    * replacer.replaceNode(oldImport, newImport);
    * ```
    */
-  replaceNode(node: ts.Node | ts.Statement, text: string, priority = 0): TextReplacement {
+  replaceNode(node: ts.Node | ts.NodeArray<ts.Node> | ts.Statement, text: string, priority = 0): TextReplacement {
     const replacement: TextReplacement = { start: node.pos, end: node.end, text, priority };
     this.replacements.push(replacement);
     return replacement;
@@ -114,7 +114,7 @@ export class TextReplacer {
    * replacer.deleteNode(oldImport.start, oldImport.end);
    * ```
    */
-  deleteNode(node: ts.Node | ts.Statement, priority = 0): TextReplacement {
+  deleteNode(node: ts.Node | ts.NodeArray<ts.Node> | ts.Statement, priority = 0): TextReplacement {
     const replacement: TextReplacement = { start: node.pos, end: node.end, text: '', priority };
     this.replacements.push(replacement);
     return replacement;

@@ -36,8 +36,6 @@ export class I18n extends AngularDeployment {
 
       const tasks: any[] = [
 
-        new PushCapacitor(),
-
         new TypescriptDependency({ install: '@ngx-translate/core' }),
         new TypescriptDependency({ install: '@ngx-translate/http-loader' }),
 

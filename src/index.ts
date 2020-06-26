@@ -43,6 +43,7 @@ export { I18n } from './deployments/angular/i18n';
 
 /* Ionic + Angular */
 export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacitor/push-capacitor';
+export { IonicAngularAppCore } from './deployments/ionic-angular/dependencies/ionic-angular-app-core';
 
 
 // ---------------------------------------------------------------------------------------------------

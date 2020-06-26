@@ -57,10 +57,11 @@ project.initialize().then(async () => {
 
   Terminal.title('PHP Parser');
 
-  // const program = project.getSourceFile(project.rootPath('api.php'));
+  // // const program = project.getSourceFile(project.rootPath('api.php'));
   const program = PhpParser.parse(project.rootPath('api.php'));
+  // console.log('program =', (program as any));
   const classe = project.findClassDeclaration('api', program);
-  console.log('classe =', (classe as any).name.name);
+  if (classe !== undefined) { console.log('classe =', (classe as any).name.name); }
 
 
   // --------------------------------------------------------------------------------
