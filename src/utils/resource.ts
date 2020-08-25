@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as chalk from 'chalk';
 import { Terminal } from './terminal';
 
 
@@ -35,12 +36,12 @@ export class Resource {
   /** Substitueix totes les barres per contra-barres.
    * @category Path
    */
-  static normalize(fileName: string, concat = '\\') {
+  static normalize(fileName: string, concat = '\\'): string {
     return fileName.replace(new RegExp('/', 'g'), concat);
   }
 
   /**
-   * Llegeix el contingut d'un arxiu i intenta parsejar-lo comrpovant l'extensió.
+   * Llegeix el contingut d'un arxiu i intenta parsejar-lo comprovant l'extensió.
    *
    * Per exemple, si l'arxiu és un de tipus `json` aleshores es retorna el resultat de
    * `JSON.parse(content)`
@@ -48,11 +49,15 @@ export class Resource {
   static open(fileName: string): any {
     try {
       // Obtenim el contingut de l'arxiu.
-      const content = fs.readFileSync(fileName).toString();
+      let content = fs.readFileSync(fileName).toString();
 
       // Parsejem el contingut.
       const file = Resource.discover(fileName) as ResourceType;
       if (file.extension === '.json') {
+        if (file.name.startsWith('tsconfig')) {
+          // Remove comments.
+          content = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '');
+        }
         return JSON.parse(content);
       }
 
@@ -64,14 +69,20 @@ export class Resource {
     }
   }
 
-  static save(fileName: string, content: string | object, options?: fs.WriteFileOptions): boolean {
+  /**
+   * Guarda el contingut en l'arxiu i intenta formatejar-lo abans comprovant l'extensió.
+   *
+   * Per exemple, si l'arxiu és un de tipus `json` aleshores abans es guardar
+   * el contingut es transforma fent `JSON.stringify(content)`
+   */
+  static save(fileName: string, content: any, options?: fs.WriteFileOptions): boolean {
     try {
       if (!options) { options = {}; }
 
       // Parsejem el contingut.
       const file = Resource.discover(fileName) as ResourceType;
       if (file.extension === '.json' && typeof content === 'object') {
-        content = JSON.stringify(content);
+        content = JSON.stringify(content, null, 2);
       }
 
       fs.writeFileSync(fileName, content, options);
@@ -82,17 +93,6 @@ export class Resource {
       return false;
     }
   }
-
-  // /** Obre un arxiu JSON i el decodifica. */
-  // static open(fileName: string): any {
-  //   try {
-  //     return JSON.parse(fs.readFileSync(fileName).toString());
-
-  //   } catch (err) {
-  //     // Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
-  //     return undefined;
-  //   }
-  // }
 
   /** Indica si un recurs existeix i a més és accessible. */
   static isAccessible(resource: string): boolean {
@@ -175,4 +175,136 @@ export class Resource {
     return content;
   }
 
+  /**
+   * Copia un arxiu de manera síncrona utilitzant `fs.writeFileSync()`.
+   *
+   * S'utilitza conjuntament amb la funció `copyFolderSync()`.
+   * @param source Carpeta d'origen de la còpia.
+   * @param target Carpeta de destí de la còpia. Veure com li afecta el paràmetr d'opció `createFolderInTarget`.
+   * @param indent Indica el nombre d'espais aplicats en funció de l'anidament en l'arbre d'arxius.
+   * @param verbose Indica si s'imprimirà informació del procés per la consola del terminal.
+   */
+  static copyFileSync(source: any, target: any, options?: { indent?: string, verbose?: boolean }): void {
+    if (!options) { options = {}; }
+    if (options.indent === undefined) { options.indent = ''; }
+    // if (options.verbose === undefined) { options.verbose = false; }
+    const verbose = options.verbose === undefined ? Terminal.verboseEnabled : !!options.verbose;
+
+    const file = path.basename( source );
+    if (verbose) { console.log(options.indent + chalk.green('√'), file); }
+
+    let targetFile = target;
+
+    // If target is a directory a new file with the same name will be created
+    if (fs.existsSync(target)) {
+      if (fs.lstatSync(target).isDirectory()) {
+        targetFile = path.join(target, path.basename(source));
+      }
+    }
+
+    fs.writeFileSync(targetFile, fs.readFileSync(source));
+  }
+
+  /**
+   * Copia una carpeta i el seu contingut de forma recursiva.
+   *
+   * S'utilitza conjuntament amb la funció `copyFileSync()`.
+   * @param source Carpeta d'origen de la còpia.
+   * @param target Carpeta de destí de la còpia. Veure com li afecta el paràmetr d'opció `createFolderInTarget`.
+   * @param filter Indica una expressió regular o bé una funció que s'utilitzen per filtrar els elements copiats.
+   * @param createFolderInTarget Indica si es crearà la carpeta al destí o bé s'hi copiarà només el seu contingut.
+   * @param indent Indica el nombre d'espais aplicats en funció de l'anidament en l'arbre d'arxius.
+   * @param verbose Indica si s'imprimirà informació del procés per la consola del terminal.
+   */
+  static copyFolderSync(source: any, target: any, options?: { filter?: string | ((resource: string) => boolean), indent?: string, createFolderInTarget?: boolean, verbose?: boolean }): number {
+    if (!options) { options = {}; }
+    if (options.indent === undefined) { options.indent = ''; }
+    if (options.createFolderInTarget === undefined) { options.createFolderInTarget = true; }
+    // if (options.verbose === undefined) { options.verbose = false; }
+    // const verbose = options.verbose;
+    const verbose = options.verbose === undefined ? Terminal.verboseEnabled : !!options.verbose;
+    /** indent funciona como el nuevo valor (para pasarlo a los hijos) mientras que options.indent contiene el valor actual. */
+    const indent = options.indent + '  ';
+    const filter = options.filter;
+    const files: any[] = [];
+
+    // Check if folder needs to be created or integrated
+    const targetFolder = options.createFolderInTarget ? path.join(target, path.basename(source)) : target;
+    if (!fs.existsSync(targetFolder)) { fs.mkdirSync(targetFolder); }
+    if (verbose && options.createFolderInTarget) { console.log(options.indent + '> ' + chalk.bold(path.basename(source))); }
+
+    // Copy
+    let copied = 0;
+    if (fs.lstatSync(source).isDirectory()) {
+      // Obtenim els arxius i carpetes.
+      files.push(...fs.readdirSync(source));
+      // 1º processem els directoris.
+      files.forEach((file: any) => {
+        const origin = path.join(source, file);
+        if (fs.lstatSync(origin).isDirectory()) {
+          if (Resource.applyFilter(origin, options.filter) && Resource.hasFiles(origin, filter)) {
+            copied += Resource.copyFolderSync(origin, targetFolder, { indent, verbose, filter });
+          } else {
+            // if (verbose) { console.log(Terminal.orangered(options.indent + '  - ' + file)); }
+          }
+        }
+      });
+      // 2º processem els arxius.
+      files.forEach((file: any) => {
+        const origin = path.join(source, file);
+        if (!fs.lstatSync(origin).isDirectory()) {
+          if (Resource.applyFilter(origin, options.filter)) {
+            Resource.copyFileSync(origin, targetFolder, { indent, verbose });
+            copied++;
+          } else {
+            // if (verbose) { console.log(Terminal.orangered(options.indent + '  - ' + file)); }
+          }
+        }
+      });
+    }
+    return copied;
+  }
+
+  /** Comprova si la carpeta conté arxius per copiar (han superat el filtre). */
+  static hasFiles(folder: string, filter?: any): boolean {
+    // Només directoris.
+    if (fs.lstatSync(folder).isDirectory()) {
+      for (const file of fs.readdirSync(folder)) {
+        const origin = path.join(folder, file);
+        if (fs.lstatSync(origin).isFile()) {
+          if (Resource.applyFilter(origin, filter)) { return true; }
+        } else {
+          if (Resource.applyFilter(origin, filter) && Resource.hasFiles(origin, filter)) { return true; }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Aplica un filtre al recurs indicat.
+   * @param file Nom i ruta complerts del recurs que es vol filtrar.
+   * @param filter Expressió o funció per aplicar com a filtre.
+   */
+  static applyFilter(file: string, filter: any): boolean {
+
+    if (!filter) { return true; }
+
+    if (typeof filter === 'string') {
+      const tester = new RegExp(filter);
+      return tester.test(file);
+
+    } else if (typeof filter === 'object' && typeof filter.test === 'function') {
+      return (filter as any).test(file);
+
+    } else if (typeof filter === 'function') {
+      return filter(file);
+
+    } else {
+      // throw Error('Unrecognized filter for copyFolderSync()');
+      return true;
+    }
+  }
+
 }
+

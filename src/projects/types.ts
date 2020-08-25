@@ -16,16 +16,25 @@ export type ProjectType = 'typescript' | 'angular' | 'php';
 //  Deployments
 // --------------------------------------------------------------------------------
 
+export interface CustomDeploymentType {
+  fn: any;
+  arguments?: any[];
+  description?: string;
+}
+
 export interface FileExistsType {
   fileName: string;
   relativeTo?: string;
   help?: string;
 }
 
-export interface CustomDeploymentType {
-  fn: any;
-  arguments?: any[];
-  description?: string;
+export interface AngularNgModuleType {
+  file?: ts.SourceFile;
+  ngModule: string;
+  property: string;
+  element: string;
+  test?: (e: any) => boolean;
+  text?: string;
 }
 
 export interface TypescriptDependencyType {
@@ -49,6 +58,12 @@ export interface TypescriptDependencyType {
   type?: '--save-dev' | '--save';
 }
 
+export interface TypescriptImportType {
+  file?: ts.SourceFile;
+  import: string;
+  from: string;
+  action?: EditActionType;
+}
 export interface TypescriptConstructorType {
   file: ts.SourceFile;
   class?: string;
@@ -57,21 +72,12 @@ export interface TypescriptConstructorType {
   type: string;
 }
 
-export interface TypescriptImportType {
-  file?: ts.SourceFile;
-  import: string;
-  from: string;
-  action?: EditActionType;
-}
 
-export interface AngularNgModuleType {
-  file?: ts.SourceFile;
-  ngModule: string;
-  property: string;
-  element: string;
-  test?: (e: any) => boolean;
-  text?: string;
-}
+export type DeploymentType = CustomDeploymentType
+  | FileExistsType
+  | AngularNgModuleType
+  | TypescriptDependencyType | TypescriptImportType | TypescriptConstructorType
+;
 
 export interface DeploymentOptions {
   onlyTest?: boolean;
@@ -79,8 +85,6 @@ export interface DeploymentOptions {
   echo?: boolean;
   verbose?: boolean;
 }
-
-export type DeploymentType = TypescriptDependencyType | TypescriptImportType | AngularNgModuleType;
 
 
 // --------------------------------------------------------------------------------

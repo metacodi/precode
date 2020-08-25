@@ -7,7 +7,7 @@ import { CodeDeployment } from '../deployments/abstract/code-deployment';
 
 import { TypescriptDependency } from '../deployments/typescript/typescript-dependency';
 import { TypescriptImport } from '../deployments/typescript/typescript-import';
-import { AngularNgModule } from '../deployments/angular/angular-ngModule';
+import { AngularNgModule } from '../deployments/angular/ngModule';
 
 
 

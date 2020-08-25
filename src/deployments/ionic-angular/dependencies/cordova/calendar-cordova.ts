@@ -12,7 +12,7 @@ import { TypescriptDeployment } from '../../../abstract/typescript-deployment';
 import { TypescriptDependency } from '../../../typescript/typescript-dependency';
 import { FileExists } from '../../../basics/file-exists';
 import { TypescriptImport } from '../../../typescript/typescript-import';
-import { AngularNgModule } from '../../../angular/angular-ngModule';
+import { AngularNgModule } from '../../../angular/ngModule';
 
 
 /** Instal·la el mòdul de notificacions push del capacitor. */

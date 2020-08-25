@@ -427,7 +427,7 @@ export class CodeProject {
     if (await utils.pathExists(fullName)) {
       if (options.action === 'remove') {
         Terminal.success(`  Eliminant la carpeta '${Terminal.file(folderName)}'.`);
-        const command = `rm -Rf ${fullName}`;
+        const command = process.platform === 'win32' ? `rmdir /S /Q "${fullName}"` : `rm -Rf ${fullName}`;
         return await this.execute(command);
 
       } else {
@@ -438,7 +438,7 @@ export class CodeProject {
     } else {
       if (options.action === 'add') {
         Terminal.success(`  Creant la carpeta '${Terminal.file(folderName)}'.`);
-        const command = `mkdir ${fullName}`;
+        const command = process.platform === 'win32' ? `mkdir "${fullName}"` : `mkdir ${fullName}`;
         return await this.execute(command);
 
       } else if (options.action === 'remove') {
@@ -549,7 +549,7 @@ export class CodeProject {
         Terminal.verbose(`La carpeta ja estava moguda a '${Terminal.file(fromPath)}'.`);
       }
     } else {
-      const command = this.os === 'linux' ? `mv ${from} ${to}` : `move ${from} ${to}`;
+      const command = process.platform === 'win32' ? `move "${from}" "${to}"` : `mv ${from} ${to}`;
       Terminal.log(`Movent de '${Terminal.file(fromPath, toPath)}' fins a ${Terminal.file(toPath, fromPath)}'...`);
       return await this.execute(command);
     }
@@ -583,13 +583,13 @@ export class CodeProject {
       const stat = fs.lstatSync(fullName);
       if (stat.isFile()) {
         // File
-        const command = this.os === 'linux' ? `rm -Rf ${fullName}` : `del "${fullName}"`;
+        const command = process.platform === 'win32' ? `del "${fullName}"` : `rm -Rf ${fullName}`;
         Terminal.log(`Eliminant '${Terminal.file(name)}'...`);
         return await CodeProject.execute(command);
 
       } else {
         // Folder
-        const command = this.os === 'linux' ? `rm -Rf ${fullName}` : `rmdir /Q /S "${fullName}"`;
+        const command = process.platform === 'win32' ? `rmdir /Q /S "${fullName}"` : `rm -Rf ${fullName}`;
         Terminal.log(`Eliminant '${Terminal.file(name)}'...`);
         return await CodeProject.execute(command);
       }
@@ -638,24 +638,6 @@ export class CodeProject {
     // const normalized = Resource.normalize(fileName);
     // return Resource.normalize(fileName);
     // // return Resource.normalize(utils.existsSync(fileName) ? fileName : Resource.concat(folder ? folder : this.projectPath, fileName));
-  }
-
-  testFileExists(fileName: string, options?: DeploymentOptions): boolean {
-    options = CodeDeployment.extendOptions(options);
-
-    const fullName = this.rootPath(fileName);
-    const folder = path.dirname(fullName);
-    const name = path.basename(fileName);
-
-    const resources = Resource.discover(folder) as ResourceType[];
-
-    if (!resources.find(r => r.isFile && r.name === name)) {
-      if (options.echo) { Terminal.fail(`No s'ha trobat l'arxiu ${Terminal.file(fileName)}.`); }
-      return false;
-    } else {
-      if (options.echo && options.verbose) { Terminal.success(`Existeix l'arxiu ${Terminal.file(fileName)}.`); }
-      return true;
-    }
   }
 
 

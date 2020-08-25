@@ -49,16 +49,23 @@ export class IonicAngularAppCore extends IonicAngularDeployment {
 
           new PushCapacitor(),
 
-          new TypescriptDependency({ install: 'moment'}),
+          new TypescriptDependency({ install: 'moment' }),
 
-          new TypescriptDependency({ install: 'file-saver'}),
-          new TypescriptDependency({ install: '@types/file-saver', type: '--save-dev'}),
+          new TypescriptDependency({ install: 'file-saver' }),
+          new TypescriptDependency({ install: '@types/file-saver', type: '--save-dev' }),
 
-          new TypescriptDependency({ install: 'cordova-plugin-brightness'}),
-          new TypescriptDependency({ install: '@ionic-native/brightness'}),
+          new TypescriptDependency({ install: '@ionic-native/core' }),
+
+          new TypescriptDependency({ install: '@ionic-native/status-bar' }),
+
+          new TypescriptDependency({ install: 'cordova-plugin-brightness' }),
+          new TypescriptDependency({ install: '@ionic-native/brightness' }),
+
+          new TypescriptDependency({ install: '@ionic-native/android-fingerprint-auth' }),
+          new TypescriptDependency({ install: 'cordova-plugin-android-fingerprint-auth' }),
 
           new TypescriptDependency({ install: 'https://github.com/fabiorogeriosj/cordova-plugin-sensors.git', dependency: 'cordova-plugin-sensors' }),
-          new TypescriptDependency({ install: '@ionic-native/sensors'}),
+          new TypescriptDependency({ install: '@ionic-native/sensors' }),
 
           new CustomDeployment({
             description: `Comprovant els arxius JSON de traducció.`,

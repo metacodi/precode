@@ -38,7 +38,7 @@ export { TypescriptDependency } from './deployments/typescript/typescript-depend
 export { TypescriptImport } from './deployments/typescript/typescript-import';
 
 /* Angular */
-export { AngularNgModule } from './deployments/angular/angular-ngModule';
+export { AngularNgModule } from './deployments/angular/ngModule';
 export { I18n } from './deployments/angular/i18n';
 
 /* Ionic + Angular */

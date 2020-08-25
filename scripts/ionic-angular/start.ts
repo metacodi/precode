@@ -9,7 +9,7 @@
  * ```
  */
 
-import chalk from 'chalk'; // const chalk = require('chalk');
+import chalk from 'chalk';
 import Prompt from 'commander';
 // import { RegularFileNode, DirectoryNode, FileNode } from "@ionic/utils-fs";
 
