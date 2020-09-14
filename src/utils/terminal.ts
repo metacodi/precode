@@ -1,4 +1,4 @@
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import { StdioOptions, exec, spawn, ExecException } from 'child_process';
 
 

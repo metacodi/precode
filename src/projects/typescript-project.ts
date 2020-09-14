@@ -262,8 +262,11 @@ export class TypescriptProject extends CodeProject {
             action.replace(sourceFile, replacer);
             options.content = replacer.apply(options.content);
           } else {
-            Terminal.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()));
-            options.content = options.content.replace(action.match || '', action.replace || '');
+            if (action.global === undefined) { action.global = true; }
+            if (action.insensitive === undefined) { action.insensitive = false; }
+            const flags: string = [action.global ? 'g' : '', action.insensitive ? 'i' : ''].filter(s => !!s).join('');
+            Terminal.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()) + ' (flags:' + flags + ')');
+            options.content = options.content.replace(new RegExp(action.match, flags), action.replace || '');
           }
         }
       }

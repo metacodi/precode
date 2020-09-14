@@ -138,7 +138,7 @@ export class CodeProject {
   // --------------------------------------------------------------------------------
 
   /** @category Init */
-  constructor(projectPath: string, scriptPath: string, os?: string, name?: string) {
+  constructor(projectPath: string, scriptPath?: string, os?: string, name?: string) {
     try {
       this.projectPath = projectPath;
       this.scriptPath = scriptPath;
@@ -384,8 +384,11 @@ export class CodeProject {
           if (typeof action.replace === 'function') {
             // For inherited classes that use AST for replacements.
           } else {
-            Terminal.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()));
-            options.content = options.content.replace(action.match || '', action.replace || '');
+            if (action.global === undefined) { action.global = true; }
+            if (action.insensitive === undefined) { action.insensitive = false; }
+            const flags: string = [action.global ? 'g' : '', action.insensitive ? 'i' : ''].filter(s => !!s).join('');
+            Terminal.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk.grey(action.match.toString()) + ' (flags:' + flags + ')');
+            options.content = options.content.replace(new RegExp(action.match, flags), action.replace || '');
           }
         }
       }
