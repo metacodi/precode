@@ -47,7 +47,7 @@ if (Prompt.ajuda) {
   process.exit();
 }
 
-const bad = process.platform === 'win32' ? '/' : '\\';
+const bad = process.platform === 'win32' ? '/' : '\\\\';
 const sep = process.platform === 'win32' ? '\\' : '/';
 
 Prompt.folder = Prompt.folder.replace(new RegExp(bad, 'g'), sep);

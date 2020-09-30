@@ -37,7 +37,7 @@ export class Resource {
    * @category Path
    */
   static normalize(fileName: string): string {
-    const find = process.platform === 'win32' ? '/' : '\\';
+    const find = process.platform === 'win32' ? '/' : '\\\\';
     const replace = process.platform === 'win32' ? '\\' : '/';
     return fileName.replace(new RegExp(find, 'g'), replace);
   }
