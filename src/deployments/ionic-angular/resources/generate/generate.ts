@@ -152,6 +152,7 @@ export const listComponentScss = `
 // @import 'src/core/abstract/components/abstract-list.component.scss';
 // @include multiselect;
 `;
+
 export const listComponentHtml = `<ion-header>
 
 <ion-toolbar *ngIf="isModal">
