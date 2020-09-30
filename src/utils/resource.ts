@@ -36,8 +36,10 @@ export class Resource {
   /** Substitueix totes les barres per contra-barres.
    * @category Path
    */
-  static normalize(fileName: string, concat = '\\'): string {
-    return fileName.replace(new RegExp('/', 'g'), concat);
+  static normalize(fileName: string): string {
+    const find = process.platform === 'win32' ? '/' : '\\';
+    const replace = process.platform === 'win32' ? '\\' : '/';
+    return fileName.replace(new RegExp(find, 'g'), replace);
   }
 
   /**
@@ -94,6 +96,10 @@ export class Resource {
     }
   }
 
+  /** Indica si un recurs existeix. */
+  static exists(resource: string): boolean {
+    try { fs.existsSync(resource); return true; } catch (err) { return false; }
+  }
   /** Indica si un recurs existeix i a més és accessible. */
   static isAccessible(resource: string): boolean {
     try { fs.accessSync(resource, fs.constants.F_OK); return true; } catch (err) { return false; }
@@ -120,8 +126,8 @@ export class Resource {
    * ```json
    * {
    *   "name": "tsconfig.json",
-   *   "path": "C:\\Users\\Jordi\\work\\metacodi\\tools\\meta-model",
-   *   "fullName": "C:\\Users\\Jordi\\work\\metacodi\\tools\\meta-model\\tsconfig.json",
+   *   "path": "C:/Users/Jordi/work/metacodi/tools/meta-model",
+   *   "fullName": "C:/Users/Jordi/work/metacodi/tools/meta-model/tsconfig.json",
    *   "isDirectory": false,
    *   "isFile": true,
    *   "extension": ".json",

@@ -42,19 +42,22 @@ if (Prompt.ajuda) {
   Terminal.log(Terminal.green('-s, --singular <dir> ') + '  (opcional) Nom singular del component (només si no es pot deduir automàticament treient la `s` del final del nom).');
 
   Terminal.subtitle(' Exemple:');
-  Terminal.log(Terminal.yellow('npx ts-node generate.ts -d C:\\Users\\Jordi\\work\\metacodi\\taxi\\apps\\pre\\logic-taxi -f src\\app\\acciones -s accion'));
+  Terminal.log(Terminal.yellow('npx ts-node generate.ts -d C:/Users/Jordi/work/metacodi/taxi/apps/pre/logic-taxi -f src/app/acciones -s accion'));
 
   process.exit();
 }
 
-Prompt.folder = Prompt.folder.replace(new RegExp('/', 'g'), '\\');
+const bad = process.platform === 'win32' ? '/' : '\\';
+const sep = process.platform === 'win32' ? '\\' : '/';
+
+Prompt.folder = Prompt.folder.replace(new RegExp(bad, 'g'), sep);
 
 // Trobem la carpeta del projecte ionic-angular.
 let directory: string = Prompt.folder;
 do {
-  const dir = directory.split('\\');
+  const dir = directory.split(sep);
   dir.pop();
-  directory = dir.join('\\');
+  directory = dir.join(sep);
 } while (directory && !IonicAngularProject.isProjectFolder(directory));
 if (!directory) { Terminal.error(`No s'ha trobat la carpeta del projecte`); process.exit(1); }
 
@@ -62,18 +65,18 @@ if (!directory) { Terminal.error(`No s'ha trobat la carpeta del projecte`); proc
 const project = new IonicAngularProject(directory);
 project.initialize().then(async () => {
 
-  const folder = Prompt.folder.split('\\');
+  const folder = Prompt.folder.split(sep);
   const plural = folder[folder.length - 1];
   const entity = { singular: Prompt.singular || plural.substring(0, plural.length - 1), plural };
 
   Terminal.log(chalk.bold('Entity: '), Terminal.green(JSON.stringify(entity)));
   Terminal.log('');
 
-  await project.generateSchema(folder.join('\\'), entity);
-  await project.generateService(folder.join('\\'), entity);
-  await project.generateModule(folder.join('\\'), entity);
-  await project.generateListPage(folder.join('\\'), entity);
-  await project.generateListComponent(folder.join('\\'), entity);
-  await project.generateDetailPage(folder.join('\\'), entity);
+  await project.generateSchema(folder.join(sep), entity);
+  await project.generateService(folder.join(sep), entity);
+  await project.generateModule(folder.join(sep), entity);
+  await project.generateListPage(folder.join(sep), entity);
+  await project.generateListComponent(folder.join(sep), entity);
+  await project.generateDetailPage(folder.join(sep), entity);
 
 });
