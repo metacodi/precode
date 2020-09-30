@@ -101,7 +101,7 @@ export class IonicAngularProject extends AngularProject {
   // --------------------------------------------------------------------------------
 
   async generateSchema(folder: string, entity: { singular: string, plural: string }): Promise<any> {
-    const fileName = `${folder}\\${entity.plural}.schema`;
+    const fileName = `${folder}/${entity.plural}.schema`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: schemaContent, replaces: [
       { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
@@ -113,7 +113,7 @@ export class IonicAngularProject extends AngularProject {
   }
 
   async generateService(folder: string, entity: { singular: string, plural: string }): Promise<any> {
-    const fileName = `${folder}\\${entity.plural}.service.ts`;
+    const fileName = `${folder}/${entity.plural}.service.ts`;
     await this.folder(folder);
     await this.file(fileName, { content: serviceContent, replaces: [
       { match: '{{entityPlural}}', replace: capitalize(entity.plural) }
@@ -121,7 +121,7 @@ export class IonicAngularProject extends AngularProject {
   }
 
   async generateModule(folder: string, entity: { singular: string, plural: string }): Promise<any> {
-    const fileName = `${folder}\\${entity.plural}.module.ts`;
+    const fileName = `${folder}/${entity.plural}.module.ts`;
     await this.folder(folder);
     await this.file(fileName, { content: moduleContent, replaces: [
       { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
@@ -132,7 +132,7 @@ export class IonicAngularProject extends AngularProject {
   }
 
   async generateListPage(folder: string, entity: { singular: string, plural: string }): Promise<any> {
-    const fileName = `${folder}\\${entity.plural}-list.page`;
+    const fileName = `${folder}/${entity.plural}-list.page`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: listPageTsContent, replaces: [
       { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
@@ -146,7 +146,7 @@ export class IonicAngularProject extends AngularProject {
   }
 
   async generateListComponent(folder: string, entity: { singular: string, plural: string }): Promise<any> {
-    const fileName = `${folder}\\${entity.plural}-list.component`;
+    const fileName = `${folder}/${entity.plural}-list.component`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: listComponentTs, replaces: [
       { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
@@ -160,7 +160,7 @@ export class IonicAngularProject extends AngularProject {
   }
 
   async generateDetailPage(folder: string, entity: { singular: string, plural: string }): Promise<any> {
-    const fileName = `${folder}\\${entity.singular}-detail.page`;
+    const fileName = `${folder}/${entity.singular}-detail.page`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: detailPageTs, replaces: [
       { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },

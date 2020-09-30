@@ -78,8 +78,6 @@ export class CodeProject {
   scriptPath: string;
   /** @deprecated */
   config: any;
-  /** Indica el sistema operatiu actual. */
-  os: string;
   // /** Debug helper */
   // line = `--------------------------------------------------------------------------------`;
   /** Referència a la connexió mysql oberta. */
@@ -138,12 +136,11 @@ export class CodeProject {
   // --------------------------------------------------------------------------------
 
   /** @category Init */
-  constructor(projectPath: string, scriptPath?: string, os?: string, name?: string) {
+  constructor(projectPath: string, scriptPath?: string) {
     try {
       this.projectPath = projectPath;
       this.scriptPath = scriptPath;
-      this.os = os || 'linux';
-      this.name = name || this.projectPath.split('/').pop();
+      this.name = this.projectPath.split('/').pop();
 
       // this.initialize().then(result => {
       //   Terminal.log('Initialized!');
