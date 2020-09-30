@@ -81,7 +81,6 @@ export class {{EntityPlural}}Module { }
 export const listPageTsContent = `import { Component } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { ThemeService } from 'src/core';
 
 @Component ({
   selector: 'app-{{entityPlural}}-list-page',
@@ -92,13 +91,8 @@ export class {{EntityPlural}}ListPage {
   protected debug = true && AppConfig.debugEnabled;
 
   constructor(
-    public theme: ThemeService,
   ) {
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
-  }
-
-  ionViewWillEnter() {
-    this.theme.setStatusBar(0, 1);
   }
 
 }
@@ -110,7 +104,7 @@ export const listPageHtmlContent = `<ion-header>
   <ion-buttons slot="start">
     <ion-back-button [text]="'buttons.back' | translate"></ion-back-button>
   </ion-buttons>
-  <ion-title (click)="theme.toggle()">{{'{{entityPlural}}.{{entityPlural}}' | translate}}</ion-title>
+  <ion-title>{{'{{entityPlural}}.{{entityPlural}}' | translate}}</ion-title>
 </ion-toolbar>
 
 </ion-header>
@@ -238,7 +232,7 @@ export const listComponentHtml = `<ion-header>
 export const detailPageTs = `import { Component, Injector, OnInit, OnDestroy } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { AbstractDetailComponent, ThemeService } from 'src/core';
+import { AbstractDetailComponent } from 'src/core';
 import { ApiUserService } from 'src/core/api';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
@@ -271,7 +265,7 @@ export const detailPageHtml = `<ion-header>
   <ion-buttons slot="start">
     <ion-back-button [text]="'buttons.back' | translate"></ion-back-button>
   </ion-buttons>
-  <ion-title (click)="theme.toggle()">{{headerText}}</ion-title>
+  <ion-title>{{headerText}}</ion-title>
 </ion-toolbar>
 
 </ion-header>
