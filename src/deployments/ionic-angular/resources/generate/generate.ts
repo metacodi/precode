@@ -183,7 +183,7 @@ export const listComponentHtml = `<ion-header>
       <ion-col size="12" size-sm="12" size-md="6" size-xl="4" *ngFor="let row of rows | filter:search:list.filter | orderBy:list.orderBy">
 
         <ion-item-sliding>
-          <ion-item (click)="select(row)" [detail]="!isPickRowMode" [ngClass]="{ selected: isSelected(row)}" class="item-color">
+          <ion-item (click)="selectRow(row)" [detail]="!isPickRowMode" [ngClass]="{ selected: isSelected(row)}" class="item-color">
 
             <ion-icon *ngIf="preloading !== row.idreg" name="flag" slot="start"></ion-icon>
             <ion-spinner *ngIf="preloading === row.idreg" name="lines-small" slot="start"></ion-spinner>
@@ -218,7 +218,7 @@ export const listComponentHtml = `<ion-header>
   <ion-row>
     <ion-col>
 
-      <ion-button (click)="select('new')" color="primary" expand="block">
+      <ion-button (click)="selectRow('new')" color="primary" expand="block">
         <ion-icon slot="start" name="add"></ion-icon>
         {{addNewText}}
       </ion-button>
