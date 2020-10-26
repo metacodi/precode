@@ -99,9 +99,11 @@ export class IonicAngularProject extends AngularProject {
   // --------------------------------------------------------------------------------
   //  generate abstract components, module and service
   // --------------------------------------------------------------------------------
+
   sanitizeEntity(entity: string): string {
     return entity.split('-').map(s => capitalize(s)).join('');
   }
+
   async generateSchema(folder: string, entity: { singular: string, plural: string }): Promise<any> {
     const fileName = `${folder}/${entity.plural}.schema`;
     await this.folder(folder);
