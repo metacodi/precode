@@ -99,12 +99,14 @@ export class IonicAngularProject extends AngularProject {
   // --------------------------------------------------------------------------------
   //  generate abstract components, module and service
   // --------------------------------------------------------------------------------
-
+  sanitizeEntity(entity: string): string {
+    return entity.split('-').map(s => capitalize(s)).join('');
+  }
   async generateSchema(folder: string, entity: { singular: string, plural: string }): Promise<any> {
     const fileName = `${folder}/${entity.plural}.schema`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: schemaContent, replaces: [
-      { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
+      { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
       { match: '{{entityName}}', replace: entity.plural.substring(0, entity.plural.length - 1) === entity.singular
         ? `'${entity.plural}'`
         : `{ singular: '${entity.singular}', plural: '${entity.plural}' }`
@@ -116,7 +118,7 @@ export class IonicAngularProject extends AngularProject {
     const fileName = `${folder}/${entity.plural}.service.ts`;
     await this.folder(folder);
     await this.file(fileName, { content: serviceContent, replaces: [
-      { match: '{{entityPlural}}', replace: capitalize(entity.plural) }
+      { match: '{{entityPlural}}', replace: this.sanitizeEntity(entity.plural) }
     ] });
   }
 
@@ -124,9 +126,9 @@ export class IonicAngularProject extends AngularProject {
     const fileName = `${folder}/${entity.plural}.module.ts`;
     await this.folder(folder);
     await this.file(fileName, { content: moduleContent, replaces: [
-      { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
+      { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
       { match: '{{entityPlural}}', replace: entity.plural },
-      { match: '{{EntitySingular}}', replace: capitalize(entity.singular) },
+      { match: '{{EntitySingular}}', replace: this.sanitizeEntity(entity.singular) },
       { match: '{{entitySingular}}', replace: entity.singular },
     ] });
   }
@@ -135,7 +137,7 @@ export class IonicAngularProject extends AngularProject {
     const fileName = `${folder}/${entity.plural}-list.page`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: listPageTsContent, replaces: [
-      { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
+      { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
       { match: '{{entityPlural}}', replace: entity.plural },
     ] });
     await this.file(`${fileName}.scss`);
@@ -149,12 +151,12 @@ export class IonicAngularProject extends AngularProject {
     const fileName = `${folder}/${entity.plural}-list.component`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: listComponentTs, replaces: [
-      { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
+      { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
       { match: '{{entityPlural}}', replace: entity.plural },
     ] });
     await this.file(`${fileName}.scss`, { content: listComponentScss });
     await this.file(`${fileName}.html`, { content: listComponentHtml, replaces: [
-      { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
+      { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
     ] });
 
   }
@@ -163,14 +165,14 @@ export class IonicAngularProject extends AngularProject {
     const fileName = `${folder}/${entity.singular}-detail.page`;
     await this.folder(folder);
     await this.file(`${fileName}.ts`, { content: detailPageTs, replaces: [
-      { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
+      { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
       { match: '{{entityPlural}}', replace: entity.plural },
-      { match: '{{EntitySingular}}', replace: capitalize(entity.singular) },
+      { match: '{{EntitySingular}}', replace: this.sanitizeEntity(entity.singular) },
       { match: '{{entitySingular}}', replace: entity.singular },
     ] });
     await this.file(`${fileName}.scss`);
     await this.file(`${fileName}.html`, { content: detailPageHtml, replaces: [
-      { match: '{{EntityPlural}}', replace: capitalize(entity.plural) },
+      { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
       { match: '{{entityPlural}}', replace: entity.plural },
     ] });
 
