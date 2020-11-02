@@ -183,7 +183,7 @@ export const listComponentHtml = `<ion-header>
       <ion-col size="12" size-sm="12" [size-md]="isModal ? 12 : 6" [size-xl]="isModal ? 12 : 4" *ngFor="let row of rows | filter:search:list.filter | orderBy:list.orderBy">
 
         <ion-item-sliding>
-          <ion-item (click)="selectRow(row)" [detail]="!isPickRowMode" [ngClass]="{ selected: isSelected(row)}" class="item-color">
+          <ion-item button (click)="selectRow(row)" [detail]="!isPickRowMode" [ngClass]="{ selected: isSelected(row)}" class="item-color">
 
             <ion-icon *ngIf="preloading !== row.idreg" name="flag" slot="start"></ion-icon>
             <ion-spinner *ngIf="preloading === row.idreg" name="lines-small" slot="start"></ion-spinner>
