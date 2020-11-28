@@ -131,6 +131,7 @@ export interface CurlOptions {
   headers?: { [key: string]: string };
   url: string;
   to: string;
+  token?: string;
 }
 
 

@@ -508,7 +508,7 @@ export class CodeProject {
    */
   async curl(options: CurlOptions): Promise<string> {
     if (options.headers === undefined) { options.headers = [] as any; }
-    const token = this.config.git.token;
+    const token = options.token || '';
 
     // curl -sb --request GET --header 'PRIVATE-TOKEN: $GITLAB_PRIVATE_TOKEN' https://gitlab.codi.ovh/tools/app-core src/app/core
     const method = options.method || 'GET';
