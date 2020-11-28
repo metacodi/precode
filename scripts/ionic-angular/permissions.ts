@@ -97,19 +97,13 @@ project.initialize().then(async () => {
         project.file('permissions.json', { content: json }).then(() => {
           // Upload del JSON a api.
           const localFile = project.rootPath('permissions.json');
-          // const command = `curl -T ${localFile} ftp://${Prompt.server} --user ${Prompt.credentials} -d ${Prompt.directory}`;
-          // curl -T 'permissions.json' -u metacodi:SGFhFy1YXj7473FhFy1Y 'ftp://ftp.metacodi.com/www/taxi/pre/uploads/permissions.json'
-          const command = `curl -T '${localFile}' -u ${Prompt.credentials} 'ftp://${Prompt.server}/${Prompt.directory}/permissions.json'`;
+          const command = `curl -T ${localFile} -u ${Prompt.credentials} ftp://${Prompt.server}/${Prompt.directory}/permissions.json`;
           Terminal.log(Terminal.yellow(command));
           project.execute(command);
         });
 
       }
     });
-
-    // if (node.name.text === 'permissions') {
-    //   Terminal.log(Terminal.green(node.exportClause.getText()));
-    // }
   });
 
 });
