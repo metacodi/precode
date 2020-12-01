@@ -180,7 +180,7 @@ export const listComponentHtml = `<ion-header>
 <ion-list>
   <ion-grid fixed>
     <ion-row>
-      <ion-col size="12" size-sm="12" [size-md]="isModal ? 12 : 6" [size-xl]="isModal ? 12 : 4" *ngFor="let row of rows | filter:search:list.filter | orderBy:list.orderBy">
+      <ion-col size="12" size-sm="12" [sizeMd]="isModal ? 12 : 6" [sizeXl]="isModal ? 12 : 4" *ngFor="let row of rows | filter:search:list.filter | orderBy:list.orderBy">
 
         <ion-item-sliding>
           <ion-item button (click)="selectRow(row)" [detail]="!isPickRowMode" [ngClass]="{ selected: isSelected(row)}" class="item-color">
@@ -188,8 +188,8 @@ export const listComponentHtml = `<ion-header>
             <ion-icon *ngIf="preloading !== row.idreg" name="flag" slot="start"></ion-icon>
             <ion-spinner *ngIf="preloading === row.idreg" name="lines-small" slot="start"></ion-spinner>
             <ion-label class="ion-text-wrap">
-              <ion-text [innerHTML]="colorMatch(row.nombre, search)"></ion-text>
-              <p *ngIf="row.descripcion" [innerHTML]="colorMatch(row.descripcion, search)"></p>
+              <text-colorized [value]="row.nombre" [search]="search"></text-colorized>
+              <p *ngIf="row.descripcion"><text-colorized [value]="row.descripcion" [search]="search"></text-colorized></p>
             </ion-label>
             <!-- <ion-icon *ngIf="row.active" [name]="row.active ? 'checkmark' : 'close'" slot="end" size="small"></ion-icon> -->
             <ion-icon *ngIf="isSelected(row)" slot="end" name="checkmark"></ion-icon>
