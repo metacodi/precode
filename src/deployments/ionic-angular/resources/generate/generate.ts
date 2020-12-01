@@ -180,7 +180,7 @@ export const listComponentHtml = `<ion-header>
 <ion-list>
   <ion-grid fixed>
     <ion-row>
-      <ion-col size="12" size-sm="12" [sizeMd]="isModal ? 12 : 6" [sizeXl]="isModal ? 12 : 4" *ngFor="let row of rows | filter:search:list.filter | orderBy:list.orderBy">
+      <ion-col size="12" *ngFor="let row of rows | filter:search:list.filter | orderBy:list.orderBy">
 
         <ion-item-sliding>
           <ion-item button (click)="selectRow(row)" [detail]="!isPickRowMode" [ngClass]="{ selected: isSelected(row)}" class="item-color">
