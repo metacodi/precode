@@ -309,9 +309,9 @@ export const detailPageHtml = `<ion-header>
         <ion-row>
           <ion-col>
 
-            <ion-button type="button" (click)="deleteRow()" color="secondary" expand="block">{{(isNew ? 'buttons.cancel' : 'buttons.delete') | translate | uppercase }}</ion-button>
+            <ion-button type="button" (click)="deleteRow()" [color]="isNew ? 'secondary' : 'danger'" expand="block"><ion-icon *ngIf="!isNew" slot="start" name="trash"></ion-icon>{{(isNew ? 'buttons.cancel' : 'buttons.delete') | translate | uppercase }}</ion-button>
 
-          </ion-col>
+            </ion-col>
           <ion-col>
 
             <ion-button type="submit" [disabled]="!initialized || frm.invalid || frm.pristine" color="primary" expand="block">{{'buttons.save' | translate | uppercase }}</ion-button>
