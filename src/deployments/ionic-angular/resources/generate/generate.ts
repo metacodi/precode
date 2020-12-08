@@ -1,6 +1,7 @@
 export const schemaContent = `import { FormGroup, FormControl, Validators } from '@angular/forms';
 
-import { EntitySchema, deepAssign } from 'src/core';
+import { EntitySchema } from 'src/core/abstract';
+import { deepAssign } from 'src/core/util';
 
 
 export const {{EntityPlural}}Schema: EntitySchema = {
