@@ -23,7 +23,7 @@ export const {{EntityPlural}}Schema: EntitySchema = {
 export const serviceContent = `import { Injectable, Injector } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { AbstractModelService } from 'src/core';
+import { AbstractModelService } from 'src/core/abstract';
 import { ApiService, ApiUserService } from 'src/core/api';
 
 
