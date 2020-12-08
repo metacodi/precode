@@ -124,7 +124,7 @@ export const listPageHtmlContent = `<ion-header>
 export const listComponentTs = `import { Component, Injector, OnInit, OnDestroy } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { AbstractListComponent } from 'src/core';
+import { AbstractListComponent } from 'src/core/abstract';
 import { ApiUserService } from 'src/core/api';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
@@ -235,7 +235,7 @@ export const listComponentHtml = `<ion-header>
 export const detailPageTs = `import { Component, Injector, OnInit, OnDestroy } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { AbstractDetailComponent } from 'src/core';
+import { AbstractDetailComponent } from 'src/core/abstract';
 import { ApiUserService } from 'src/core/api';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
