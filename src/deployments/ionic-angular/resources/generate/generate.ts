@@ -48,7 +48,8 @@ export class {{entityPlural}}Service extends AbstractModelService {
 export const moduleContent = `import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { AppCoreModule, AuthGuard } from 'src/core';
+import { AppCoreModule } from 'src/core';
+import { AuthGuard } from 'src/core/auth';
 
 import { {{EntityPlural}}ListPage } from './{{entityPlural}}-list.page';
 import { {{EntityPlural}}ListComponent } from './{{entityPlural}}-list.component';
