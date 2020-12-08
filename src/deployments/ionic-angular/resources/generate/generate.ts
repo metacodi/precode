@@ -1,6 +1,7 @@
 export const schemaContent = `import { FormGroup, FormControl, Validators } from '@angular/forms';
 
-import { EntitySchema, deepAssign } from 'src/core';
+import { EntitySchema } from 'src/core/abstract';
+import { deepAssign } from 'src/core/util';
 
 
 export const {{EntityPlural}}Schema: EntitySchema = {
@@ -22,7 +23,7 @@ export const {{EntityPlural}}Schema: EntitySchema = {
 export const serviceContent = `import { Injectable, Injector } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { AbstractModelService } from 'src/core';
+import { AbstractModelService } from 'src/core/abstract';
 import { ApiService, ApiUserService } from 'src/core/api';
 
 
@@ -47,7 +48,8 @@ export class {{entityPlural}}Service extends AbstractModelService {
 export const moduleContent = `import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { AppCoreModule, AuthGuard } from 'src/core';
+import { AppCoreModule } from 'src/core';
+import { AuthGuard } from 'src/core/auth';
 
 import { {{EntityPlural}}ListPage } from './{{entityPlural}}-list.page';
 import { {{EntityPlural}}ListComponent } from './{{entityPlural}}-list.component';
@@ -122,7 +124,7 @@ export const listPageHtmlContent = `<ion-header>
 export const listComponentTs = `import { Component, Injector, OnInit, OnDestroy } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { AbstractListComponent } from 'src/core';
+import { AbstractListComponent } from 'src/core/abstract';
 import { ApiUserService } from 'src/core/api';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
@@ -233,7 +235,7 @@ export const listComponentHtml = `<ion-header>
 export const detailPageTs = `import { Component, Injector, OnInit, OnDestroy } from '@angular/core';
 
 import { AppConfig } from 'src/config';
-import { AbstractDetailComponent } from 'src/core';
+import { AbstractDetailComponent } from 'src/core/abstract';
 import { ApiUserService } from 'src/core/api';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
@@ -309,9 +311,9 @@ export const detailPageHtml = `<ion-header>
         <ion-row>
           <ion-col>
 
-            <ion-button type="button" (click)="deleteRow()" color="secondary" expand="block">{{(isNew ? 'buttons.cancel' : 'buttons.delete') | translate | uppercase }}</ion-button>
+            <ion-button type="button" (click)="deleteRow()" [color]="isNew ? 'secondary' : 'danger'" expand="block"><ion-icon *ngIf="!isNew" slot="start" name="trash"></ion-icon>{{(isNew ? 'buttons.cancel' : 'buttons.delete') | translate | uppercase }}</ion-button>
 
-          </ion-col>
+            </ion-col>
           <ion-col>
 
             <ion-button type="submit" [disabled]="!initialized || frm.invalid || frm.pristine" color="primary" expand="block">{{'buttons.save' | translate | uppercase }}</ion-button>
