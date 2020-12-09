@@ -24,7 +24,9 @@ export const serviceContent = `import { Injectable, Injector } from '@angular/co
 
 import { AppConfig } from 'src/config';
 import { AbstractModelService } from 'src/core/abstract';
-import { ApiService, ApiUserService } from 'src/core/api';
+import { ApiService } from 'src/core/api';
+
+import { UserService } from 'src/app/auth';
 
 
 @Injectable({
@@ -36,7 +38,7 @@ export class {{entityPlural}}Service extends AbstractModelService {
   constructor(
     public injector: Injector,
     public api: ApiService,
-    public user: ApiUserService,
+    public user: UserService,
   ) {
     super(injector, api);
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
@@ -125,10 +127,12 @@ export const listComponentTs = `import { Component, Injector, OnInit, OnDestroy 
 
 import { AppConfig } from 'src/config';
 import { AbstractListComponent } from 'src/core/abstract';
-import { ApiUserService } from 'src/core/api';
+
+import { UserService } from 'src/app/auth';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
 import { {{EntityPlural}}Service } from './{{entityPlural}}.service';
+
 
 @Component ({
   selector: 'app-{{entityPlural}}-list',
@@ -141,7 +145,7 @@ export class {{EntityPlural}}ListComponent extends AbstractListComponent impleme
   constructor(
     public injector: Injector,
     public service: {{EntityPlural}}Service,
-    public user: ApiUserService,
+    public user: UserService,
   ) {
     super(injector, {{EntityPlural}}Schema);
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
@@ -236,10 +240,12 @@ export const detailPageTs = `import { Component, Injector, OnInit, OnDestroy } f
 
 import { AppConfig } from 'src/config';
 import { AbstractDetailComponent } from 'src/core/abstract';
-import { ApiUserService } from 'src/core/api';
+
+import { UserService } from 'src/app/auth';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
 import { {{EntityPlural}}Service } from './{{entityPlural}}.service';
+
 
 @Component ({
   selector: 'app-{{entitySingular}}-detail',
@@ -252,7 +258,7 @@ export class {{EntitySingular}}DetailPage extends AbstractDetailComponent implem
   constructor(
     public injector: Injector,
     public service: {{EntityPlural}}Service,
-    public user: ApiUserService,
+    public user: UserService,
   ) {
     super(injector, {{EntityPlural}}Schema);
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
