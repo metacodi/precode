@@ -12,8 +12,6 @@ import { TypescriptDependency } from '../../typescript/typescript-dependency';
 import { I18n } from '../../angular/i18n';
 import { PushCapacitor } from './capacitor/push-capacitor';
 import { TypescriptConstructor } from '../../typescript/typescript-constructor';
-import { CustomDeployment } from '../../basics/custom-deployment';
-
 
 
 export class IonicAngularAppCore extends IonicAngularDeployment {

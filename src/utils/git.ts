@@ -80,7 +80,7 @@ export class Git {
       // if (!!verbose) { console.log('changes =>', changes); }
       const lines = changes.split('\n');
 
-      const results = [];
+      const results: any[] = [];
       lines.map((l: string) => {
         if (l.length > 2 && filter.includes(l.charAt(0)) && l.charAt(1) === '\t') {
           const parts = l.split('\t');
@@ -150,7 +150,7 @@ export class Git {
         X: 'Unknown',
         B: 'Broken'
     };
-    return map[code];
+    return Object.keys(map).find(k => k === code);
   }
 
 }
