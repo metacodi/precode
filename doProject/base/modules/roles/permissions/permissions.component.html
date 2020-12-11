@@ -1,0 +1,84 @@
+<ion-header class="border-bottom">
+
+  <ion-toolbar *ngIf="isModal">
+    <ion-buttons slot="start">
+      <ion-button (click)="modal.dismiss()">
+        <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{'Permisos'}}</ion-title>
+  </ion-toolbar>
+
+  <ion-toolbar *ngIf="!isModal && !isEmbeded">
+    <ion-buttons slot="start">
+      <ion-back-button [text]="'buttons.back' | translate"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{'Permisos'}}</ion-title>
+  </ion-toolbar>
+
+  
+  <ion-item>
+    <ion-icon name="people-circle" slot="start"></ion-icon>
+    <ion-label>{{role?.name}}</ion-label>
+    <ion-icon (click)="toggleExpandedAll(!expandedAll)" [name]="expandedAll ? 'chevron-up' : 'chevron-down'" size="small" slot="end"></ion-icon>
+  </ion-item>
+  
+  <ion-progress-bar *ngIf="loading" type="indeterminate"></ion-progress-bar>
+
+</ion-header>
+<ion-content>
+
+  <ng-template #permissionNode let-permission>
+    
+    <ion-item button [ngStyle]="{ 'padding-left': (permission.level * 22) + 'px'}" detail="false">
+      <ion-icon slot="start"
+        (click)="toggleExpanded(permission)"
+        [name]="permission.children?.length ? (permission.expanded ? 'chevron-down' : 'chevron-forward') : ''" 
+      ></ion-icon>
+      <ion-icon *ngIf="!permission.isFolder" slot="start"
+        (click)="toggleSelected(permission)"
+        [src]="selectedIcon(permission)"
+      ></ion-icon>
+      <ion-label (click)="toggleSelected(permission)" class="ion-text-wrap">
+        <ion-icon *ngIf="permission.icon" slot="start"
+          [name]="permission.icon"
+          [src]="permission.icon"
+        ></ion-icon>
+        {{('permissions.' + permission.name) | translate}}
+      </ion-label>
+      <!-- <ion-note>{{permission.expandedHeight}}</ion-note> -->
+    </ion-item>
+  
+    <ion-list *ngIf="permission?.children?.length && permission.expanded">
+      <ng-container *ngFor="let child of permission.children">
+        <ng-container *ngTemplateOutlet="permissionNode; context:{ $implicit: child }"></ng-container>
+      </ng-container>
+    </ion-list>
+  
+  </ng-template>
+
+  <ion-list>
+    <ng-container *ngFor="let permission of permissions">
+      <ng-container *ngTemplateOutlet="permissionNode; context:{ $implicit: permission }"></ng-container>
+    </ng-container>
+  </ion-list>
+
+  <pre style="margin: 20px; color: green; display: none;">{{denied | json}}</pre>
+
+</ion-content>
+<ion-footer *ngIf="!isModal && !isEmbeded">
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+  
+        <ion-button (click)="savePermissions()" color="primary" expand="block" [disabled]="!hasChanges">
+          <!-- <ion-icon slot="start" name="save"></ion-icon> -->
+          {{'buttons.save' | translate | uppercase }}
+        </ion-button>
+  
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  
+  </ion-footer>

@@ -1,0 +1,75 @@
+<ion-content class="ion-text-center ios-login">
+
+  <img  class="logo" [src]="theme.resource('login/header.jpg')" />
+
+  <div class="stretch-content">
+
+    <form [formGroup]="frm" (ngSubmit)="login()" layout="layout" class="collapse-items">
+
+      <ion-item>
+        <ion-label>{{'login.select_lang' | translate}}</ion-label>
+        <ion-select formControlName="idLang" slot="end" ionChange="changeLanguage()">
+          <ion-select-option *ngFor="let lang of languages.available" [value]="lang.idreg" [attr.selected]="lang.idreg === languages.default.idreg ? 'selected' : null">{{lang.nativeName}}</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="mail" slot="start"></ion-icon>
+        <ion-input #emailRef type="email" formControlName="email" placeholder="{{'login.email' | translate}}" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="lock-open" slot="start"></ion-icon>
+        <ion-input #passwordRef type="password" formControlName="password" placeholder="{{'login.password' | translate}}" required></ion-input>
+      </ion-item>
+
+      <div class="error ion-text-start">
+        <p *ngIf="(getter('email').touched || getter('email').dirty) && getter('email').errors?.required">{{'login.email_required' | translate}}</p>
+        <p *ngIf="(getter('email').touched || getter('email').dirty) && getter('email').errors?.email">{{'login.email_invalid' | translate}}</p>
+        <p *ngIf="(getter('password').touched || getter('password').dirty) && getter('password').errors?.required">{{'login.pass_required' | translate}}</p>
+        <p *ngIf="(getter('password').touched || getter('password').dirty) && getter('password').errors?.minlength">{{'login.pass_minlength' | translate}}</p>
+      </div>
+      
+      <button type="submit" analyticsEvent="Login Click" [disabled]="frm.invalid" expand="block" style="width: 100%; padding: 0px; margin-left: auto; margin-right: auto; border-radius: 50px; border: 0px" >
+        <ion-button [disabled]="frm.invalid" expand="block" [color]="frm.valid ? 'primary' : 'secondary'" class="action" style="max-width:100%; margin: 0px; border: 0px;">
+          <ion-icon slot="start" name="key-outline"></ion-icon>
+          {{'buttons.access' | translate  }}
+        </ion-button>
+      </button>
+      
+    </form>
+    
+    <ion-button *ngIf ="biometricEnabled" (click)="biometric.login()" expand="block" color="secondary">
+      <ion-icon slot="start" [name]="buttonBiometricIcon"></ion-icon>
+      {{buttonBiometricText }}
+    </ion-button>
+
+    <ion-button (click)="register()" expand="block" color="secondary">{{'login.register' | translate }}</ion-button>
+
+    <ion-button (click)="recovery()" fill="clear" expand="block" color="medium">{{'login.forgot_pass' | translate}}</ion-button>
+    
+    <ion-button routerLink="/contactar" fill="clear" expand="block" color="light">{{'login.contacte_con_nosotros' | translate}} <ion-icon name="send" slot="end"></ion-icon></ion-button>
+
+    <!-- <ion-fab  vertical="bottom" horizontal="center" slot="fixed">
+      <ion-fab-button color="secondary">
+        <ion-icon [name]="theme.current.mode === 'dark' ? 'sunny' : 'moon'"></ion-icon>
+      </ion-fab-button>
+    </ion-fab> -->
+  
+  </div>
+
+</ion-content>
+<!-- <ion-footer [@carShow]="carShow ? 'visible' : 'hidden'" (@carShow.done)="onAnimationComplete($event)">
+  
+  <div class="container-img">
+    <img [src]="theme.resource('login/coche-off.jpg')">
+    <img [src]="theme.resource('login/coche-on.jpg')" class="on" [@carStart]="carStart ? 'on' : 'off'" (@carStart.done)="onAnimationComplete2($event)">
+  </div>
+
+  <div class="mascara-animacion">
+    <div class="curva-left"></div>
+    <div class="curva-center"></div>
+    <div class="curva-right"></div>
+  </div>
+
+</ion-footer> -->

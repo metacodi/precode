@@ -1,0 +1,655 @@
+// App Styles
+// ----------------------------------------------------------------------------
+// Put style rules here that you want to apply to the entire application. These
+// styles are for the entire app and not just one component. Additionally, this
+// file can hold Sass mixins, functions, and placeholder classes to be imported
+// and used throughout the application.
+
+
+// ---------------------------------------------------------------------------------------------------
+// Fuentes de letra
+// ---------------------------------------------------------------------------------------------------
+
+// @import "src/theme/fonts.scss";
+
+:root {
+  // --ion-font-family: "-apple-system", sans-serif !important;
+  --ion-font-family: sans-serif !important;
+}
+
+// NOTA: Google-Maps cambia la fuente de la aplicación.
+body, .ionic-body  {
+  // font-family: "-apple-system", sans-serif !important;    /* HACK! google maps downloads roboto font and blinks the view */
+  font-family: sans-serif !important;    /* HACK! google maps downloads roboto font and blinks the view */
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  Ajustes generales
+// ---------------------------------------------------------------------------------------------------
+
+// NOTA: A veces no hydrata la clase. Forzamos que siempre se muestre.
+ion-app {
+  visibility: visible;
+  // color: #ffce00;
+  // color: #ff9100;
+  // color: #10dc60;
+  // color: #f04141;
+  // color: #3880ff;
+}
+
+// NOTA: Completamos el punto de ruptura que le falta a ionic.
+@media (max-width: 320px) {
+  .ion-hide-xs-down {
+    display: none !important;
+  }
+}
+
+// Quitamos el estilo de los campos para credenciales que el navegador ha resaltado al autocompletar.
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  border: none !important;
+  -webkit-text-fill-color: var(--ion-text-color) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--ion-background-color) inset !important;
+  box-shadow: 0 0 0px 1000px var(--ion-background-color) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+  color: var(--ion-text-color);
+}
+
+// Estilos para iOS 11.x
+.ios ion-menu.menu-enabled, .ios.platform-mobile ion-menu.menu-enabled, .ios.platform-mobile ion-modal.show-page .ios ios-login{
+  margin-top: constant(safe-area-inset-top); // for iOS 11.1
+  margin-top: env(safe-area-inset-top); // for iOS 11.2 and onwards
+  margin-bottom: env(safe-area-inset-bottom);
+  height: calc(100% - constant(safe-area-inset-top));
+  height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+body {
+  padding-top: constant(safe-area-inset-top); // for iOS 11.2
+  padding-top: env(safe-area-inset-top); // for iOS 11.1
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+// Quitamos el padding lateral a la grid principal que articula el contenido de las secciones.
+// ---------------------------------------------------------------------------------------------------
+
+ion-content > ion-grid, ion-content > ion-grid > ion-row {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+ion-content > ion-grid > ion-row > ion-col:first-of-type {
+  padding-left: 0px;
+}
+
+ion-content > ion-grid > ion-row > ion-col:last-of-type {
+  padding-right: 0px;
+}
+
+// En dispositivos pequeños, estrechamos la altura del header y del footer.
+@media (max-width: 720px) {
+  ion-header > ion-grid, ion-header > ion-grid > ion-row, ion-header > ion-grid > ion-row > ion-col,
+  ion-footer > ion-grid, ion-footer > ion-grid > ion-row, ion-footer > ion-grid > ion-row > ion-col {
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  ion-footer > ion-grid > ion-row > ion-col {
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  ion-header
+// ---------------------------------------------------------------------------------------------------
+
+ion-header {
+  --border: 0px;
+} 
+
+ion-header ion-buttons * {
+  // Quitamos el color primario por defecto.
+  --color: var(--ion-text-color) !important;
+}
+
+ion-header ion-back-button {
+  font-size: 14px;
+}
+
+ion-searchbar {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+.searchbar-input {
+  font-size: 14px !important;
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  ion-footer
+// ---------------------------------------------------------------------------------------------------
+
+ion-footer {
+  border-top: 0.55px solid var(--ion-border-color);
+  background: var(--ion-background-color);
+}
+
+ion-footer ion-button {
+  --border-radius: 10px;
+}
+
+ion-footer ion-grid:last-of-type {
+  margin-bottom: 15px;
+}
+
+@media (min-width: 768px) {
+  ion-modal ion-footer ion-grid:last-of-type {
+    margin-bottom: 0px;
+  }
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  componente de listado
+// ---------------------------------------------------------------------------------------------------
+
+ion-list ion-item-divider {
+  padding: 5px 5px 5px 22px;
+  font-size: 16px;
+  // background-color: var(--ion-color-step-50);
+  background-color: var(--ion-item-divider-background-color);
+  border-top: 0.55px solid var(--ion-border-color);
+  border-bottom: 0.55px solid var(--ion-border-color);
+}
+
+ion-list ion-item {
+  font-size: 16px !important;
+  --padding-start: 15px;
+}
+
+ion-list > ion-item:last-of-type, 
+ion-list > ion-item-sliding:last-of-type > ion-item {
+    --border-style: none;
+}
+
+ion-list ion-grid, 
+ion-list ion-grid ion-col {
+  padding: 0px;
+}
+
+ion-list ion-item ion-progress-bar,
+ion-list ion-card ion-progress-bar {
+  position: absolute;
+  bottom: 0px;
+}
+
+ion-list .ion-text-wrap {
+  font-size: inherit !important;
+}
+
+ion-list ion-item.compact {
+  --min-height: auto;
+  --padding-start: 0px;
+}
+
+ion-list ion-item.compact ion-grid {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+ion-list ion-item.compact:first-of-type ion-grid {
+  padding-top: 8px;
+}
+
+ion-searchbar {
+  padding-inline-start: 6px !important;
+  padding-inline-end: 6px !important;
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  componente de detalle
+// ---------------------------------------------------------------------------------------------------
+
+.stretch-content {
+  width: 90%;
+  max-width: 600px;
+  margin: auto;
+}
+
+.detail {
+  padding: 0px;
+  max-width: 720px;
+  margin: 8px;
+  --background: transparent !important;
+  box-shadow: rgba(var(--ion-color-dark-rgb), 0.12) 0px 4px 16px;
+}
+
+// Quitamos el pading para centrar el contenido.
+.detail ion-grid {
+  padding: 0px;
+  padding-bottom: 10px;
+}
+
+// Línea de separación para todas las filas, excepto la última grid.
+.detail > * > ion-grid > ion-row,
+.detail > * > * > ion-row,
+.detail > ion-grid > ion-row,
+.detail > ion-grid > * > ion-row {
+  border-bottom: 0.55px solid var(--ion-border-color);
+}
+
+// Para anular la línea y condensar dos filas.
+.detail ion-row.no-line {
+  border-bottom: none;
+  padding-bottom: 0px !important;
+}
+
+@media (min-width: 720px) {
+  .detail > * >ion-grid > ion-row, 
+  .detail > * >ion-grid > * > ion-row,
+  .detail > ion-grid > ion-row, 
+  .detail > ion-grid > * > ion-row {
+    padding: 6px 0px;
+  }
+}
+
+// Centramos el título
+.detail h2 {
+  text-align: center;
+  letter-spacing: 0.8px;
+}
+
+// Texto descriptivo de la sección
+.detail ion-grid ion-col h3 {
+  margin: 10px 0px 0px 5px;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.detail ion-list {
+  background: transparent !important;
+}
+
+// Quitamos padding a la izquierda de los controles.
+.detail ion-item {
+  --border-style: none;
+  --padding-start: 4px;
+  font-size: 15px !important;
+  // Para el tema dark
+  --background: transparent !important;
+}
+
+// Los labels sin ellipsis, permitimos wrap.
+.detail ion-item ion-label {
+  font-size: 15px !important;
+  white-space: normal !important;
+  // max-width: none;
+}
+
+// Fuente de letra de los controles.
+.detail ion-item ion-input, 
+.detail ion-item ion-textarea {
+  font-size: 15px !important;
+  margin: 0px;
+}
+@media (min-width: 576px) {
+  .detail ion-item ion-input, 
+  .detail ion-item ion-textarea {
+    font-size: 16px !important;
+  }
+}
+
+// Botones secundarios, ej: 'Ver recorrido', 'Precio cerrado', 'Info vuelo'
+.detail ion-button[size=small] {
+  margin: 9px auto !important;
+}
+
+// Botones del footer de la ficha
+.detail > * > ion-grid.buttons,
+.detail > ion-grid.buttons {
+  padding-bottom: 0px;
+}
+.detail > * > ion-grid.buttons ion-row,
+.detail > ion-grid.buttons ion-row {
+  border-bottom: none;
+}
+.detail > * > ion-grid.buttons ion-button,
+.detail > ion-grid.buttons ion-button {
+  margin: 10px auto;
+  max-width: 400px;
+}
+
+
+@media (min-width: 360px) {
+  .detail {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+@media (min-width: 576px) {
+  .detail {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .detail ion-item ion-label {
+    font-size: 16px !important;
+  }
+}
+
+@media (min-width: 720px) {
+  .detail {
+    width: 90%;
+    margin: 16px auto;
+    padding: 16px !important;
+  }
+  .detail ion-grid {
+    padding-bottom: 20px;
+  }
+  .detail h2 {
+    margin-top: 10px;
+  }
+  .detail ion-grid ion-col p {
+    margin: 12px 0px 4px 12px;
+  }
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  componentes
+// ---------------------------------------------------------------------------------------------------
+
+ion-content ion-button {
+  --border-radius: 10px;
+}
+
+ion-content ion-radio {
+  --color: var(--ion-text-color);
+  --color-checked: var(--ion-text-color);
+}
+
+ion-content ion-checkbox {
+  --background-checked: var(--ion-background-color);
+  --checkmark-color: var(--ion-text-color);
+  --border-color-checked: var(--ion-text-color);
+  --border-color: var(--ion-text-color);
+  --border-width: 1px;
+}
+
+ion-content ion-textarea {
+  --background: transparent !important;
+  --padding-start: 8px !important;
+  --placeholder-color: var(--placeholder-color);
+  border-radius: 4px;
+  text-align: left;
+  margin: 10px 0;
+}
+
+ion-item ion-icon[slot=start] {
+  margin-inline-end: 14px;
+}
+
+ion-textarea textarea {
+  overflow: hidden;
+  padding-left: 0px !important;
+}
+
+ion-action-sheet {
+  --button-color: var(--ion-text-color) !important;
+}
+
+ion-action-sheet button {
+  --ion-color-primary: var(--ion-text-color) !important;
+  background-color: var(--ion-overlay-background-color) !important;
+  border-top: 0.55px solid var(--ion-color-light);
+}
+
+ion-action-sheet button .action-sheet-icon {
+  margin-inline-end: 8px !important;
+  font-size: 18px !important;
+}
+
+.alert-checkbox-group, .alert-radio-group {
+  --ion-color-primary: var(--ion-text-color);
+}
+
+ion-tab-button {
+  letter-spacing: 1.2px;
+  border-bottom: 0.55px solid var(--ion-color-step-150);
+  background-color: inherit;
+  font-weight: normal;
+  max-width: none;
+}
+
+ion-tab-button.selected {
+  border-bottom: 2px solid var(--ion-color-primary) !important;
+}
+
+// Se utiliza en items que tienen un input hidden y usan un label para mostrar el valor.
+// Ej: <ion-label [ngClass]="{ 'placeholder-color': !fecha.value }">
+.placeholder-color {
+  color: var(--placeholder-color) !important;
+}
+
+ion-list ion-spinner {
+  // Igualamos el ancho con el de los iconos de los items en los ion-list.
+  margin-inline-end: 19.198px !important;
+}
+
+expand-button {
+  margin-inline-end: 0px;
+}
+
+.hidden {
+  display: none;
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  estados
+// ---------------------------------------------------------------------------------------------------
+
+// Mensajes de error para formularios.
+.error p, p.error {
+  color: var(--ion-color-danger);
+  font-size: 16px;
+  margin: 8px 8px;
+}
+
+// $filtered-base-color: #ffce00;
+// $filtered-base-color: #3880ff;
+$filtered-base-color: #10dc60;
+
+// Color del texto resaltado en las búsquedas.
+.filtered {
+  // color: var(--ion-color-primary);
+  color: $filtered-base-color;
+}
+
+.filtered.filtered-word-1 {
+  // color: var(--ion-color-tertiary);
+  color: $filtered-base-color;
+}
+
+.filtered.filtered-word-2 {
+  // color: var(--ion-color-warning);
+  color: darken($filtered-base-color, 15%);
+}
+
+.filtered.filtered-word-3 {
+  // color: var(--ion-color-success);
+  color: darken($filtered-base-color, 30%);
+}
+
+
+// Texto que se muestra cuando no hay filas disponibles.
+.no-rows {
+  padding-left: 8px;
+  font-style: italic;
+  letter-spacing: 0.6px;
+  color: rgba(var(--ion-text-color-rgb,0,0,0),.4);
+}
+
+
+.estados-conductor-popover .popover-content {
+  max-width: 300px !important;
+}
+
+.estado-conductor {
+  min-width: 25px;
+  min-height: 25px;
+  width: 25px;
+  height: 25px;
+  border-radius: 16px;
+  margin: 0px 8px;
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  estilos
+// ---------------------------------------------------------------------------------------------------
+
+.border-bottom {
+  border-bottom: 0.55px solid var(--ion-border-color);
+}
+
+.shadow {
+  box-shadow: rgba(var(--ion-color-dark-rgb), 0.12) 0px 4px 16px;
+}
+.no-shadow {
+  box-shadow: none !important;
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  animations
+// ---------------------------------------------------------------------------------------------------
+
+.collapsed {
+  transition: all 250ms ease-out;
+  max-height: 0px !important;
+  opacity: 0 !important;
+  margin-top: 0px !important;
+  margin-bottom: 0px !important;
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  border-top: 0px;
+  border-bottom: 0px;
+  box-shadow: none;
+}
+
+.expanded {
+  transition: all 250ms ease-in;
+  max-height: 200px !important;
+  opacity: 1 !important;
+}
+
+.expanded-400 {
+  transition: all 250ms ease-in;
+  max-height: 400px !important;
+  opacity: 1 !important;
+}
+
+.expanded-600 {
+  transition: all 250ms ease-in;
+  max-height: 600px !important;
+  opacity: 1 !important;
+}
+
+.expanded-800 {
+  transition: all 250ms ease-in;
+  max-height: 800px !important;
+  opacity: 1 !important;
+}
+
+.expanded-1000 {
+  transition: all 250ms ease-in;
+  max-height: 800px !important;
+  opacity: 1 !important;
+}
+
+
+
+// ---------------------------------------------------------------------------------------------------
+//  pestañas decorativas
+// ---------------------------------------------------------------------------------------------------
+
+// ion-header.page-ribbon ion-toolbar:before {
+//   content: "";
+// } 
+// ion-header.page-ribbon ion-toolbar:after {
+//   content: "";
+// } 
+
+// ion-header.page-ribbon ion-toolbar:before {
+//   content: " ";
+//   width: 156px;
+//   height: 44px;
+//   position: absolute;
+//   z-index: 0;
+//   background-size: auto 100%;
+//   background-repeat: no-repeat;
+//   background-position: right;
+//   bottom: 0;
+//   left: -30px;
+// }
+
+// ion-header.page-ribbon ion-toolbar:after {
+//   content: " ";
+//   width: 156px;
+//   height: 44px;
+//   position: absolute;
+//   z-index: 0;
+//   background-size: auto 100%;
+//   background-repeat: no-repeat;
+//   background-position: right;
+//   bottom: 0;
+//   right: -30px;
+// }
+
+// ion-header.page-ribbon ion-tooolbar {
+//   background: var(--header-background-color);
+// }
+// ion-header.page-ribbon.header-ios ion-toolbar:last-of-type {
+//   --border-width: 0;
+// }
+
+// ion-header.page-ribbon ion-title {
+//   color: var(--ion-color-primary);
+// }
+
+// // Experimento para dibujar la curva via css
+// #yin-yang {
+//   width: 96px;
+//   box-sizing: content-box;
+//   height: 48px;
+//   background: #eee;
+//   border-color: red;
+//   border-style: solid;
+//   border-width: 2px 2px 50px 2px;
+//   border-radius: 100%;
+//   position: relative;
+// }
+// #yin-yang:before {
+//   content: "";
+//   position: absolute;
+//   top: 50%;
+//   left: 0;
+//   background: #eee;
+//   border: 18px solid red;
+//   border-radius: 100%;
+//   width: 12px;
+//   height: 12px;
+//   box-sizing: content-box;
+// }

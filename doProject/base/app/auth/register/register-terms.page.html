@@ -1,0 +1,1394 @@
+<ion-header class="page ribbon">
+  
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-back-button [text]="'buttons.back' | translate"></ion-back-button>
+      </ion-buttons>
+      <ion-title>{{'register.condiciones_generales' | translate}}</ion-title>
+    </ion-toolbar>
+
+</ion-header>
+<ion-content padding [scrollY]="true">
+
+  <div class="stretch-content">
+      
+    <!-- <img [src]="theme.resource('home/header.jpg')" alt="logo" > -->
+
+    <div *ngIf="defaultLanguage === 'es'">
+      <p><strong>AVISO LEGAL</strong></p>
+      <p>
+        <a href="http://www.exceltaxisantcugat.cat">www.exceltaxisantcugat.cat</a>
+        &nbsp;es propiedad de EXCEL TAXI SANT CUGAT, S.L. (en adelante, EXCEL TAXI
+        SANT CUGAT) con domicilio social en Avda. Corts Catalanes, 5-7 – Edif.
+        Trade Center I (08173) Sant Cugat del Vallés (Barcelona), CIF B66075417,
+        e-mail:
+        <a href="mailto:info@exceltaxisantcugat.cat"
+          >info@exceltaxisantcugat.cat</a
+        >
+        y teléfono 935838201. Se encuentra inscrita en el Registro Mercantil de
+        Barcelona, Folio 93, Tomo 43836, Hoja B-439757, Inscripción 1ª. Se prohíbe
+        la reproducción total o parcial de los contenidos de esta Web sin
+        solicitar autorización previa. Todos los derechos están reservados.
+      </p>
+      <p><strong>POLÍTICA DE PRIVACIDAD</strong></p>
+      <p><strong>Derecho de información</strong></p>
+      <p>
+        A los efectos de lo previsto en la Ley Orgánica de Protección de Datos de
+        carácter personal, EXCEL TAXI SANT CUGAT, S.L. (en adelante, EXCEL TAXI
+        SANT CUGAT) con domicilio social en Avda. Corts Catalanes, 5-7 – (08173)
+        Sant Cugat del Vallés (Barcelona) con CIF número B66075417, informa al
+        usuario/cliente de la existencia de un fichero automatizado de datos de
+        carácter personal creado por EXCEL TAXI SANT CUGAT y bajo su
+        responsabilidad con la finalidad de realizar el mantenimiento y gestión de
+        la relación con los solicitantes de información o clientes que han
+        accedido a través de los formularios electrónicos de este sitio o mediante
+        mensajes de correo electrónico.
+      </p>
+      <p>
+        El fichero referido ha sido inscrito en la Agencia de Protección de Datos.
+      </p>
+      <p><strong>Finalidad</strong></p>
+      <p>
+        Los datos que facilite a EXCEL TAXI SANT CUGAT tienen como finalidad
+        gestionar su solicitud, facilitarle la información y/o servicios que
+        solicite y poder ofrecerle nuevos servicios.
+      </p>
+      <p><strong>Consentimiento del usuario</strong></p>
+      <p>
+        El uso de los mencionados formularios, así como el envío de un correo
+        electrónico de consulta, supone el consentimiento del remitente al
+        tratamiento automatizado de los datos incluidos en los medios de
+        comunicación indicados. Los datos no serán cedidos a terceros.<br />
+        Salvo en los campos en que expresamente se indique lo contrario, la
+        entrega de información requerida sobre datos personales tendrá el carácter
+        de voluntaria, sin que la negativa a facilitar dicha información implique
+        una merma en la calidad o cantidad de los servicios que solicite. La falta
+        de cumplimentación de los campos determinados como obligatorios o el
+        suministro de datos incorrectos imposibilitará que EXCEL TAXI SANT CUGAT
+        pueda prestarle los servicios que seleccione, gestionar su solicitud o
+        remitirle la información solicitada.
+      </p>
+      <p>
+        <strong>Derecho de acceso</strong><br />
+        Podrá ejercer su derecho de acceso, rectificación, cancelación y oposición
+        al tratamiento de sus datos personales, en los términos y condiciones
+        previstos en la propia LOPD. Para su mayor comodidad, también podrá
+        ejercer los derechos antes mencionados dirigiéndose a la siguiente
+        dirección de correo electrónico: info@EXCELTAXISANTCUGAT.cat<br />
+        EXCEL TAXI SANT CUGAT no utiliza tácticas de “Spaming”, y tampoco quedan
+        registrados los usuarios por una mera visita a nuestra página Web.
+      </p>
+      <p>
+        <strong>Información sobre cookies</strong><br />
+        Esta Web no utiliza cookies.
+      </p>
+      <p><strong>Seguridad</strong></p>
+      <p>
+        EXCEL TAXI SANT CUGAT mantiene los niveles de seguridad de protección de
+        sus datos conforme al Real Decreto 994/1999, de 11 de Junio, relativo a
+        las medidas de seguridad de los ficheros automatizados que contengan datos
+        de carácter personal y ha establecido todos los medios técnicos a su
+        alcance para evitar la pérdida, mal uso, alteración, acceso no autorizado
+        y robo de los datos que facilite a EXCEL TAXI SANT CUGAT, sin perjuicio de
+        informarle de que las medidas de seguridad en Internet no son
+        inexpugnables.<br />
+        Respecto a cualquier tema relativo a la protección de datos de carácter
+        personal, puede ponerse en contacto con nosotros mediante nuestra
+        dirección de correo electrónico: info@EXCELTAXI SANTCUGAT.cat
+      </p>
+      <p>
+        EXCELTAXI SANT CUGAT no será responsable en ningún caso de las incidencias
+        que puedan surgir en torno a los datos personales cuando se deriven de un
+        ataque o acceso no autorizado a los sistemas informáticos y que sea
+        imposible de detectar por las medidas de seguridad implantadas.
+      </p>
+      <p><strong>CONDICIONES DE CONTRATACIÓN</strong></p>
+      <p>
+        Por favor, antes de contratar nuestros servicios, o registrarse como
+        usuario lea con detenimiento las Condiciones de Contratación.
+      </p>
+      <p>
+        Al registrarse como usuario en la aplicación para dispositivos móviles o a
+        través de la página web (considerándose a partir de ahora tanto la página
+        web como la aplicación asociada a la misma, como sitio web) o adquirir
+        &nbsp;alguno de nuestros servicios acepta las siguientes Condiciones de
+        Contratación.
+      </p>
+      <p>Objeto</p>
+      <p>
+        Las presentes Condiciones de Contratación tienen como objeto regular la
+        contratación de servicios a través de nuestra aplicación para dispositivos
+        móviles y/o de nuestra Web
+        <a href="http://www.exceltaxisantcugat.cat">www.exceltaxisantcugat.cat</a>
+        dominio del cual es titular EXCEL TAXI SANT CUGAT, S.L. (en adelante,
+        EXCEL TAXI SANT CUGAT) con domicilio social en Avda. Corts Catalanes, 5-7
+        – Edif. Trade Center I (08173) Sant Cugat del Vallés (Barcelona), CIF
+        B66075417, e-mail:
+        <a href="mailto:info@exceltaxisantcugat.cat"
+          >info@exceltaxisantcugat.cat</a
+        >
+        y teléfono 935838201.
+      </p>
+      <p>
+        EXCEL TAXI SANT CUGAT, no asume ninguna responsabilidad por los daños y
+        perjuicios resultantes o que tengan conexión con el empleo de dicha
+        información.
+      </p>
+      <p>
+        EXCEL TAXI SANT CUGAT no se responsabiliza de los errores u omisiones de
+        los que pudieran adolecer los contenidos de su sitio Web u otros
+        contenidos a los que se pueda acceder a través de la misma ni asume ningún
+        deber o compromiso de verificar ni de vigilar los contenidos e
+        informaciones del mismo.
+      </p>
+      <p>
+        Los enlaces o links que contiene el sitio Web pueden conducir al usuario a
+        otros sitios y páginas Web, gestionados por terceros, sobre los que EXCEL
+        TAXI SANT CUGAT no ejerce ningún tipo de control.
+      </p>
+      <p>
+        EXCEL TAXI SANT CUGAT no responde ni de los contenidos ni del estado de
+        dichos sitios y páginas Web, y el acceso a los mismos a través del sitio
+        Web tampoco implica que EXCEL TAXI SANT CUGAT recomiende o apruebe sus
+        contenidos.
+      </p>
+      <p><strong>Capacidad para contratar</strong></p>
+      <p>
+        De acuerdo con la legislación aplicable, para contratar los servicios
+        ofrecidos por EXCEL TAXI SANT CUGAT el cliente deberá tener la capacidad
+        jurídica necesaria para contratar que establezca la ley del país del que
+        es nacional.
+      </p>
+      <p>
+        En el supuesto que menores de edad o personas con la capacidad modificada
+        accedan a está página web o se registren en la aplicación para
+        dispositivos móviles, deben estar en compañía de sus padres, tutores o
+        representantes legales, quienes serán considerados responsables de todos
+        los actos realizados por éstos últimos.
+      </p>
+      <p>
+        Todos aquellos servicios contratados por menores o personas con la
+        capacidad modificada se presumirán contratados por sus representantes
+        legales, siendo responsabilidad exclusiva de éstos últimos respecto de las
+        personas que a su cargo se encuentren, siendo los obligados a controlar,
+        supervisar y restringir el acceso a las páginas web o aplicaciones cuyo
+        acceso consideren inadecuado.
+      </p>
+      <p><strong>Descripción del producto/servicio</strong></p>
+      <p>
+        EXCEL TAXI SANT CUGAT a través de su página Web
+        <a href="http://www.exceltaxisantcugat.cat">www.exceltaxisantcugat.cat</a>
+        y su aplicación para dispositivos móviles ofrece servicios de taxi de alta
+        calidad, acorde al perfil y necesidades del usuario.
+      </p>
+      <p>
+        La aplicación está disponible para dispositivos con sistema operativo IOS
+        y Android, además de la versión Web integrada en la web de EXCEL TAXI SANT
+        CUGAT.
+      </p>
+      <p>
+        Utilizando la aplicación el usuario podrá, bajo los términos descritos en
+        las condiciones de contratación:
+      </p>
+      <ul>
+        <li>Crear/modificar perfil de usuario</li>
+        <li>Crear/modificar/cancelar reservas</li>
+        <li>Crear un listado de direcciones frecuentes</li>
+        <li>
+          Recibir contraofertas si la hora para la que solicitó el taxi no hay
+          disponibilidad.
+        </li>
+        <li>Solicitar taxi para el momento (sujeto a disponibilidad)</li>
+        <li>Consultar el estado de sus reservas</li>
+        <li>
+          Contactar directamente con el taxista una vez haya uno asignado a su
+          reserva.
+        </li>
+        <li>
+          Efectuar el pago con tarjeta de crédito a través de la aplicación.
+        </li>
+        <li>Valorar la calidad del servicio</li>
+        <li>
+          Recibir factura por correo electrónico cuando el pago se efectúe a
+          través de la App.
+        </li>
+        <li>
+          Seleccionar servicios a incluir en la factura, ya sea uno, varios, o
+          todos los del mes.
+        </li>
+        <li>Consultar el histórico de reservas</li>
+        <li>Enviar mensajes, consultas, sugerencias, etc. a la empresa.</li>
+      </ul>
+      <p><strong>Derecho de copia y propiedad intelectual</strong></p>
+      <p>
+        EXCEL TAXI SANT CUGAT, sus socios o sus proveedores poseen los derechos de
+        la Propiedad Intelectual de todos y cualquiera de los componentes del
+        Servicio, Página Web y aplicación que puedan protegerse, incluyendo pero
+        no limitándose el texto, material gráfico, todo el software asociado con
+        el Servicio y los elementos de la interfaz de usuario contenidos en el
+        mismo. Usted se compromete a no copiar, adaptar, reproducir, distribuir,
+        aplicar ingeniería inversa, descompilar, o disimular cualquier faceta del
+        Servicio que EXCEL TAXI SANT CUGAT, sus socios o sus proveedores posean.
+        Usted también acepta y se obliga a no utilizar robots, spiders, otros
+        aparatos automatizados, o procesos manuales para controlar o copiar
+        cualquier contenido del Servicio.<br />
+        El diseño de este sitio web y de su aplicación correspondiente es
+        propiedad de EXCEL TAXI SANT CUGAT, desde su programación, edición,
+        compilación y demás elementos necesarios para su funcionamiento.
+      </p>
+      <p><strong>Área de Influencia</strong></p>
+      <p>
+        Los taxis asociados a Excel Taxi Sant Cugat pertenecen al ámbito del Area
+        Metropolitana de Barcelona (AMB), y en particular, su zona de trabajo es
+        Sant Cugat del Vallés , en la que se establecen el origen o destino
+        lógicos de todos los recorridos. <br />
+        El punto de recogida debe estar comprendido dentro de las poblaciones que
+        conforman el AMB, y el punto de destino puede ser cualquiera, tanto dentro
+        como fuera del territorio español. <br />
+        Cuando un trayecto tenga su origen y destino fuera de Sant Cugat, y el
+        recorrido previo y posterior que deba realizar el taxista en vacío desde y
+        hacia Sant Cugat hagan que el servicio no sea rentable, Excel Taxi puede
+        negarse a ofrecer el servicio u ofrecer alternativas para satisfacer las
+        necesidades del cliente.
+      </p>
+      <p>
+        <strong><u>Proceso de contratación</u></strong>
+      </p>
+      <p><strong>Registro</strong></p>
+      <p>
+        El acceso al sitio web y la descarga de la aplicación de EXCEL TAXI SANT
+        CUGAT es totalmente gratuita para los Usuarios. No obstante, los servicios
+        que se contraten están sujetos al pago de un precio que se determine según
+        las condiciones de uso y servicio contratado.<br />
+        El contenido de prestaciones de la página web y de la aplicación no
+        incluye los servicios de internet necesarios para su utilización. El
+        cliente es responsable del acceso a internet, así como de los requisitos
+        técnicos y de la configuración del dispositivo final para la utilización
+        de la página web, la aplicación y la actualización del software de las
+        mimas, siendo a su cargo cualquier gasto derivado del mismo.
+      </p>
+      <p>
+        Para la contratación de cualquier servicio a través de la página web o
+        aplicación, se requiere la inscripción previa en el registro de usuarios.
+        Los datos del formulario marcados con un asterisco son obligatorios. El
+        cliente está obligado a facilitar los datos de una forma veraz y correcta,
+        siendo el único responsable de la información falsa o inexacta que
+        realice, así como de los perjuicios que dicha información pudiera causar.
+      </p>
+      <p>
+        El cliente consiente expresamente que EXCEL TAXI SANT CUGAT, S.L. proceda
+        a la recogida de dichos datos y a su posterior tratamiento con la
+        finalidad indicada en su “Política de privacidad”. La no aceptación de los
+        términos legales y las condiciones de contratación impide la continuación
+        del proceso de contratación y, por lo tanto, el acceso a los servicios. La
+        verificación de los datos del proceso de alta de usuario y/o contratación
+        será responsabilidad única del cliente.
+      </p>
+      <p>
+        El cliente acepta que los taxistas colaboradores con EXCEL TAXI tengan
+        acceso a sus datos facilitados para la contratación de los servicios.
+      </p>
+      <p>
+        Se presumirá que cualquier persona que actúe en nombre del Cliente, ya sea
+        un encargado, un colaborador, etc., es representante del mismo y tiene
+        poderes suficientes para actuar como tal y vincularle.
+      </p>
+      <p><strong>Confirmación de reserva.</strong></p>
+      <p>
+        Una vez efectuada la reserva, y aceptando las presentes condiciones de
+        contratación, el cliente recibirá confirmación de los servicios
+        contratados, momento a partir del cual se entenderá aceptado el servicio
+        por parte de EXCEL TAXI SANT CUGAT.
+      </p>
+      <p>
+        EXCEL TAXI SANT CUGAT garantizará el servicio una vez haya sido confirmada
+        la reserva.
+      </p>
+      <p>
+        EXCEL TAXI SANT CUGAT se reserva el derecho a dejar de ofrecer servicios
+        siempre que exista causa justificada, incluyendo con carácter
+        ejemplificativo pero no limitativo, como causa&nbsp; justificada el
+        incumplimiento en el pago del servicio, ausencia reiterada&nbsp; del
+        cliente en el lugar y hora de la reserva, agresión o trato indigno a algún
+        taxista,.
+      </p>
+      <p>
+        Una vez confirmada la reserva, y asignada la misma a un taxista, el
+        cliente tendrá a su disposición los datos de contacto de éste para poder
+        informar cualquier incidencia en relación al servicio contratado.
+      </p>
+      <p>
+        Se advierte que el taxista no envía aviso al cliente al llegar al punto de
+        recogida del cliente, salvo que el propio taxista se demore en la
+        recogida.
+      </p>
+      <p>
+        No se aceptan reservas para servicios interiores. Este tipo de servicios
+        deben solicitarse unos minutos antes y siempre que haya disponibilidad, se
+        enviará un taxi a realizar el servicio.
+      </p>
+      <p>
+        Se denominan <strong>servicios interiores</strong> a todos aquellos cuyo
+        origen y destino está dentro de un mismo municipio.
+      </p>
+      <p>
+        A efectos prácticos, se consideran también servicios interiores los
+        servicios cuyo trayecto esté comprendido entre Sant Cugat y alguna de las
+        siguientes poblaciones:
+      </p>
+      <ul>
+        <li>Cerdanyola del Vallés</li>
+        <li>Molins de Rei</li>
+        <li>Papiol</li>
+        <li>Rubí</li>
+      </ul>
+      <p>
+        Como norma general, las reservas deben realizarse con una antelación
+        mínima de una hora.
+      </p>
+      <p>
+        Se pueden realizar reservas para terceras personas cambiando el nombre del
+        pasajero a recoger, pero en cualquier caso, el responsable frente a
+        cualquier incidencia con esa reserva es el usuario registrado que realizó
+        la reserva.
+      </p>
+      <p>
+        En caso de que por cualquier motivo no fuera posible cumplir con una
+        solicitud, el responsable de servicios rechazaría la reserva.
+      </p>
+      <p>
+        Si el problema fuera el horario de la solicitud, y existiera la
+        posibilidad de cubrir el servicio unos minutos antes o unos minutos
+        después, el usuario recibirá una contraoferta horaria, con una o más
+        opciones, que el usuario podría aceptar o rechazar.
+      </p>
+      <p><strong>Política de modificaciones o cancelaciones</strong></p>
+      <p>
+        Las modificaciones en las reservas estarán sujetas a la verificación y
+        confirmación por parte del responsable de servicios que esté a cargo de
+        los servicios en cada momento. Si un cliente solicita un cambio en la
+        recogida, y si el lugar o a la hora para la cual solicita la modificación
+        no hubieran taxis disponibles, Excel Taxi Sant Cugat podría contra-ofertar
+        o rechazar la solicitud.&nbsp;&nbsp;
+      </p>
+      <p>
+        EXCEL TAXI SANT CUGAT se reserva el derecho de anulación de servicios,
+        obligándose, en el caso que sea por causa imputable exclusivamente a él, a
+        devolver, en su caso, el importe íntegro abonado por el servicio no
+        realizado finalmente.
+      </p>
+      <p>
+        Cuando la cancelación se realiza con menos de una hora de antelación, si
+        el taxi se ha iniciado el desplazamiento hasta el punto de recogida, o si
+        ya se encuentra en el punto de recogida, el cliente deberá abonar el
+        desplazamiento, con un mínimo de 15 euros.
+      </p>
+      <p>
+        Cuando se trate de un servicio compuesto por varios trayectos y/o tiempos
+        de espera, se podrá cancelar parte del servicio con derecho al reintegro
+        de la parte proporcional del servicio no realizado.
+      </p>
+      <p>
+        Comunicar al taxista en el momento de subir al taxi que el destino será
+        diferente al indicado en la reserva, puede causar perjuicios a la
+        organización de flota, y como consecuencia a otros clientes, e incluso al
+        propio taxista si el nuevo destino no compensa el desplazamiento realizado
+        para cubrir ese servicio. Ello faculta a EXCEL TAXI para dejar de prestar
+        el servicio al cliente, con plena indemnidad.
+      </p>
+      <p>
+        El cliente comunicará a EXCEL TAXI SANT CUGAT dentro del plazo estipulado
+        y por cualquier medio admitido en derecho, su deseo de ejercitar el
+        derecho de cancelación.
+      </p>
+      <p><strong>Servicios instantáneos</strong></p>
+      <p>
+        La aplicación permite solicitar servicios para el momento, sujeto siempre
+        a disponibilidad del taxista. El sistema calculará y consultará al taxista
+        que tardaría menos en llegar, y una vez el taxista confirme que lo puede
+        realizar, el cliente recibirá información sobre el tiempo que tardará el
+        taxi, para finalmente confirmar o cancelar la reserva
+      </p>
+      <p><strong>Precio</strong></p>
+      <p>
+        Los precios aplicables a cada servicio son los establecidos por el
+        organismo regulador del taxi en Barcelona y su área metropolitana
+        (Instituto Metropolitano del Taxi) y se aplicarán siempre que se cumplan
+        las siguientes condiciones:
+      </p>
+      <ul>
+        <li>
+          El pago debe efectuarse, por regla general, directamente al taxista al
+          finalizar el servicio.
+        </li>
+      </ul>
+      <p>
+        Tanto el uso de la página web como de la aplicación en relación al
+        servicio de gestión de reservas y solicitudes de servicios ofrecidos será
+        gratuito, siendo el servicio contratado abonado directamente al taxista,
+        salvo que el cliente tenga suscrito otras condiciones particulares
+        diferentes a éstas.
+      </p>
+      <p>
+        El servicio podrá abonarse en efectivo o con tarjetas de crédito. EXCEL
+        TAXI SANT CUGAT no almacena datos de las tarjetas de crédito, estando este
+        servicio subcontratado a una entidad bancaria que cumple con la normativa
+        vigente&nbsp; y exigencias de seguridad.
+      </p>
+      <p>
+        Para los servicios de abonado, se aplicarán las tarifas de Excel Taxi Sant
+        Cugat que cubren los gastos administrativos y de gestión.
+      </p>
+      <p><strong>Incumplimiento</strong></p>
+      <p>
+        Cuando el pasajero no se presente en el punto de recogida y no sea posible
+        establecer contacto con él, el taxi esperará hasta 30 minutos en el punto
+        de recogida, y hasta una hora en aeropuertos y estaciones de tren, antes
+        de declarar nulo el servicio. En estos casos se cobrará el desplazamiento
+        desde Sant Cugat hasta el punto de recogida.
+      </p>
+      <p><strong>Trayectos o esperas solicitadas por el pasajero</strong></p>
+      <p>
+        Cuando un cliente solicite un servicio para una tercera persona, y el
+        pasajero solicite desplazamientos o esperas no acordadas en el servicio
+        pactado, se deberá aclarar quien se hará cargo del pago de la diferencia,
+        si el cliente o el pasajero, en caso de que ninguna de las partes acceda a
+        hacerse cargo, el taxista tiene la facultad de negarse a realizar el
+        servicio adicional solicitado por el pasajero sin que en ningún caso haya
+        derecho a reintegro del importe abonado por el servicio inicialmente
+        contratado.
+      </p>
+      <p><strong>Validez del contrato</strong></p>
+      <p>
+        Las presentes condiciones generales se incorporarán al contrato de
+        prestación de servicios, , en el momento en que el cliente preste su
+        conformidad, que se entenderá prestada cuando confirme que ha leído y
+        acepta el formulario de contratación. Por tratarse de una contratación
+        electrónica, la firma del presente contrato se verá sustituida por la
+        aceptación de las presentes condiciones generales.
+      </p>
+      <p><strong>Modificaciones</strong></p>
+      <p>
+        Las presentes condiciones generales podrán ser objeto de modificaciones,
+        que serán comunicadas en la Web, en la aplicación o por correo electrónico
+        en cualquier momento, siendo exigible al usuario con el fin de mejorar su
+        calidad o de modificar, introducir o dejar de ofrecer prestaciones
+        ofrecidas hasta la fecha.&nbsp;
+      </p>
+      <p><strong>Responsabilidades de EXCEL TAXI SANT CUGAT</strong></p>
+      <p>
+        EXCEL TAXI garantiza la calidad del servicio contratado a través de la
+        página Web, o cualquier dispositivo móvil, servicio o aplicaciones. Quedan
+        garantizados todos los derechos que las Leyes en vigor garanticen a los
+        consumidores y usuarios. El incumplimiento de cualquiera de estas
+        Condiciones de Contratación da derecho al Cliente a la cancelación de los
+        Servicios adquiridos por el Cliente.
+      </p>
+      <p>
+        EXCEL TAXI SANT CUGAT no garantiza un acceso permanente de la página web o
+        de la aplicación, teniendo la facultad de interrumpir su servicio
+        temporalmente, sin necesidad de informar al cliente de dicha interrupción,
+        de manera individual.
+      </p>
+      <p>
+        Las personas que utilicen este sitio web o la aplicación asumirán todos
+        los riesgos de uso, eximiendo a EXCEL TAXI de toda responsabilidad
+        derivada del uso de los mismos, así como daños, costos y gastos que surjan
+        o estén relacionados con el uso de información y contenido
+      </p>
+      <p><strong>Responsabilidades del cliente</strong></p>
+      <p>
+        El cliente se obliga a realizar un uso lícito de los servicios, sin
+        contravenir la legislación vigente, ni lesionar los derechos e intereses
+        de terceras personas. Asimismo, garantiza la veracidad y exactitud de los
+        datos facilitados en los formularios de contratación. El incumplimiento de
+        cualquiera de estas condiciones podrá dar lugar a la cancelación de los
+        servicios por parte de EXCEL TAXI SANT CUGAT sin necesidad de preaviso al
+        cliente y sin que ello dé derecho a indemnización alguna.
+      </p>
+      <p>
+        Todos los derechos sobre software son de EXCEL TAXI SANT CUGAT.
+        Consecuentemente, no podrá ser copiado, modificado, manipulado,
+        decompilado&nbsp; ni divulgado sin previa autorización de EXCEL TAXI SANT
+        CUGAT.
+      </p>
+      <p><strong>Incidencias y reclamaciones</strong></p>
+      <p>
+        En el caso de que el cliente desee comunicar alguna incidencia, comentario
+        o efectuar alguna reclamación podrá hacerlo de tres formas:
+      </p>
+      <ul>
+        <li>
+          Por teléfono, llamando al 935838201, de lunes a jueves, de 9:00 a 14:00
+          y de 16:00 a 19:00 y viernes, de 9:00 a 14:00, hora peninsular.
+        </li>
+        <li>
+          Por correo electrónico a
+          <a href="mailto:info@exceltaxisantcugat.cat"
+            >info@exceltaxisantcugat.cat</a
+          >
+        </li>
+        <li>
+          Por correo ordinario a Avda. Corts Catalanes, 5-7 – Edif. Trade Center I
+          (08173) Sant Cugat del Vallés (Barcelona)
+        </li>
+      </ul>
+      <p><strong>Legislación aplicable y Jurisdicción</strong></p>
+      <p>
+        A estas condiciones generales y a las relaciones jurídicas que se puedan
+        derivar de su aplicación e interpretación, les será de aplicación la ley
+        española,&nbsp; &nbsp;Ud. y EXCEL TAXI SANT CUGAT aceptan someterse a la
+        jurisdicción exclusiva de los tribunales de Rubi &nbsp;para resolver
+        cualquier cuestión jurídica en relación con las Condiciones.
+      </p>
+      <p>
+        El cliente declara haber leído, conocer y aceptar las presentes
+        Condiciones Generales de Contratación, así como la Política de privacidad
+        y Protección de Datos de Carácter Personal en toda su extensión.
+      </p>
+    </div>
+
+    <div *ngIf="defaultLanguage === 'ca'">
+      <p>
+        <strong>AVÍS LEGAL</strong><br />
+        <a href="http://www.exceltaxisantcugat.cat">www.exceltaxisantcugat.cat</a>
+        és propietat de EXCEL TAXI SANT CUGAT, S.L. (en endavant EXCEL TAXI SANT
+        CUGAT), amb domicili a l'Avinguda Corts Catalanes, 5-7,
+        info@exceltaxisantcugat.cat i telèfon 935838201. Està inscrita en el
+        Registre Mercantil de Barcelona, foli 93, Tom 43836, full B-439757,
+        inscripció 1 St. Prohibida la reproducció total o parcial dels continguts
+        d'aquest lloc web sense autorització prèvia. Tots els drets són
+        reservats.<br />
+        <br />
+        <strong>POLÍTICA DE PRIVADESA</strong><br />
+        <br />
+        <strong>Dret d'informació</strong><br />
+        A l'efecte de les disposicions de la Llei Orgànica de protecció de dades
+        de caràcter personal, EXCEL TAXI SANT CUGAT, S.L. (en endavant EXCEL TAXI
+        SANT CUGAT) amb domicili a l'Avinguda Corts Catalanes, 5-7-(08173) Sant
+        Cugat del Vallès (Barcelona) amb CIF número&nbsp;B66075417, informa el
+        client/usuari de l'existència d'un fitxer automatitzat de dades de
+        caràcter personal creat per EXCEL TAXI SANT CUGAT i sota la seva
+        responsabilitat per tal de realitzar el manteniment i gestió de la relació
+        amb els sol·licitants d'informació o clients que accedeixen a través dels
+        formularis electrònics d'aquest lloc o mitjançant missatges de correu
+        electrònic.<br />
+        <br />
+        L'arxiu referit ha estat inscrit en l'agència de protecció de dades.<br />
+        <br />
+        <strong>Propòsit</strong><br />
+        La informació que faciliti a EXCEL TAXI SANT CUGAT té per objectiu
+        gestionar la seva sol·licitud, facilitar informació o serveis sol·licitats
+        i oferir nous serveis.<br />
+        <br />
+        <strong>Consentiment d’usuari</strong><br />
+        L'ús dels formularis esmentats, així com enviar un correu electrònic de
+        consulta, suposa el consentiment del remitent al tractament automatitzat
+        de les dades contingudes en els mitjans de comunicació indicats. Les dades
+        no seran cedides a tercers.<br />
+        Excepte en els camps on de forma expressa es manifesti el contrari, la
+        informació requerida sobre dades personals seran de caràcter de
+        voluntària, sense que la negativa a facilitar aquesta informació impliqui
+        una disminució en la qualitat o quantitat dels serveis sol·licitats. La
+        manca d'ompliment en determinats camps com obligatori o el subministrament
+        de dades incorrectes farà impossible a EXCEL TAXI SANT CUGAT poder
+        proporcionar els serveis que seleccioni, gestionar la seva sol·licitud o
+        enviar-li la informació sol·licitada.<br />
+        <strong><br />
+          Dret d'accés</strong><br />
+        Podrà exercir els drets d'accés, rectificació, cancel·lació i oposició al
+        tractament de les seves dades personals, en els termes i condicions
+        previstes en la mateixa&nbsp;LOPD. Per la seva comoditat, també podrà
+        exercir els drets abans esmentats a la següent adreça electrònica:
+        info@exceltaxisantcugat.cat<br />
+        EXCEL TAXI SANT CUGAT no utilitza tècniques de "spamming", i tampoc queden
+        registrats els usuaris per una mera visita al nostre lloc web.<br />
+        <br />
+        <strong>Informació sobre les galetes</strong><br />
+        Aquest lloc web no fa servir cookies.<br />
+        <br />
+        <strong>Seguretat<br /> </strong>
+        EXCEL TAXI SANT CUGAT manté els nivells de seguretat de protecció de les
+        dades d'acord amb el Reial decret 994/1999, d'11 de juny, sobre mesures de
+        seguretat dels fitxers automatitzats que continguin dades de caràcter
+        personal i ha establert tots els mitjans tècnics al seu abast per evitar
+        la pèrdua, mal ús, alteració, accés no autoritzat i robatori de les dades
+        facilitades a EXCEL TAXI SANT CUGAT, sense perjudici d'informar que les
+        mesures de seguretat d'Internet no són inexpugnables.<br />
+        En relació amb qualsevol qüestió relativa a la protecció de dades
+        personals, contacteu amb nosaltres a través de la nostra adreça de correu:
+        <a href="mailto:info@exceltaxisantcugat.cat"
+          >info@exceltaxisantcugat.cat</a
+        >. <br />
+        <br />
+        EXCEL TAXI SANT CUGAT no serà responsable de les incidències que puguin
+        sorgir al voltant de les dades personals quan es derivin d'un atac o accés
+        no autoritzat als sistemes informàtics i que no pugui ser detectat per les
+        mesures de seguretat implementades.<br />
+        <br />
+        <strong>CONDICIONS DE CONTRACTACIÓ</strong><br />
+        Si us plau, abans de contractar els nostres serveis, o us registreu com a
+        usuari llegir atentament les condicions de contractació.<br />
+        <br />
+        En registrar-se com a usuari de l'aplicació per a dispositius mòbils o
+        mitjançant el lloc web (considerant-se d'ara endavant tant el lloc web com
+        l'aplicació associada a ella, com lloc web) o comprar qualsevol dels
+        nostres serveis, vostè accepta les següents condicions de contractació.<br />
+        <br />
+        <strong>Objecte</strong><br />
+        Les presents Condicions de Contractació tenen com a objecte regular la
+        contractació de serveis a través de la nostra aplicació per a dispositius
+        mòbils i/o de la nostra Web www.exceltaxisantcugat.cat domini del que és
+        titular EXCEL TAXI SANT CUGAT, S.L. (d'ara endavant, EXCEL TAXI SANT
+        CUGAT) amb domicili social en Av. Corts Catalans, 5-7
+        –&nbsp;Edif.&nbsp;Trade&nbsp;Center&nbsp;I (08173) Sant Cugat
+        del&nbsp;Vallès&nbsp;(Barcelona), CIF&nbsp;B66075417, e-mail:
+        <a href="mailto:info@exceltaxisantcugat.cat"
+          >info@exceltaxisantcugat.cat</a
+        >
+        &nbsp;i telèfon 935838201.<br />
+        <br />
+        EXCEL TAXI SANT CUGAT, no assumeix cap responsabilitat pels danys i
+        perjudicis derivats o relacionats amb l'ús d'aquesta informació.<br />
+        <br />
+        EXCEL TAXI SANT CUGAT no es responsabilitza dels errors o omissions que
+        pugui patir el contingut del seu lloc Web o altres continguts a què es
+        pugui accedir a través del mateix ni assumeix cap obligació o compromís de
+        verificar ni de vigilar els continguts i informacions d'aquest.<br />
+        <br />
+        Els links&nbsp;o enllaços que conté el lloc Web poden conduir l'usuari a
+        altres llocs i pàgines Web gestionats per tercers, sobre les quals EXCEL
+        TAXI SANT CUGAT no exerceix cap control.<br />
+        <br />
+        EXCEL TAXI SANT CUGAT no es fa responsable dels continguts ni de l'estat
+        d'aquests llocs web i pàgines Web, i accedir-hi a través del lloc Web no
+        implica que EXCEL TAXI SANT CUGAT recomani o aprovi els seus
+        continguts.<br />
+        <br />
+        <strong>Capacitat per contractar</strong><br />
+        D'acord amb la legislació aplicable, per contractar els serveis oferts per
+        EXCEL TAXI SANT CUGAT, el client ha de tenir la capacitat legal necessària
+        per contractar que estableix la llei del país de la qual és nacional.<br />
+        <br />
+        En el supòsit que menors d'edat o persones amb la capacitat modificada
+        accedeixin a aquesta pàgina web o es registrin en l'aplicació per a
+        dispositius mòbils, han d'estar en companyia dels seus pares, tutors o
+        representants legals, els qui seran considerats responsables de tots els
+        actes realitzats per aquests últims.<br />
+        <br />
+        Tots aquells serveis contractats per menors o persones amb la capacitat
+        modificada es presumiran contractats pels seus representants legals, sent
+        responsabilitat exclusiva d'aquests últims respecte de les persones que a
+        càrrec seu es trobin, sent els obligats a controlar, supervisar i
+        restringir l'accés a les pàgines web o aplicacions l'accés de les quals
+        considerin inadequat.<br />
+        <br />
+        <strong>Descripció del producte/servei</strong><br />
+        EXCEL TAXI SANT CUGAT a través de la seva pàgina Web
+        <a href="http://www.exceltaxisantcugat.cat">www.exceltaxisantcugat.cat</a>
+        &nbsp;i la seva aplicació per a dispositius mòbils ofereix serveis de taxi
+        d'alta qualitat, d’acord al perfil i necessitats de l'usuari<br />
+        L'aplicació està disponible per a dispositius amb sistemes
+        operatius&nbsp;IOS&nbsp;i Android, així com la versió web integrada en la
+        web d'EXCEL TAXI SANT CUGAT.<br />
+        <br />
+        Utilitzant l'aplicació l'usuari podrà, en els termes descrits en les
+        condicions de contractació:<br />
+        - Crear / modificar perfil d'usuari<br />
+        - Crear/modificar/cancel·lar reserves<br />
+        - Crear una llista d'adreces freqüents<br />
+        - Rebre contraofertes si l'hora per la qual va sol·licitar el taxi no hi
+        ha disponibilitat.<br />
+        - Sol·licitud de taxi per al moment (segons disponibilitat)<br />
+        - Comprovar l'estat de les teves reserves.<br />
+        - Contactar directament amb el conductor una vegada té un assignat a la
+        seva reserva.<br />
+        - El pagament amb targeta de crèdit mitjançant l'aplicació.<br />
+        - Avaluació de la qualitat del servei.<br />
+        - Rebre la factura per correu electrònic quan el pagament s'efectua a
+        través de l'App.<br />
+        - Seleccionar els serveis que s'inclouran en la factura, un, diversos o
+        tots els del mes.<br />
+        - Consultar l'històric de reserves.<br />
+        - Enviar missatges, consultes, suggeriments... a l'empresa.<br />
+        <br />
+        <strong>Drets de còpia i propietat intel·lectual</strong><br />
+        EXCEL TAXI SANT CUGAT, els seus socis o els seus proveïdors posseeixen els
+        drets de la Propietat Intel·lectual de tots i qualsevol dels components
+        del Servei, Pàgina Web i aplicació que puguin protegir-se, incloent-hi
+        però no limitant el text, material gràfic, tot el programari associat amb
+        el Servei i els elements de la interfície d'usuari continguts en el
+        mateix. Vostè es compromet a no copiar, adaptar, reproduir, distribuir,
+        aplicar enginyeria inversa, descompilar, o dissimular qualsevol aspecte
+        del Servei que EXCEL TAXI SANT CUGAT, els seus socis o els seus proveïdors
+        posseeixin. Vostè també accepta i s'obliga a no utilitzar
+        robots,&nbsp;spiders, altres aparells automatitzats, o processos manuals
+        per controlar o copiar qualsevol contingut del Servei.<br />
+        El disseny d'aquest lloc web i de la seva aplicació corresponent és
+        propietat d'EXCEL TAXI SANT CUGAT, des de la seva programació, edició,
+        compilació i altres elements necessaris per al seu funcionament.<br />
+        <br />
+        <strong>Àrea d'influència</strong><br />
+        Els taxis associats a Excel Taxi Sant Cugat pertanyen a l'àmbit
+        del&nbsp;Àrea&nbsp;Metropolitana de Barcelona (AMB), i en particular, la
+        seva zona de treball és Sant Cugat del Vallès, en la qual s'estableixen
+        l'origen o destinació lògics de tots els recorreguts.<br />
+        El punt de recollida ha d'estar comprès dins de les poblacions que
+        conformen l'AMB, i el punt de destinació pot ser qualsevol, tan dins com
+        fora del territori espanyol.<br />
+        Quan un trajecte tingui el seu origen i destinació fora de Sant Cugat, i
+        el recorregut previ i posterior que hagi de realitzar el taxista en buit
+        des de i cap a Sant Cugat facin que el servei no sigui rendible, Excel
+        Taxi pot negar-se a oferir el servei o oferir alternatives per satisfer
+        les necessitats del client.<br />
+        <strong></strong><strong>PROCÈS DE CONTRACTACIÓ</strong><br />
+        <br />
+        <strong>Registre</strong><br />
+        L'accés al lloc web i la descàrrega de l'aplicació d'EXCEL TAXI SANT CUGAT
+        és totalment gratuïta per als usuaris. No obstant això, els serveis que es
+        contractin estan subjectes al pagament d'un preu que es determini segons
+        les condicions d'ús i servei contractat.<br />
+        El contingut de prestacions de la pàgina web i de l'aplicació no inclou
+        els serveis d'internet necessaris per a la seva utilització. El client és
+        responsable de l'accés a internet, així com dels requisits tècnics i de la
+        configuració del dispositiu final per a la utilització de la pàgina web,
+        l'aplicació i l'actualització del programari, sent a càrrec seu qualsevol
+        despesa derivada d'aquest.<br />
+        <br />
+        Per a la contractació de qualsevol servei a través de la pàgina web o
+        aplicació, es requereix la inscripció prèvia en el registre d'usuaris. Les
+        dades del formulari marcades amb un asterisc són obligatòries. El client
+        està obligat a facilitar les dades d'una forma veraç i correcta, sent
+        l'únic responsable de la informació falsa o inexacta que realitzi, així
+        com dels perjudicis que aquesta informació pogués causar.<br />
+        <br />
+        El client consent expressament que EXCEL TAXI SANT CUGAT, S.L. procedeixi
+        a la recollida d'aquestes dades i al seu posterior tractament amb la
+        finalitat indicada en la seva "Política de privadesa". La no acceptació
+        dels termes legals i les condicions de contractació impedeix la
+        continuació del procés de contractació i, per tant, l'accés als serveis.
+        La verificació de les dades del procés d'alta d'usuari i/o contractació
+        serà responsabilitat única del client.<br />
+        <br />
+        El client accepta que els taxistes col·laboradors amb EXCEL TAXI tinguin
+        accés a les seves dades facilitades per a la contractació dels serveis.<br />
+        <br />
+        Es presumirà que qualsevol persona que actuï en nom del Client, ja sigui
+        un encarregat, un col·laborador, etc., és representant del mateix i té
+        poders suficients per actuar com a tal i vincular-li.<br />
+        <br />
+        <strong>Confirmació de la reserva</strong><br />
+        Una vegada efectuada la reserva, i acceptant les presents condicions de
+        contractació, el client rebrà confirmació dels serveis contractats, moment
+        a partir del que s'entendrà acceptat el servei per part d'EXCEL TAXI SANT
+        CUGAT.<br />
+        <br />
+        EXCEL TAXI SANT CUGAT garantirà el servei una vegada hagi estat confirmada
+        la reserva.<br />
+        <br />
+        EXCEL TAXI SANT CUGAT es reserva el dret a deixar d'oferir serveis sempre
+        que existeixi causa justificada, incloent-hi amb caràcter exemplificatiu
+        però no&nbsp;limitatiu, com a causa justificada l'incompliment en el
+        pagament del servei, absència reiterada del client en el lloc i hora de la
+        reserva, agressió o tracte indigne a algun taxista.<br />
+        <br />
+        Una vegada confirmada la reserva, i assignada la mateixa a un taxista, el
+        client tindrà a la seva disposició les dades de contacte d'aquest per
+        poder informar qualsevol incidència en relació al servei contractat.<br />
+        <br />
+        S'adverteix que el taxista no envia avís al client en arribar al punt de
+        recollida del client, tret que el mateix taxista es demori en la
+        recollida.<br />
+        <br />
+        No s'accepten reserves per a serveis interiors. Aquest tipus de serveis
+        han de sol·licitar-se uns minuts abans i sempre que hi hagi
+        disponibilitat, s'enviarà un taxi a realitzar el servei.<br />
+        <br />
+        Es denominen serveis interiors a tots aquells que tenen l'origen i la
+        destinació dins d'un mateix municipi.<br />
+        <br />
+        A efectes pràctics, es consideren també serveis interiors els serveis el
+        trajecte dels quals estigui comprès entre Sant Cugat i alguna de les
+        següents poblacions:<br />
+        - Cerdanyola del Vallès<br />
+        - Molins de Rei<br />
+        - El Papiol<br />
+        -&nbsp;Rubí<br />
+        <br />
+        Com a norma general, les reserves han de realitzar-se amb una antelació
+        mínima d'una hora.<br />
+        <br />
+        Les reserves es poden fer per tercers canviant el nom del passatger a
+        recollir, però en qualsevol cas, el responsable davant de qualsevol
+        incident amb aquesta reserva és l'usuari registrat que va fer la
+        reserva.<br />
+        <br />
+        Si no fos possible complir amb una sol·licitud, el responsable de serveis
+        rebutjaria la reserva.<br />
+        <br />
+        Si el problema fos l'horari de la sol·licitud, i existís la possibilitat
+        de cobrir el servei uns minuts abans o uns minuts després, l'usuari rebrà
+        una contraoferta horària, amb una o més opcions, que l'usuari podrà
+        acceptar o rebutjar.<br />
+        <br />
+        <br />
+        <strong>Política de modificacions o cancel·lacions</strong><br />
+        Les modificacions en les reserves estaran subjectes a la verificació i
+        confirmació per part del responsable de serveis que estigui a càrrec dels
+        serveis a cada moment. Si un client sol·licita un canvi en la recollida, i
+        si al lloc o a l'hora per la qual sol·licita la modificació no hi hagués
+        taxis disponibles, EXCEL TAXI SANT CUGAT podria contra-oferir o rebutjar
+        la sol·licitud.<br />
+        <br />
+        EXCEL TAXI SANT CUGAT es reserva el dret d'anul·lació de serveis,
+        obligant-se, en el cas que sigui per causa imputable exclusivament a ell,
+        a retornar, si escau, l'import íntegre abonat pel servei no realitzat
+        finalment.<br />
+        <br />
+        Quan la cancel·lació es realitza amb menys d'una hora d'antelació, si el
+        taxi ha iniciat el desplaçament fins al punt de recollida, o si ja es
+        troba en el punt de recollida, el client haurà d'abonar el desplaçament,
+        amb un mínim de 15 euros.<br />
+        <br />
+        Quan es tracti d'un servei compost per diversos trajectes i/o temps
+        d'espera, es podrà cancel·lar part del servei amb dret al reintegrament de
+        la part proporcional del servei no realitzat.<br />
+        <br />
+        Comunicar al taxista al moment de pujar al taxi que la destinació serà
+        diferent de la indicada en la reserva, pot causar perjudicis a
+        l'organització de flota, i com a conseqüència a altres clients, i fins i
+        tot al mateix taxista si la nova destinació no compensa el desplaçament
+        realitzat per cobrir aquest servei. Això faculta a EXCEL TAXI per deixar
+        de prestar el servei al client, amb plena indemnitat.<br />
+        <br />
+        El client comunicarà a EXCEL TAXI SANT CUGAT dins del termini estipulat i
+        per qualsevol mitjà admès en dret, el seu desig d'exercitar el dret de
+        cancel·lació.<br />
+        <br />
+        <strong>Serveis instantanis</strong><br />
+        L'aplicació permet sol·licitar serveis per al moment, subjecte sempre a
+        disponibilitat del taxista. El sistema calcularà i consultarà al taxista
+        que trigaria menys a arribar, i una vegada el taxista confirmi que ho pot
+        realitzar, el client rebrà informació sobre el temps que trigarà el taxi,
+        per finalment confirmar o cancel·lar la reserva.<br />
+        <br />
+        <strong>Preu</strong><br />
+        Els preus aplicables a cada servei són els establerts per l'organisme
+        regulador del taxi a Barcelona i la seva àrea metropolitana (Institut
+        Metropolità del Taxi) i s'aplicaran sempre que es compleixin les següents
+        condicions:<br />
+        <br />
+        - El pagament ha d'efectuar-se, per regla general, directament al taxista
+        en finalitzar el servei.<br />
+        <br />
+        Tant l'ús de la pàgina web com de l'aplicació en relació al servei de
+        gestió de reserves i sol·licituds de serveis oferts serà gratuït, sent el
+        servei contractat abonat directament al taxista, tret que el client tingui
+        subscrit altres condicions particulars diferents d'aquestes.<br />
+        <br />
+        El servei podrà abonar-se en efectiu o amb targetes de crèdit. EXCEL TAXI
+        SANT CUGAT no emmagatzema dades de les targetes de crèdit, estant aquest
+        servei subcontractat a una entitat bancària que compleix amb la normativa
+        vigent i exigències de seguretat.<br />
+        <br />
+        Per als serveis d'abonat, s'aplicaran les tarifes d'Excel Taxi Sant Cugat
+        que cobreixen les despeses administratives i de gestió.<br />
+        <br />
+        <strong>Incompliment</strong><br />
+        Quan el passatger no es presenti en el punt de recollida i no sigui
+        possible establir contacte amb ell, el taxi esperarà fins a 30 minuts en
+        el punt de recollida, i fins a una hora en aeroports i estacions de tren,
+        abans de declarar nul el servei. En aquests casos es cobrarà el
+        desplaçament des de Sant Cugat fins al punt de recollida.<br />
+        <br />
+        <strong>Trajectes o esperes sol·licitades pel passatger</strong><br />
+        Quan un client sol·liciti un servei per a una tercera persona, i el
+        passatger sol·liciti desplaçaments o esperes no acordades en el servei
+        pactat, s'haurà d'aclarir qui es farà càrrec del pagament de la
+        diferència, si el client o el passatger, en cas que cap de les parts
+        accedeixi a fer-se càrrec, el taxista té la facultat de negar-se a
+        realitzar el servei addicional sol·licitat pel passatger sense que en cap
+        cas hi hagi dret a reintegrament de l'import abonat pel servei inicialment
+        contractat.<br />
+        <br />
+        <strong>Validesa del contracte</strong><br />
+        Les presents condicions generals s'incorporaran al contracte de prestació
+        de serveis, en el moment en què el client presti la seva conformitat, que
+        s'entendrà prestada quan confirmi que ha llegit i accepta el formulari de
+        contractació. Per tractar-se d'una contractació electrònica, la signatura
+        del present contracte es veurà substituïda per l'acceptació de les
+        presents condicions generals.<br />
+        <br />
+        <strong>Modificacions</strong><br />
+        Les presents condicions generals podran ser objecte de modificacions, que
+        seran comunicades a la Web, en l'aplicació o per correu electrònic a
+        qualsevol moment, sent exigible a l'usuari amb la finalitat de millorar la
+        seva qualitat o de modificar, introduir o deixar d'oferir prestacions
+        ofertes fins avui estar al corrent d'aquestes.<br />
+        <br />
+        <strong>Responsabilitats d'EXCEL TAXI SANT CUGAT</strong><br />
+        EXCEL TAXI garanteix la qualitat del servei contractat a través de la
+        pàgina Web, o qualsevol dispositiu mòbil, servei o aplicacions. Queden
+        garantits tots els drets que les Lleis en vigor garanteixin als
+        consumidors i usuaris. L'incompliment de qualsevol d'aquestes Condicions
+        de Contractació dóna dret al Client a la cancel·lació dels Serveis
+        adquirits pel Client.<br />
+        <br />
+        EXCEL TAXI SANT CUGAT no garanteix un accés permanent de la pàgina web o
+        de l'aplicació, tenint la facultat d'interrompre el seu servei
+        temporalment, sense necessitat d'informar al&nbsp;client d'aquesta
+        interrupció, de manera individual.<br />
+        <br />
+        Les persones que utilitzin aquest lloc web o l'aplicació assumiran tots
+        els riscos d'ús, eximint a EXCEL TAXI de tota responsabilitat derivada de
+        l'ús d'aquests, així com danys, costos i despeses que sorgeixin o estiguin
+        relacionats amb l'ús d'informació i contingut.<br />
+        <br />
+        <strong>Responsabilitats del client</strong><br />
+        El client s'obliga a realitzar un ús lícit dels serveis, sense contravenir
+        la legislació vigent, ni lesionar els drets i interessos de terceres
+        persones. Així mateix, garanteix la veracitat i exactitud de les dades
+        facilitades en els formularis de contractació. L'incompliment de qualsevol
+        d'aquestes condicions podrà donar lloc a la cancel·lació dels serveis per
+        part d'EXCEL TAXI SANT CUGAT sense necessitat de preavís al client i sense
+        que això doni dret a cap indemnització.<br />
+        <br />
+        Tots els drets sobre programari són d'EXCEL TAXI SANT CUGAT. En
+        conseqüència, no podrà ser copiat, modificat, manipulat, descompilat ni
+        divulgat sense prèvia autorització d'EXCEL TAXI SANT CUGAT.<br />
+        <br />
+        <strong>Incidències i reclamacions</strong><br />
+        En el cas que el client desitgi comunicar alguna incidència, comentari o
+        efectuar alguna reclamació podrà fer-ho per diferents vies:<br />
+        <br />
+        • Per telèfon, trucant a la 935838201, de dilluns a dijous,
+        de&nbsp;9:00&nbsp;a&nbsp;14:00&nbsp;i
+        de&nbsp;16:00&nbsp;a&nbsp;19:00&nbsp;i divendres,
+        de&nbsp;9:00&nbsp;a&nbsp;14:00, hora peninsular.<br />
+        • Per correu electrònic a
+        <a href="mailto:info@exceltaxisantcugat.cat"
+          >info@exceltaxisantcugat.cat</a
+        >
+        <br />
+        • Per correu ordinari a Av. Corts Catalanes,
+        5-7-Edif.&nbsp;Trade&nbsp;Center&nbsp;(08173) Sant Cugat del Vallès
+        (Barcelona)<br />
+        <br />
+        <strong>Legislació aplicable i Jurisdicció</strong><br />
+        A aquestes condicions generals i a les relacions jurídiques que es puguin
+        derivar de la seva aplicació i interpretació, els serà aplicable la llei
+        espanyola, vostè&nbsp;i&nbsp;EXCEL TAXI SANT CUGAT accepten sotmetre's a
+        la jurisdicció exclusiva dels tribunals de&nbsp;Rubí&nbsp;per resoldre
+        qualsevol qüestió jurídica en relació amb les Condicions.
+      </p>
+      <p>
+        El client declara haver llegit, conèixer i acceptar les presents
+        Condicions Generals de Contractació, així com la Política de privadesa i
+        Protecció de Dades de Caràcter Personal en tota la seva extensió.
+      </p>
+    </div>
+
+    <div *ngIf="defaultLanguage === 'en'">
+      <p>
+        <strong>LEGAL WARNING</strong><br />
+        www.exceltaxisantcugat.cat is owned by EXCEL TAXI SANT CUGAT, S.L. (From
+        now on, EXCEL TAXI SANT CUGAT) with fiscal address at Avenida. Corts
+        Catalanes, 5-7 - Trade Center Building I. (08173) Sant Cugat del Vallés
+        (Barcelona). TAX ID number: B66075417. E-mail: info@exceltaxisantcugat.cat
+        and telephone number 935838201. It is registered in Registro Mercantil de
+        Barcelona, page 93, Volume 43836, Sheet B-439757, Inscription 1st . The
+        total or partial part of this reproduction and the contents of this
+        website is forbidden without prior authorization. All rights reserved.
+      </p>
+      <p>
+        <strong>PRIVACY POLICY</strong><br />
+        <strong>Right to information</strong><br />
+        For the purposes of the provisions of the Organic Law on the Protection of
+        Personal Data, EXCEL TAXI SANT CUGAT, S.L. (From now on, EXCEL TAXI SANT
+        CUGAT) with fiscal address at Av. Corts Catalanes, 5-7 - (08173) Sant
+        Cugat del Vallés (Barcelona) with TAX ID number B66075417, informs the
+        user / customer about the existence of an automated file Personal data
+        created by EXCEL TAXI SANT CUGAT and under its responsibility in order to
+        carry out the maintenance and management of the relationship with the
+        information requestors or clients who have accessed through the electronic
+        forms of this site or through emails. <br />
+        The referred file has been registered with the Data Protection Agency.
+      </p>
+      <p>
+        <strong>Purpose</strong><br />
+        The data you provide to EXCEL TAXI SANT CUGAT are intended to manage your
+        request, provide you with the information and / or services you request
+        and to be able to offer you new services.
+      </p>
+      <p>
+        <strong>User Consent</strong><br />
+        The use of the mentioned forms, as well as sending a consultation email,
+        supposes the consent of the sender to the automated treatment of the data
+        included in the means of the indicated mass media. The data will not be
+        transferred to third parties. <br />
+        Except in fields where expressly stated otherwise, the delivery of
+        information required on personal data will be voluntary, without the
+        refusal to provide such information imply a reduction in the quality or
+        quantity of the services you request. Failure to fill in the fields
+        determined as mandatory or the provision of incorrect data will make it
+        impossible for EXCEL TAXI SANT CUGAT to provide you with the services you
+        select, to manage your request or to send you the requested information.
+      </p>
+      <p>
+        <strong>Access Rights </strong><br />
+        You may exercise your access right, rectification, cancellation and
+        opposition of the processing of your personal data, under the terms and
+        conditions provided in the LOPD. For your convenience, you can also
+        exercise the aforementioned rights by going to the following e-mail
+        address: info@EXCELTAXISANTCUGAT.cat <br />
+        EXCEL TAXI SANT CUGAT does not use "Spamming" tactics, nor are users
+        registered for a mere visit to our website.
+      </p>
+      <p>
+        <strong>Cookie Information</strong><br />
+        This website does not use cookies.
+      </p>
+      <p>
+        <strong>Security</strong><br />
+        EXCEL TAXI SANT CUGAT maintains the security levels of protection of its
+        data in accordance with Royal Ordinance 994/1999, of June 11, relative to
+        the security measures of the automated files that contain personal data
+        and has established all the technical means at its disposal to prevent
+        loss, misuse, alteration, unauthorized access and theft of data provided
+        to EXCEL TAXI SANT CUGAT, without prejudice to inform you that the
+        security measures on the Internet are not impregnable. <br />
+        Regarding any topic related to the protection of personal data, you can
+        contact us through our email address: info @ EXCELTAXI SANTCUGAT.cat
+        <br />
+        EXCEL TAXI SANT CUGAT shall not be liable in any case for incidents that
+        may arise regarding personal data when they result from an attack or
+        unauthorized access to computer systems and that is impossible to detect
+        by the &nbsp;implemented security measures.
+      </p>
+      <p>
+        <strong>AGREEMENT CONDITIONS </strong><br />
+        Please, before contracting our services, or register as a user, carefully
+        read the agreement Conditions. <br />
+        By registering as a user in the mobile application or through the web page
+        (both the website and associated application being considered as a
+        website) or acquiring any of our services, you agree to the following
+        Terms and Conditions .
+      </p>
+      <p>
+        <strong>Object</strong> <br />
+        The purpose of these Terms of Conditions is to regulate the contracting of
+        services through our application for mobile devices and / or our website
+        www.exceltaxisantcugat.cat domain of which EXCEL TAXI SANT CUGAT, S.L.
+        (From now on, referred to as EXCEL TAXI SANT CUGAT) with fiscal address
+        &nbsp;at Avda. Corts Catalanes, 5-7 - Trade Center Building I (08173) Sant
+        Cugat del Vallés (Barcelona), Tax ID number B66075417, e-mail:
+        info@exceltaxisantcugat.cat and telephone 935838201. <br />
+        EXCEL TAXI SANT CUGAT, assumes no liability for damages resulting from or
+        connected with the use of such information. <br />
+        EXCEL TAXI SANT CUGAT is not responsible for the errors or omissions of
+        those who may suffer the content of its website or other content that can
+        be accessed through it or assume no duty or commitment to verify or
+        monitor the contents and information thereof. <br />
+        The links contained in the website may lead the user to other sites and
+        web pages managed by third parties, on which EXCEL TAXI SANT CUGAT does
+        not exercise any type of control. <br />
+        EXCEL TAXI SANT CUGAT does not respond to the contents or the status of
+        such sites and websites, and access to them through the website does not
+        imply that EXCEL TAXI SANT CUGAT recommends or approves its contents.
+      </p>
+      <p>
+        <strong>Legal capacity</strong><br />
+        According to the applicable legislation, in order to contract the services
+        offered by EXCEL TAXI SANT CUGAT, the client must have the legal capacity
+        necessary to contract that establishes the law of the country of which he
+        is a national. <br />
+        In the event that minors or persons with modified capacity access this
+        website or register in the application for mobile devices, they must be in
+        the company of their parents, guardians or legal representatives, who will
+        be held responsible for all acts performed by the latter. <br />
+        All services contracted by minors or persons with the modified capacity
+        shall be presumed to be hired by their legal representatives, being the
+        exclusive responsibility of the latter with respect to the persons in
+        their charge, being obliged to control, supervise and restrict access to
+        Web pages or applications that they consider inappropriate.
+      </p>
+      <p>
+        <strong>Product / service description</strong><br />
+        EXCEL TAXI SANT CUGAT through its website www.exceltaxisantcugat.cat and
+        its application for mobile devices offers high quality taxi services,
+        according to the profile and the users´needs . <br />
+        The application is available for devices with IOS and Android operating
+        system in addition to the Web version integrated in the web of EXCEL TAXI
+        SANT CUGAT. <br />
+        Using the application, the user may, under the terms described in the
+        contracting conditions: <br />
+        - Create / modify user profile <br />
+        - Create / modify / cancel bookings <br />
+        - Create a list of frequent addresses <br />
+        - Receive counter-offers if the time for which you requested the taxi is
+        not available. <br />
+        - Request taxi for the moment (subject to availability) <br />
+        - Check the status of your bookings <br />
+        - Contact the taxi driver directly once one is assigned to their booking.
+        <br />
+        - Make the payment by credit card through the application. <br />
+        - Evaluate the quality of the service <br />
+        - Receive invoice by email when payment is made through the App. <br />
+        - Select services to include in the invoice, either one, several, or all
+        of the month. <br />
+        - Check booking history <br />
+        - Send messages, queries, suggestions, etc. to the enterprise.
+      </p>
+      <p>
+        <strong>Copyright and intellectual property</strong><strong> </strong><br />
+        EXCEL TAXI SANT CUGAT, its partners or suppliers have the rights of the
+        Intellectual Property of all and any of the components of the Service, Web
+        Page and application that may be protected, including but not limited to
+        the text, graphic material, all software associated with the Service and
+        the elements of the user interface contained in it. You agree not to copy,
+        adapt, reproduce, distribute, reverse engineer, decompile, or disguise any
+        facet of the Service that EXCEL TAXI SANT CUGAT, its partners or its
+        suppliers owns. You also agree not to use robots, spiders, other automated
+        devices, or manual processes to control or copy any content of the
+        service. <br />
+        The design of this website and its corresponding application is the
+        property of EXCEL TAXI SANT CUGAT, from its programming, edition,
+        compilation and other elements necessary for its operation.
+      </p>
+      <p>
+        <strong>Area of influence</strong><br />
+        Taxis associated with Excel Taxi Sant Cugat belong to the area of the
+        Metropolitan Area of Barcelona (AMB), and in particular, its work area is
+        Sant Cugat del Vallés, which establishes the logical origin or destination
+        of all routes. <br />
+        The collecting point must be comprised within the populations that make up
+        the AMB, and the destination point can be any, both inside and outside the
+        Spanish territory. <br />
+        When a journey has its origin and destination outside of Sant Cugat, and
+        the previous and subsequent trip that the taxi driver must take to and
+        from Sant Cugat make the service not profitable, Excel Taxi can refuse to
+        offer the service or offer alternatives to meet the customer´s needs.
+      </p>
+      <p>
+        <strong>Hiring process</strong><br />
+        <strong>Registry</strong><br />
+        Access to the website and the download of the EXCEL TAXI SANT CUGAT
+        application is totally free for the users. However, the services that are
+        contracted are subject to the payment of a price that is determined
+        according to the conditions of use and service contracted. <br />
+        The performance content of the website and the application does not
+        include the necessary internet services for its use. The customer is
+        responsible for accessing the internet, as well as the technical
+        requirements and configuration of the final device for the use of the
+        website, application and software update, being at his expense any
+        expenses derived thereof. <br />
+        For the contracting of any service through the website or application, the
+        previous registration in the user registry is required. Form data marked
+        with an asterisk are required. The customer is obliged to provide the data
+        in a truthful and correct manner, being solely responsible for the false
+        or inaccurate information that he makes, as well as the damages that such
+        information could cause. <br />
+        The customer expressly agrees that EXCEL TAXI SANT CUGAT, S.L. Proceed to
+        the collection of said data and its subsequent processing for the purpose
+        indicated in its "Privacy Policy". Failure to accept legal terms and
+        conditions of contract prevents the continuation of the hiring process
+        and, therefore, access to the services. The verification of the data of
+        the user registration process and / or contracting will be the sole
+        responsibility of the client. <br />
+        The client accepts that the taxi drivers collaborating with EXCEL TAXI
+        have access to their data provided for the contracting of the services.
+        <br />
+        It will be presumed that any person acting on behalf of the client,
+        whether a manager, a collaborator, etc., is representative of the same and
+        has sufficient powers to act as such and to bind him.
+      </p>
+      <p>
+        <strong>Booking confirmation</strong><br />
+        Once the booking is made, and accepting the present contracting
+        conditions, the customer will receive confirmation of the contracted
+        services, from which time the service will be understood by EXCEL TAXI
+        SANT CUGAT. <br />
+        EXCEL TAXI SANT CUGAT will guarantee the service once the booking has been
+        confirmed. <br />
+        EXCEL TAXI SANT CUGAT reserves the right to stop offering services
+        whenever there is justified cause, including by way of example but not
+        limitation, as a justifiable cause for failure to pay the service,
+        repeated absence of the client at the place and time of the booking,
+        aggression or treatment unworthy to some taxi driver. <br />
+        Once the booking is confirmed, and assigned to a taxi driver, the customer
+        will have &nbsp;the contact details of this one at his disposal to be able
+        to inform any incidence in relation to the contracted service. <br />
+        It is noted that the taxi driver does not send notice to the customer when
+        arriving at the point of collection of the customer, unless the taxi
+        driver himself is delayed in the collection. <br />
+        Bookings for interior services are not accepted. This type of services
+        must be requested a few minutes before and whenever there is availability,
+        a taxi will be sent to perform the service. <br />
+        Internal services are called to all those whose origin and destination is
+        within the same municipality. <br />
+        For practical purposes, it is also considered to be internal services, the
+        services which are between Sant Cugat and one of the following
+        populations: <br />
+        - Cerdanyola del Vallés <br />
+        - Molins de Rei <br />
+        - Papiol <br />
+        - Rubi <br />
+        As a general rule, bookings must be made at least one hour in advance.
+        <br />
+        Bookings can be made for third parties by changing the name of the
+        passenger to pick up, but in any case, the responsible for any incident
+        with that booking is the registered user who made the booking. <br />
+        In case that for any reason it is not possible to comply with an
+        application, the service manager would reject the booking. <br />
+        If the problem is the schedule of the request, and there is a possibility
+        to cover the service a few minutes before or a few minutes later, the user
+        will receive a counter time offer, with one or more options that the user
+        could accept or reject.
+      </p>
+      <p>
+        <strong>Modifications or Cancellations Policies</strong><strong> </strong><br />
+        The changes in bookings will be subject to verification and confirmation
+        by the service manager who is in charge of the services at any time. If a
+        customer requests a change in the collection, and if the place or the time
+        for which he / she requests the modification, there are no taxis
+        available, Excel Taxi Sant Cugat could counter-offer or reject the
+        request. <br />
+        EXCEL TAXI SANT CUGAT reserves the right to cancel services, being
+        obliged, in the case that it is attributable exclusively to him, to
+        return, as the case may be, the entire amount paid for the service not
+        finally performed. <br />
+        When the cancellation is made less than one hour in advance, if the taxi
+        has started the journey to the collecting point, or if it is already at
+        the point of collection, the customer must pay the trip, with a minimum of
+        15 Euros. <br />
+        In the case of a service consisting of several routes and / or waiting
+        times, part of the service may be canceled with the right to reimbursement
+        of the proportional part of the service not performed. <br />
+        Communicate to the taxi driver at the time of going to the taxi that the
+        destination will be different from the one indicated in the booking, can
+        cause damages to the fleet organization, and as a consequence to other
+        customers, and even to the taxi driver himself if the new destination does
+        not compensate the displacement Made to cover this service. This enables
+        EXCEL TAXI to stop providing customer service, with full indemnity. <br />
+        The client will communicate to EXCEL TAXI SANT CUGAT within the stipulated
+        period and by any means admitted in law, his desire to exercise the right
+        of cancellation.
+      </p>
+      <p>
+        <strong>Instant services</strong><br />
+        The application allows to request services for the moment, subject always
+        to availability of the taxi driver. The system will calculate and consult
+        the taxi driver that would take less time to arrive, and once the taxi
+        driver confirms that he can do it, the customer will receive information
+        about the time it will take the taxi, to finally confirm or cancel the
+        booking.
+      </p>
+      <p>
+        <strong>Price</strong><br />
+        The price applicable to each service are those established by the taxi
+        regulator in Barcelona and its metropolitan area (Metropolitan Taxi
+        Institute) and will apply provided that the following conditions are met:
+        <br />
+        - The payment must be made, as a general rule, directly to the taxi driver
+        at the end of the service. <br />
+        Both the use of the website and the application in relation to the booking
+        management service and requests for services offered will be free of
+        charge, with the contracted service subscribed directly to the taxi
+        driver, unless the customer has subscribed other specific conditions other
+        than these. <br />
+        The service can be paid by cash or with credit cards. EXCEL TAXI SANT
+        CUGAT does not store credit card data, this service being subcontracted to
+        a bank that complies with current regulations and security requirements.
+        <br />
+        For subscriber services, Excel Taxi Sant Cugat rates will be applied,
+        which cover administrative and management expenses.
+      </p>
+      <p>
+        <strong>Breach</strong><br />
+        When the passenger does not show up at the collecting point and it is not
+        possible to contact him, the taxi will wait up to 30 minutes at the
+        collecting point and up to one hour at airports and train stations before
+        declaring the service invalid. In these cases the transfer from Sant Cugat
+        to the collecting point will be charged.
+      </p>
+      <p>
+        <strong>Trips or waiting times requested by the passenger</strong><br />
+        When a customer requests a service for a third person, and the passenger
+        requests travel or waiting not agreed in the agreed service, it should be
+        clarified who will pay for the difference, if the customer or the
+        passenger, in the event that none of the parties agree to take charge, the
+        taxi driver has the power to refuse to perform the additional service
+        requested by the passenger without in any case the right to reimbursement
+        of the amount paid by the service initially contracted.
+      </p>
+      <p>
+        <strong>Validity of the contract</strong><br />
+        These general conditions will be included in the service agreement, at the
+        moment the customer agrees, which will be understood when he confirms that
+        he has read and accepted the contract form. As it is an electronic
+        contract, the signature of this contract will be replaced by the
+        acceptance of the present general conditions.
+      </p>
+      <p>
+        <strong>Modifications</strong><br />
+        The present general conditions may be subject to modifications, which will
+        be communicated on the web, in the application or by email at any time,
+        being demanded by the user in order to improve their quality or to modify,
+        introduce or stop offering offered services till the date.
+      </p>
+      <p>
+        <strong>Responsibilities of EXCEL TAXI SANT CUGAT</strong><br />
+        EXCEL TAXI guarantees the quality of the service contracted through the
+        website, or any mobile device, service or applications. All rights that
+        the laws in force guarantee to consumers and users are guaranteed. Failure
+        to comply with any of these Conditions of Contract entitles the Customer
+        to cancel the Services purchased by the Customer. <br />
+        EXCEL TAXI SANT CUGAT does not guarantee permanent access to the website
+        or application, having the power to interrupt its service temporarily,
+        without having to inform the client of this interruption, individually.
+        <br />
+        The persons who use this website or the application will assume all risks
+        of use, exempting EXCEL TAXI from all responsibility derived from the use
+        of the same, as well as damages, costs and expenses that arise or are
+        related to the use of information and content.
+      </p>
+      <p>
+        <strong>Customer Responsibilities</strong><br />
+        The client is obliged to make a lawful use of the services, without
+        contravening the current legislation, nor damaging the rights and
+        interests of third parties. It also guarantees the accuracy and veracity
+        of the data provided in the recruitment forms. Failure to comply with any
+        of these conditions may result in the cancellation of services by EXCEL
+        TAXI SANT CUGAT without prior notice to the client and without any right
+        to compensation. <br />
+        All software rights are from EXCEL TAXI SANT CUGAT. Consequently, it may
+        not be copied, modified, manipulated, decompiled or divulged without prior
+        authorization from EXCEL TAXI SANT CUGAT.
+      </p>
+      <p>
+        <strong>Incidents and claims</strong><br />
+        In the event that the client wishes to communicate any incident, comment
+        or make a complaint can do so in three ways: <br />
+        • By telephone, calling 935838201, from Monday to Thursday, from 9:00 a.m.
+        to 2:00 p.m. and from 4:00 p.m. to 7:00 p.m. and Friday, from 9:00 a.m. to
+        2:00 p.m., peninsular time. <br />
+        • By email to info@exceltaxisantcugat.cat <br />
+        • By ordinary mail to Avda. Corts Catalanes, 5-7 - Trade Center Building I
+        (08173) Sant Cugat del Vallés (Barcelona)
+      </p>
+      <p>
+        <strong>Governing Law and Jurisdiction</strong><br />
+        To these general conditions and to the legal relations that may be derived
+        from their application and interpretation, the Spanish law will apply to
+        you and EXCEL TAXI SANT CUGAT agree to submit to the exclusive
+        jurisdiction of the courts of Rubi to resolve any legal question in
+        Relationship with the Conditions.
+      </p>
+      &nbsp;The client declares to have read, to know and to accept the present
+      General Conditions of Contract, as well as the Privacy Policy and Protection
+      of Data of Personal Character in all its extension.
+    </div>
+
+  </div>
+
+</ion-content>

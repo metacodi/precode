@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "637555579959",
+    "firebase_url": "https://excel-taxi-user.firebaseio.com",
+    "project_id": "excel-taxi-user",
+    "storage_bucket": "excel-taxi-user.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637555579959:android:2c8934a89f03e87a3433b2",
+        "android_client_info": {
+          "package_name": "com.exceltaxisantcugat.user"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "637555579959-ko1c5tussod6378omn09l0kdn8gs4irp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDW3JHUiXDM7GnSprGkBtIgLGc5k0mXLQY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "637555579959-ko1c5tussod6378omn09l0kdn8gs4irp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "637555579959-f2qu30c3kj7620nfds1fonerj7i6fflo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.exceltaxisantcugat.user",
+                "app_store_id": "1138251766"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

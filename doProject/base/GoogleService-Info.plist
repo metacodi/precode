@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>637555579959-f2qu30c3kj7620nfds1fonerj7i6fflo.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.637555579959-f2qu30c3kj7620nfds1fonerj7i6fflo</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDfuhQod43FyMfwS_i1mltag1ET4wrlwhg</string>
+	<key>GCM_SENDER_ID</key>
+	<string>637555579959</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.exceltaxisantcugat.user</string>
+	<key>PROJECT_ID</key>
+	<string>excel-taxi-user</string>
+	<key>STORAGE_BUCKET</key>
+	<string>excel-taxi-user.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:637555579959:ios:11a0896276307f413433b2</string>
+	<key>DATABASE_URL</key>
+	<string>https://excel-taxi-user.firebaseio.com</string>
+</dict>
+</plist>

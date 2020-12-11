@@ -1,0 +1,10 @@
+export { DevicePlugin } from './device';
+export { FaceIdPlugin, FaceIdResponse } from './face-id';
+export { FileSystemPlugin } from './file-system';
+export { GeolocationPlugin } from './geolocation';
+export { KeyboardPlugin } from './keyboard';
+export { LocalNotificationPlugin } from './local-notification';
+export { NetworkPlugin } from './network';
+export { SplashScreenPlugin } from './splash-screen';
+export { StatusBarPlugin } from './status-bar';
+export { StoragePlugin } from './storage';

@@ -1,0 +1,82 @@
+#!/bin/sh
+
+FIRST_ARGUMENT="$1"
+SECOND_ARGUMENT="$2"
+THIRD_ARGUMENT="$3"
+CURDIR="$(pwd)"
+
+if [ $FIRST_ARGUMENT == "ios" ] 
+then
+  echo "ionic build $2 && npx cap copy ios && npx cap sync ios && npx cap open ios"
+  ionic build $2 && npx cap copy ios && npx cap sync ios && npx cap open ios
+fi
+
+if [ $FIRST_ARGUMENT == "android" ] 
+then
+  echo "ionic build $2 && npx cap copy android && npx cap sync android && npx cap open android"
+  ionic build $2 && npx cap copy android && npx cap sync android && npx cap open android
+fi
+
+if [ $FIRST_ARGUMENT == "electron" ] 
+then
+  echo "ionic build $2 && npx cap copy @capacitor-community/electron && npx cap sync @capacitor-community/electron && npx cap open @capacitor-community/electron"
+  ionic build $2 && npx cap copy @capacitor-community/electron && npx cap sync @capacitor-community/electron && npx cap open @capacitor-community/electron
+fi
+
+if [ $FIRST_ARGUMENT == "build" ] 
+then
+  if [ $SECOND_ARGUMENT == "open" ]
+  then
+    ionic build && npx cap copy && npx cap copy @capacitor-community/electron && npx cap sync && npx cap sync @capacitor-community/electron && npx cap open ios && npx cap open android
+  else
+    echo "ionic build $2 && npx cap copy && npx cap copy @capacitor-community/electron"
+    ionic build $2 && npx cap copy && npx cap copy @capacitor-community/electron && npx cap sync && npx cap sync @capacitor-community/electron
+  fi
+fi
+
+if [ $FIRST_ARGUMENT == "compile" ] 
+then
+  echo "cd electron && npm run electron:build-mac && npm run electron:build-windows && cd .."
+  cd electron && npm run electron:build-mac && npm run electron:build-windows && cd ..
+fi
+
+if [ $FIRST_ARGUMENT == "upload" ] 
+then
+  curl -T 'electron/dist/ExcelTaxi Setup 3.0.0.exe' -u metacodi:SGFhFy1YXj7473FhFy1Y 'ftp://ftp.metacodi.com/www/taxi/pre/downloads/ExcelTaxi Setup 3.0.0.exe'
+  curl -T 'electron/dist/ExcelTaxi-3.0.0.pkg' -u metacodi:SGFhFy1YXj7473FhFy1Y 'ftp://ftp.metacodi.com/www/taxi/pre/downloads/ExcelTaxi-3.0.0.pkg'
+fi
+
+if [ $FIRST_ARGUMENT == "all" ] 
+then
+  sh do lang
+  sh do build $2
+  sh do compile
+  sh do upload 
+fi
+
+#sh do gen src/app/acciones accion
+if [ $FIRST_ARGUMENT == "gen" ] 
+then
+  echo "gen $2 $3"
+  cd /Users/xaviergiral/Documents/metacodi/precode/scripts/ionic-angular/
+  if [ -z "$THIRD_ARGUMENT" ] 
+  then
+    npx ts-node generate.ts -f $CURDIR/$2 && cd $CURDIR
+  else
+    npx ts-node generate.ts -f $CURDIR/$2 -s $3 && cd $CURDIR
+  fi
+fi
+
+if [ $FIRST_ARGUMENT == "lang" ] 
+then
+  echo "curl 'https://taxi.metacodi.com/pre/api/i18n?lang=1' -o 'src/assets/i18n/es.json'"
+  curl 'https://taxi.metacodi.com/pre/api/i18n?lang=1' -o 'src/assets/i18n/es.json'
+fi
+
+if [ $FIRST_ARGUMENT == "permissions" ] 
+then
+  echo "do $1"
+  cd /Users/xaviergiral/Documents/metacodi/precode/scripts/ionic-angular/
+  echo "npx ts-node permissions.ts -f src/app/permissions.ts -c metacodi:SGFhFy1YXj7473FhFy1Y -s ftp.metacodi.com -d /www/taxi/pre/api && cd $CURDIR"
+  npx ts-node permissions.ts -f $CURDIR/src/app/permissions.ts -c metacodi:SGFhFy1YXj7473FhFy1Y -s ftp.metacodi.com -d /www/taxi/pre/api && cd $CURDIR
+fi

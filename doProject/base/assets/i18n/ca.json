@@ -1,0 +1,410 @@
+{
+    "buttons": {
+        "accept": "Acceptar",
+        "cancel": "Cancel",
+        "yes": "Si",
+        "no": "No",
+        "access": "Accedir",
+        "back": "Enrere",
+        "next": "Següent",
+        "send": "Enviar",
+        "modify": "Modificar",
+        "save": "Desar",
+        "delete": "Eliminar",
+        "search": "Cercar",
+        "print": "Imprimir",
+        "finalize": "Finalitzar"
+    },
+    "common": {
+        "Atencion": "Atenció",
+        "Campos_obligatorios": "Camps obligatoris marcats amb un *",
+        "Push_notifications": "Notificacions PUSH",
+        "Push_emit_sound": "Emetre un so a l'rebre una notificació PUSH",
+        "Recibir_SMS": "Rebre SMS",
+        "Poblaciones": "Poblacions",
+        "Poblacion": "Població",
+        "theme": "Canviar colors",
+        "error": "Error",
+        "espere_un_momento": "Esperi un moment, si us plau",
+        "buscar": "Cercar",
+        "busqueda_avanada": "Cerca avançada"
+    },
+    "person": {
+        "nombre": "Nom",
+        "apellidos": "Cognoms",
+        "telefono": "Telèfon",
+        "telefono_alternativo": "Telèfon alternatiu",
+        "telefono_movil": "Telèfon mòbil",
+        "email": "Correu electrònic",
+        "dni": "DNI o passaport"
+    },
+    "address": {
+        "descripcion": "Descripció",
+        "direccion": "Direcció",
+        "cp": "Codi postal",
+        "poblacion": "Població",
+        "provincia": "Província",
+        "pais": "País",
+        "favorita": "Favorita",
+        "observaciones": "Observacions"
+    },
+    "smtp": {
+        "name": "Títol capçalera",
+        "email": "Correu electrònic enviament",
+        "host": "Host SMTP",
+        "user": "Usuari",
+        "password": "Clau",
+        "port": "Port sortida"
+    },
+    "api": {
+        "alert_header": "Atenció",
+        "updating": "Actualitzant",
+        "unknown_error": "Hi ha hagut un error inesperat. Si us plau, torneu a intentar-ho més tard.",
+        "network_error": "Ho sentim, no ha estat possible comunicar-se amb el servidor. Comproveu la seva connexió a internet i torneu a provar."
+    },
+    "home": {
+        "Mi_perfil": "El meu perfil",
+        "gestionServicios": "Gestió de serveis",
+        "Programar_Reserva": "Programar Reserva",
+        "Servicio_Parada": "Servei Parada",
+        "Gestion_perfiles": "Gestió de perfils",
+        "Gestion_puntos": "Gestió de punts",
+        "Facturacion": "Facturació",
+        "Bloqueo_servicios": "Bloqueig de serveis",
+        "Configuracion": "Configuració",
+        "mi_perfil": "Meu perfil",
+        "programar_reserva": "Programar Reserva",
+        "taxi_ya": "UN TAXI JA!",
+        "estado_servicios": "Els meus serveis",
+        "historico_reservas": "Historial de serveis"
+    },
+    "login": {
+        "select_lang": "Seleccionar idioma",
+        "email": "Correu electrònic usuari",
+        "password": "Clau",
+        "confirm_password": "Repetir contrasenya",
+        "forgot_pass": "Heu oblidat la contrasenya?",
+        "email_required": "Es requereix un correu electrònic per a la validació",
+        "email_invalid": "El correu electrònic no té un format correcte",
+        "pass_required": "Es requereix una clau per a la validació",
+        "pass_mismatch": "Les contrasenyes no coincideixen",
+        "pass_minlength": "La contrasenya ha de tenir una longitud mínima de 6 caràcters, contenir majúscules, minúscules i números",
+        "contacte_con_nosotros": "¿Tens dubtes? Contacta amb nosaltres",
+        "register": "registrar-te"
+    },
+    "recovery": {
+        "Enviado_email": "Li hem enviat un correu electrònic amb les instruccions per obtenir la contrasenya"
+    },
+    "mis_direcciones": {
+        "Mis_direcciones": "Els meus adreces",
+        "Add new midirecciontaxista": "Afegir nova direcció",
+        "Mi_direccion": "La meva adreça",
+        "Descripcion_required": "Es requereix una descripció",
+        "Direccion_required": "Manca indicar l'adreça"
+    },
+    "misdireccionestaxistas": {
+        "mis_direcciones": "Els meus adreces",
+        "Add new midirecciontaxista": "Afegir nova direcció",
+        "list_misdireccionestaxistas": "Els meus direccions"
+    },
+    "perfiles": {
+        "Usuarios": "Usuaris",
+        "Empresas": "Empreses",
+        "Conductores": "Conductors",
+        "Add new usuario": "Afegeix nou usuari",
+        "Add_new_empresa": "Afegir nova empresa",
+        "Add new conductor": "Afegeix nou conductor",
+        "Ficha_usuario": "Fitxa usuari",
+        "Ficha_empresa": "Fitxa empresa",
+        "Ficha_conductor": "Fitxa conductor",
+        "Carga_completada": "Càrrega completada",
+        "Load_complete": "Ja s'han obtingut tots els perfils de la base de dades",
+        "Loading_more": "Carregant més perfils",
+        "Vehiculo": "Vehicle",
+        "Contacto": "Contacte",
+        "Usuario": "Usuari",
+        "Particular": "Particular",
+        "Delete_perfil": "Voleu eliminar aquest perfil?"
+    },
+    "empresa": {
+        "nombre": "Nom empresa",
+        "num_abonado": "Num. Abonat",
+        "contacto_nombre": "Nom de l'contacte",
+        "contacto_telefono": "Telèfon de l'contacte",
+        "nif": "NIF",
+        "iban": "IBAN",
+        "meta_campos": "Camps addicionals separats per #",
+        "forma_pago": "Forma de pagament",
+        "nombre_required": "Es requereix un nom per al perfil",
+        "num_abonado_required": "Es requereix un nombre d'abonat",
+        "forma_pago_required": "Es requereix una forma de pagament",
+        "razon_social": "Raó social",
+        "iva": "IVA (ex: 0,10)",
+        "registro_mercantil": "Registre mercantil",
+        "solicitar_modify": "SOL·LICITAR MODIFICACIÓ"
+    },
+    "usuario": {
+        "detail_usuario": "Fitxa usuari",
+        "empresa": "Seleccionar empresa",
+        "pagar_via_app": "Pagar a través de l'aplicació",
+        "guardar_tarjeta": "Desar targeta",
+        "facturar_todo_fin_mes": "Facturar tots els serveis a final de mes",
+        "save_reserva_canlendario": "Guardar reserva en el calendari a l'confirmar",
+        "validado": "Validat",
+        "recibir_push_al_confirmar": "Rebre una notificació quan es confirmi una reserva",
+        "recibir_email_al_confirmar": "Rebre un correu electrònic quan es confirmi una reserva",
+        "empresa_required": "Es requereix una empresa per a l'usuari",
+        "nombre_required": "Es requereix un nom per al perfil",
+        "apellidos_required": "Calen uns cognoms per al perfil",
+        "telefono_required": "Es requereix un número de telèfon per al perfil"
+    },
+    "taxistas": {
+        "detail_taxista": "Fitxa conductor",
+        "Add new taxista": "Afegeix nou conductor"
+    },
+    "usuarios": {
+        "usuario": "Usuari",
+        "Add new usuario": "Afegeix nou usuari",
+        "detail_usuario": "Fitxa usuari"
+    },
+    "conductor": {
+        "detail_conductor": "Fitxa conductor",
+        "licencia": "Llicència",
+        "coche": "Cotxe",
+        "matricula": "Matrícula cotxe",
+        "calendario": "Calendari",
+        "maletero_amplio": "Maleter ampli",
+        "seis_pasajeros": "Vehicle 6 passatgers",
+        "con_animales": "Espacial",
+        "disponible": "Disponible",
+        "fuera_servicio": "Fora de servei",
+        "recibir_reservas": "Pot rebre reserves",
+        "recibir_solicitudes": "Pot rebre sol·licituds",
+        "colaborador": "Col·laborador",
+        "administrador_temporal": "Administrador temporal",
+        "administrador": "Administrador",
+        "mis_calendarios": "Els meus calendaris",
+        "nombre_required": "Es requereix un nom per al perfil",
+        "apellidos_required": "Calen uns cognoms per al perfil",
+        "telefono_required": "Es requereix un número de telèfon",
+        "licencia_requried": "Es requereix un número de llicència",
+        "coche_descripcion_requried": "Es requereix una descripció de l'cotxe",
+        "coche_matricula_requried": "Es requereix el número de matrícula del cotxe",
+        "calendario_requried": "Es requereix un calendari seleccionat"
+    },
+    "bloqueos": {
+        "Reservas": "Reserves",
+        "Solicitudes": "Sol·licituds",
+        "Modo_diario": "Mode diari",
+        "Periodo": "Període definit",
+        "Inicio": "Inici",
+        "Final": "Final",
+        "Mensaje_usuario": "Definir missatge per mostrar a l'usuari"
+    },
+    "config": {
+        "Empresa": "Empresa",
+        "Tarifas": "Tarifes",
+        "Precios": "Preus",
+        "Precios_tarifa": "Preus tarifes",
+        "Festivos": "Festius",
+        "Dias_festivos": "Dies festius",
+        "Datos_contacto": "Dades de contacte",
+        "Datos_facturacion": "Dades de facturació",
+        "Servidor_correo": "Servidor de correu electrònic",
+        "Opciones_admin": "Opcions d'administració",
+        "intervalo_segundos_solicitudes": "Interval en segons per a sol·licituds",
+        "intervalo_segundos_entre_solicitudes": "Interval en segons entre sol·licituds",
+        "num_intentos_solicitudes": "Num intents sol·licituds",
+        "propina_1": "Propina 1",
+        "propina_2": "Propina 2",
+        "propina_3": "Propina 3",
+        "intervalo_segundos_geo": "Interval segons enviament geolocalització",
+        "intervalo_segundos_refresco": "Interval refresc geolocalització",
+        "horas_finalizacion_servicio": "Increment en hores per finalitzar un servei",
+        "horas_margen_reserva": "Hores per marge de reserva",
+        "iva_required": "Es requereix un valor per a 'IVA'",
+        "intervalo_segundos_solicitudes_required": "Es requereix un valor per la 'velocitat en segons per a sol·licituds'",
+        "intervalo_segundos_entre_solicitudes_required": "Es requereix un valor per la 'velocitat en segons entre sol·licituds'",
+        "num_intentos_solicitudes_required": "Es requereix un valor per a 'Num intents sol·licituds'",
+        "propina_1_required": "Es requereix un valor per a 'Propina 1'",
+        "propina_2_required": "Es requereix un valor per a 'Propina 2'",
+        "propina_3_required": "Es requereix un valor per a 'Propina 3'",
+        "intervalo_segundos_geo_required": "Es requereix un valor per la 'velocitat segons enviament geolocalització'",
+        "intervalo_segundos_refresco_required": "Es requereix un valor per la 'velocitat segons refresc geolocalització'",
+        "horas_finalizacion_servicio_required": "Es requereix un valor per a 'Increment en hores per finalitzar un servei'",
+        "horas_margen_reserva_required": "Es requereix un valor per a 'Hores per marge de reserva'",
+        "intervalo_segundos_solicitudes_pattern": "Valor incorrecte en la 'velocitat en segons per a sol·licituds'",
+        "intervalo_segundos_entre_solicitudes_pattern": "Valor incorrecte en la 'velocitat en segons entre sol·licituds'",
+        "num_intentos_solicitudes_pattern": "Valor incorrecte a 'Num intents sol·licituds'",
+        "propina_1_pattern": "Valor incorrecte a 'Propina 1'",
+        "propina_2_pattern": "Valor incorrecte a 'Propina 2'",
+        "propina_3_pattern": "Valor incorrecte a 'Propina 3'",
+        "intervalo_segundos_geo_pattern": "Valor incorrecte en la 'velocitat segons enviament geolocalització'",
+        "intervalo_segundos_refresco_pattern": "Valor incorrecte en la 'velocitat segons refresc geolocalització'",
+        "horas_finalizacion_servicio_pattern": "Valor incorrecte a 'Increment en hores per finalitzar un servei'",
+        "horas_margen_reserva_pattern": "Valor incorrecte a 'Hores per marge de reserva'"
+    },
+    "tarifas": {
+        "Add new tarifa": "Afegir nova tarifa",
+        "Loading_more": "Carregant més tarifes",
+        "Tarifa": "Tarifa",
+        "descripcion": "Descripció",
+        "hora_inicio": "Hora inici (hh: mm: ss)",
+        "hora_fin": "Hora fi (hh: mm: ss)",
+        "select": "Seleccionar tarifa",
+        "descripcion_required": "Es requereix un valor per a 'Descripció'",
+        "hora_inicio_required": "Es requereix un valor per a 'Hora inici'",
+        "hora_fin_required": "Es requereix un valor per a 'Hora fi'"
+    },
+    "precios_tarifa": {
+        "precio_tarifa": "Preu de Tarifa",
+        "Add_new_precio_tarifa": "Afegeix nou preu",
+        "Loading_more": "Carregant més preus",
+        "origen": "Origen",
+        "destino": "Destinació",
+        "select_origen": "Seleccionar població",
+        "select_destino": "Seleccionar població"
+    },
+    "precios de tarifas": {
+        "Add new precio de tarifa": "Afegeix nou preu"
+    },
+    "festivos": {
+        "Add new festivo": "Afegeix nou festiu",
+        "Loading_more": "Carregant més festius",
+        "Festivo": "Festiu",
+        "tarifa": "Tarifa",
+        "dia": "Dia",
+        "mes": "Mes",
+        "hora_inicio": "Hora inici (hh: mm: ss)",
+        "hora_fin": "Hora fi (hh: mm: ss)",
+        "tarifa_required": "Es requereix una tarifa per al dia festiu",
+        "hora_inicio_required": "Es requereix un valor per a 'Hora inici'",
+        "hora_fin_required": "Es requereix un valor per a 'Hora fi'"
+    },
+    "servicios": {
+        "Reservas": "Reserves",
+        "Solicitudes": "Sol·licituds",
+        "Paradas": "Parades",
+        "servicios": "Els meus serveis"
+    },
+    "reservas": {
+        "Add new reserva": "Afegir nova reserva"
+    },
+    "pickmap": {
+        "select_direccion": "Seleccionar ubicació",
+        "invalid_address": "Direcció incorrecta!"
+    },
+    "vehiculos_disponibles": {
+        "vehiculos_disponibles": "Vehicles disponibles",
+        "title": "Disponibilitat",
+        "list": "Conductors",
+        "map": "Vehicles",
+        "vehiculo": "Vehicle"
+    },
+    "register": {
+        "registro_particulares": "Registre particulars",
+        "acepto_condiciones": "Accepto les condicions",
+        "ver_condiciones": "Veure condicions",
+        "condiciones_generales": "Condicions generals",
+        "required_condiciones": "* Has d'acceptar les condicions generals per poder continuar",
+        "success": "La seva sol·licitud de registre s'ha realitzat correctament.",
+        "check_your_email": "Si us plau, comproveu la vostra adreça de correu electrònic per acabar de validar el seu compte"
+    },
+    "usuario_app": {
+        "nombre_required": "Falta indicar el nom de l'usuari",
+        "apellidos_required": "Manca indicar els cognoms de l'usuari",
+        "telefono_required": "Falta indicar un telèfon de l'usuari",
+        "si_desean_modificar": "Si volen fer modificacions en les dades d'aquest usuari, premin el botó inferior 'Sol·licitar modificació' i en breu un dels nostres agents es posarà en contacte amb vostès.",
+        "password_requirements": "* La contrasenya ha de tenir al menys 8 caràcters, contenir majúscules, minúscules i números.",
+        "datos_facturacion": "Dades de facturació obligatoris per poder emetre factures al seu nom (opcional)",
+        "razon_social": "Raó social o passaport",
+        "pagar_aplicacion": "Pagar amb l'App",
+        "almacenar_targeta_credito": "Desar targeta",
+        "recibir_sms": "Rebre SMS",
+        "facturar_fin_mes": "Facturar tots els serveis junts a final de mes",
+        "recibir_notificaciones_reserva": "Rebre una notificació push quan es confirmi la meva reserva",
+        "recibir_correo_reserva": "Rebre un mail quan es confirmi la meva reserva",
+        "metodos_pago": "Mètodes de pagament",
+        "opciones": "Opcions"
+    },
+    "menu": {
+        "miperfil": "El meu perfil",
+        "contactar": "Contacte",
+        "change_theme": "Canviar colors",
+        "logout": "Tancar sessió"
+    },
+    "pasajeros": {
+        "pasajeros": "Passatgers",
+        "Add new pasajero": "Afegeix nou passatger",
+        "list_pasajeros": "Seleccioneu un passatger"
+    },
+    "pasajero": {
+        "detail_pasajero": "Fitxa passatger",
+        "nombre_required": "Es requereix un 'nom' per al passatger",
+        "apellidos_required": "Es requereixen els 'cognoms' de l'passatger",
+        "telefono_required": "Es requereix un 'telèfon' de l'passatger",
+        "select": "Passatgers"
+    },
+    "misdirecciones": {
+        "mis_direcciones": "Els meus adreces",
+        "Add new midireccion": "Afegir nova direcció",
+        "list_misdirecciones": "Els meus adreces",
+        "descripcion_required": "Es requereix una descripció",
+        "direccion_required": "Manca indicar l'adreça"
+    },
+    "midireccion": {
+        "detail_midireccion": "La meva adreça"
+    },
+    "reservar": {
+        "title": "Reservar",
+        "pasajero": "Passatger",
+        "recogida": "Recollida",
+        "destino": "Destinació",
+        "confirmar": "Confirmar",
+        "es_para_mi": "És per a mi (mateixes dades de registre)",
+        "otroPasajero": "Un altre passatger (si és diferent a vostè)",
+        "fecha": "DD/MM/YYYY",
+        "hora": "Hh:mm",
+        "datos_pasajero": "Dades de l'passatger",
+        "indique_direccion": "Indiqueu una adreça",
+        "indique_num_vuelo": "Indiqui Nombre vol",
+        "fecha_hora": "Data i hora",
+        "ubicacion": "Ubicació",
+        "direcciones": "Direccions",
+        "localizarme": "Localitzar",
+        "facturar_equipaje": "Facturar equipatge",
+        "vehiculo": "Vehicle",
+        "servicios_especiales": "Serveis especials",
+        "seis_pasajeros": "Vehicle per a 6 pax.",
+        "maletero_amplio": "Maleter ampli",
+        "con_animales": "Vehicle especial",
+        "cancelar_reserva": "Cancel Rerserva",
+        "cancelar_reserva_mensaje": "Esteu segur que voleu cancel·lar la reserva?",
+        "cargoPasajero": "Servei a càrrec de l'passatger",
+        "geolocalizando": "Geolocalizando",
+        "geolocalizado": "Geolocalitzat",
+        "geolocalizado_en": "Geolocalitzat a:",
+        "error_direccion_geolocalizada": "No s'ha pogut obtenir una adreça vàlida a partir del seu ubicacón actual",
+        "error_geolocalizando": "Ha ocorreguda 1 erro a l'intentar obtenir les seves coordenades per geolocalització",
+        "observaciones": "Observacions"
+    },
+    "contactar": {
+        "contactar": "Contacte",
+        "mensaje": "Escrigui aquí el seu missatge"
+    },
+    "servicio": {
+        "title": "Fitxa del servei"
+    },
+    "historico_servicios": {
+        "historico_servicios": "Històric de serveis"
+    },
+    "maps": {
+        "select_direccion": "Seleccionar ubicació",
+        "invalid_address": "Direcció incorrecta!",
+        "recorrido": "Recorregut",
+        "ver_recorrido": "Veure recorregut",
+        "distancia": "Distància",
+        "duracion": "Durada",
+        "estimacion": "Estimació"
+    }
+}

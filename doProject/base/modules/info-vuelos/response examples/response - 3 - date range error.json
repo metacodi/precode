@@ -1,0 +1,31 @@
+{
+  "request": {
+    "airline": {
+      "fsCode": "AA",
+      "requestedCode": "AA"
+    },
+    "flight": {
+      "requested": "1111",
+      "interpreted": "1111"
+    },
+    "utc": {
+      "requested": "false",
+      "interpreted": false
+    },
+    "url": "https:\/\/api.flightstats.com\/flex\/flightstatus\/rest\/v2\/json\/flight\/status\/AS\/1111\/arr\/2020\/05\/18?utc=false",
+    "nonstopOnly": {
+      "interpreted": false
+    },
+    "date": {
+      "year": "2020",
+      "month": "05",
+      "day": "18"
+    }
+  },
+  "error": {
+    "httpStatusCode": 400,
+    "errorId": "cf79d6fc-2f40-4803-bbff-dc7cd8bd1ed5",
+    "errorMessage": "Invalid value for date: 2020-05-18 - The date specified is not within the expected range. Latest allowed date '2020-04-21'",
+    "errorCode": "BAD_REQUEST"
+  }
+}

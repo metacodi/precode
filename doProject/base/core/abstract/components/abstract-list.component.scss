@@ -1,0 +1,160 @@
+/**
+ * Clases css para activar el modo de selección múltiple.
+ *
+ * Cuando se activa el modo de slección múltiple se muestran unos botones de selección a la derecha (o izquierda)
+ * de cada ítem de la lista.
+ *
+ * Para disponer del conjunto de clases de estilo definidas en este documento debe añadirse una importación en el archivo
+ * de scss del componente:
+ * ```scss
+ * @import 'src/core/abstract/components/abstract-list.component.scss';
+ * @include multiselect;
+ * ```
+ *
+ * Ejemplo: lista de servicios entre los que vamos a seleccionar algunos para facturar:
+ *
+ * ```html
+ * <ion-list class="disable-user-behavior" [ngClass]="{ 'disable-pointer-events': multiSelect, 'list-left-editing': multiSelect }">
+ *   <ion-card class="item-left-editable">
+ *     <div class="item-content">
+ *       <!-- item content goes here -->
+ *     </div>
+ *     <div class="item-left-edit enable-pointer-events" [ngClass]="{ 'visible': multiSelect, 'active': multiSelect }">
+ *       <ion-icon [color]="multiSelect?.color" [name]="row.checked ? multiSelect?.checked : multiSelect?.unchecked"></ion-icon>
+ *     </div>
+ *   </ion-card>
+ * </ion-list>
+ * ```
+ *
+ * NOTA: Cambiar 'left' por 'right' para crear botones de edición que aparezcan por la derecha.
+ */
+ 
+ @mixin multiselect {
+  :host {
+
+    // ---------------------------------------------------------------------------------------------------
+    //  item-content
+    // ---------------------------------------------------------------------------------------------------
+
+    .item-left-editable .item-content,
+    .item-right-editable .item-content {
+      -webkit-transition-duration: 250ms;
+      transition-duration: 250ms;
+      -webkit-transition-timing-function: ease-in-out;
+      transition-timing-function: ease-in-out;
+      -webkit-transition-property: -webkit-transform;
+      -moz-transition-property: -moz-transform;
+      transition-property: transform;
+    }
+
+    .list-left-editing .item-left-editable .item-content, .item-left-editing.item-left-editable .item-content {
+      -webkit-transform: translate3d(40px, 0, 0);
+      transform: translate3d(40px, 0, 0);
+    }
+
+    .list-right-editing .item-right-editable .item-content, .item-right-editing.item-right-editable .item-content {
+      -webkit-transform: translate3d(-40px, 0, 0);
+      transform: translate3d(-40px, 0, 0);
+    }
+
+
+    // ---------------------------------------------------------------------------------------------------
+    //  item-left-edit . item-right-edit
+    // ---------------------------------------------------------------------------------------------------
+
+    .item-left-edit,
+    .item-right-edit {
+      -webkit-transition: all ease-in-out 125ms;
+      transition: all ease-in-out 125ms;
+      position: absolute;
+      top: 0;
+      z-index: 0;
+      width: 10px;
+      height: 100%;
+      line-height: 100%;
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    .item-left-edit {
+      left: 0;
+      -webkit-transform: translate3d(-21px, 0, 0);
+      transform: translate3d(-21px, 0, 0);
+    }
+    .item-right-edit {
+      right: 0;
+      -webkit-transform: translate3d(21px, 0, 0);
+      transform: translate3d(21px, 0, 0);
+    }
+
+    .item-left-edit.visible.active,
+    .item-right-edit.visible.active {
+      opacity: 1;
+      -webkit-transition-delay: 125ms;
+      transition-delay: 125ms;
+    }
+
+    .item-left-edit.visible.active {
+      -webkit-transform: translate3d(6px, 0, 0);
+      transform: translate3d(6px, 0, 0);
+    }
+    .item-right-edit.visible.active {
+      -webkit-transform: translate3d(-6px, 0, 0);
+      transform: translate3d(-6px, 0, 0);
+    }
+
+    .item-left-edit.visible,
+    .item-right-edit.visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+
+    // ---------------------------------------------------------------------------------------------------
+    //  ion-icon
+    // ---------------------------------------------------------------------------------------------------
+
+    .item-left-edit ion-icon,
+    .item-right-edit ion-icon {
+      font-size: 28px;
+      height: 100%;
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    .item-left-edit.visible.active ion-icon, 
+    .item-right-edit.visible.active ion-icon {
+      visibility: visible;
+      opacity: 1;
+    }
+
+
+    // ---------------------------------------------------------------------------------------------------
+    //  edit behaviour
+    // ---------------------------------------------------------------------------------------------------
+
+    .enable-pointer-events {
+      pointer-events: auto;
+    }
+
+    .disable-user-behavior {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-drag: none;
+      -ms-content-zooming: none;
+      // NOTA: En algunos móbiles deshabilita los gestos que permiten hacer scroll.
+      // touch-action: none;
+      // -ms-touch-action: none;
+    }
+
+    .disable-pointer-events {
+      pointer-events: none;
+    }
+
+  }
+}

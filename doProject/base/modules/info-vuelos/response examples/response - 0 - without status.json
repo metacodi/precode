@@ -1,0 +1,41 @@
+{
+  "request": {
+    "airline": {
+      "fsCode": "AA",
+      "requestedCode": "AA"
+    },
+    "flight": {
+      "requested": "1111",
+      "interpreted": "1111"
+    },
+    "utc": {
+      "requested": "false",
+      "interpreted": false
+    },
+    "url": "https:\/\/api.flightstats.com\/flex\/flightstatus\/rest\/v2\/json\/flight\/status\/AA\/1111\/arr\/2020\/03\/15?utc=false",
+    "nonstopOnly": {
+      "interpreted": false
+    },
+    "date": {
+      "year": "2020",
+      "month": "03",
+      "day": "15",
+      "interpreted": "2020-03-15"
+    }
+  },
+  "appendix": {
+    "airlines": [
+      {
+        "fs": "AA",
+        "iata": "AA",
+        "icao": "AAL",
+        "name": "American Airlines",
+        "phoneNumber": "08457-567-567",
+        "active": true
+      }
+    ],
+    "airports": [],
+    "equipments": []
+  },
+  "flightStatuses": []
+}

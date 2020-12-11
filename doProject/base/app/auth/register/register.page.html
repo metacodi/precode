@@ -1,0 +1,97 @@
+<ion-header class="page ribbon">
+
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button [text]="'buttons.back' | translate"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{'register.registro_particulares' | translate}}</ion-title>
+  </ion-toolbar>
+
+</ion-header>
+<ion-content>
+
+  <div class="stretch-content">
+
+    <ion-grid class="contenedor-avatar">
+      <ion-row>
+        <ion-col size="auto">
+          <ion-avatar>
+            <img [src]="theme.resource('perfil/avatar-perfil.png')" alt="avatar">
+          </ion-avatar>
+        </ion-col>
+        <ion-col class="ion-hide-md-down"></ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <p>{{'common.campos_obligatorios' | translate}}</p>
+
+    <form [formGroup]="frm" (ngSubmit)="saveRow()">
+
+      <ion-item>
+        <ion-icon name="person" slot="start"></ion-icon>
+        <ion-input #nombreRef formControlName="nombre" type="text" placeholder="{{'person.nombre' | translate}} *" spellcheck="false" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="people" slot="start"></ion-icon>
+        <ion-input formControlName="apellidos" type="text" placeholder="{{'person.apellidos' | translate}} *" spellcheck="false" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="phone-portrait" slot="start"></ion-icon>
+        <ion-input formControlName="telefono" type="text" placeholder="{{'person.telefono' | translate}} *" spellcheck="false" required></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="call" slot="start"></ion-icon>
+        <ion-input formControlName="telefono2" type="text" placeholder="{{'person.telefono_alternativo' | translate}}" spellcheck="false"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="mail" slot="start"></ion-icon>
+        <ion-input formControlName="email" type="text" placeholder="{{'person.email' | translate}} *" spellcheck="false" required></ion-input>
+      </ion-item>
+
+      <div formGroupName="passwords">
+
+        <p>{{'usuario.password_requirements' | translate}}</p>
+
+        <ion-item class="collapse">
+          <ion-icon name="lock-open" slot="start"></ion-icon>
+          <ion-input type="password" formControlName="password" placeholder="{{'login.password' | translate}} *" spellcheck="false" required></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-icon name="lock-open" slot="start"></ion-icon>
+          <ion-input type="password" formControlName="confirm" placeholder="{{'login.confirm_password' | translate}} *" spellcheck="false" required></ion-input>
+        </ion-item>
+      </div>
+
+      <ion-item>
+        <ion-label><a (click)="verCondiciones()">{{'register.acepto_condiciones' | translate}}</a></ion-label>
+        <ion-toggle formControlName="aceptoCondiciones" slot="end"></ion-toggle>
+      </ion-item>
+  
+      <div class="error ion-text-start">
+        <p *ngIf="(getter('nombre').touched || getter('nombre').dirty) && getter('nombre').errors?.required">{{'usuario.nombre_required' | translate}}</p>
+        <p *ngIf="(getter('apellidos').touched || getter('apellidos').dirty) && getter('apellidos').errors?.required">{{'usuario.apellidos_required' | translate}}</p>
+        <p *ngIf="(getter('telefono').touched || getter('telefono').dirty) && getter('telefono').errors?.required">{{'usuario.telefono_required' | translate}}</p>
+        <p *ngIf="(getter('email').touched || getter('email').dirty) && getter('email').errors?.required">{{'login.email_required' | translate}}</p>
+        <p *ngIf="(getter('email').touched || getter('email').dirty) && getter('email').errors?.email">{{'login.email_invalid' | translate}}</p>
+        <div *ngIf="(getter('password').touched || getter('password').dirty) && (getter('confirm').touched || getter('confirm').dirty)">
+          <p *ngIf="getter('password').errors?.required || getter('confirm').errors?.required">{{'login.pass_required' | translate}}</p>
+          <p *ngIf="getter('password').errors?.minlength || getter('confirm').errors?.minlength">{{'login.pass_minlength' | translate}}</p>
+          <p *ngIf="getter('passwords').errors?.mismatch">{{'login.pass_mismatch' | translate}}</p>
+        </div>
+        <div *ngIf="submitted && !aceptoCondiciones.value" padding>{{'register.required_condiciones' | translate}}</div>
+      </div>
+    
+
+      <ion-button type="submit" [disabled]="frm.invalid || frm.pristine" [color]="frm.valid ? 'primary' : 'secondary'" expand="block">
+        {{ 'login.register' | translate | uppercase }}
+      </ion-button>
+
+    </form>
+
+  </div>
+</ion-content>

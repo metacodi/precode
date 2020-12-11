@@ -1,0 +1,27 @@
+// ion-header {
+//   color: white;
+//   --ion-text-color: white;
+//   // background-color: black;
+//   // --header-background-color: black;
+// }
+
+.stretch-content {
+  max-width: 500px;
+}
+
+ion-item {
+  --border-style: none; 
+  --background: var(--ion-color-step-50);
+}
+
+ion-icon {
+  //margin: 20px auto;
+  font-size: 85px;
+}
+
+// ion-content {
+// }
+
+ion-grid {
+  margin-top: 30px;
+}
