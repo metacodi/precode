@@ -37,7 +37,7 @@ export class PushCapacitor extends TypescriptDeployment {
 
         new TypescriptCapacitor(),
 
-        new TypescriptDependency({ install: 'capacitor-fcm', type: '--save' }),
+        new TypescriptDependency({ install: '@capacitor-community/fcm', type: '--save' }),
 
         new FileExists({
           fileName: project.rootPath('GoogleService-Info.plist'),

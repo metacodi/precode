@@ -10,7 +10,7 @@ import { CodeProject } from '../../projects/code-project';
 import { DeploymentOptions, CustomDeploymentType } from '../../projects/types';
 import { TextReplacer } from '../../utils/text-replacer';
 
-/** Executa una funbció personalitzada contra un arxiu de codi del projecte. */
+/** Executa una funció personalitzada contra un arxiu de codi del projecte. */
 export class CustomDeployment extends CodeDeployment {
 
   data: CustomDeploymentType;

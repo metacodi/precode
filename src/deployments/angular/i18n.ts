@@ -13,6 +13,7 @@ import { AngularNgModule } from './ngModule';
 import { TypescriptDeployment } from '../abstract/typescript-deployment';
 import { TypescriptCapacitor } from '../typescript/typescript-capacitor';
 import { PushCapacitor } from '../ionic-angular/dependencies/capacitor/push-capacitor';
+import { CustomDeployment } from '../basics/custom-deployment';
 
 
 /** i18n - Translate Module. */
@@ -54,6 +55,17 @@ export class I18n extends AngularDeployment {
         deps: [HttpClient]
       }
     })`,
+        }),
+
+        new CustomDeployment({
+          description: `Comprovant els arxius JSON de traducció.`,
+          fn: async () => {
+            await project.folder('src/assets/i18n');
+            if (!project.exists('src/assets/i18n/es.json')) {
+              await project.file('src/assets/i18n/es.json', { content: `{}` });
+            }
+            return true;
+          }
         }),
 
       ];

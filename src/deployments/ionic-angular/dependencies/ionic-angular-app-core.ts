@@ -67,17 +67,6 @@ export class IonicAngularAppCore extends IonicAngularDeployment {
           new TypescriptDependency({ install: 'https://github.com/fabiorogeriosj/cordova-plugin-sensors.git', dependency: 'cordova-plugin-sensors' }),
           new TypescriptDependency({ install: '@ionic-native/sensors' }),
 
-          new CustomDeployment({
-            description: `Comprovant els arxius JSON de traducció.`,
-            fn: async () => {
-              await project.folder('src/assets/i18n');
-              if (!project.exists('src/assets/i18n/es.json')) {
-                await project.file('src/assets/i18n/es.json', { content: `{}` });
-              }
-              return true;
-            }
-          }),
-
           new TypescriptConstructor({ file: appComponent, identifier: 'lang', type: 'AppLanguageService' }),
 
         ];

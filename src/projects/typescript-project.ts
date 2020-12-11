@@ -100,9 +100,9 @@ export class TypescriptProject extends CodeProject {
   // --------------------------------------------------------------------------------
 
   /** Comprova si el `package.json` conté la dependència indicada. */
-  hasDependency(name: string, type?: '--save' | '--save-dev'): boolean {
+  hasDependency(name: string, type?: '--save-prod' | '--save-dev'): boolean {
     if (this.package && typeof this.package.dependencies === 'object') {
-      return Object.keys(this.package[type === '--save' ? 'dependencies' : 'devDependencies']).includes(name);
+      return Object.keys(this.package[type === '--save-prod' ? 'dependencies' : 'devDependencies']).includes(name);
     }
   }
 
@@ -122,13 +122,13 @@ export class TypescriptProject extends CodeProject {
   /** Comprovem si el project té instal·lada la plataforma ios. */
   isCapacitoriOS(): boolean {
     // Comprovem si té la dependència instal·lada.
-    return this.hasDependency('@capacitor/ios', '--save');
+    return this.hasDependency('@capacitor/ios', '--save-prod');
   }
 
   /** Comprovem si el project té instal·lada la plataforma android. */
   isCapacitorAndroid(): boolean {
     // Comprovem si té la dependència instal·lada.
-    return this.hasDependency('@capacitor/android', '--save');
+    return this.hasDependency('@capacitor/android', '--save-prod');
   }
 
 

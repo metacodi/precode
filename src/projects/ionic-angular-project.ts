@@ -7,7 +7,7 @@ import { Resource, ResourceType } from '../utils/resource';
 import { CodeProject } from './code-project';
 import { AngularProject } from './angular-project';
 import { capitalize } from '../utils/functions';
-import { detailPageHtml, detailPageTs, listComponentHtml, listComponentScss, listComponentTs, listPageHtmlContent, listPageTsContent, moduleContent, schemaContent, serviceContent } from '../deployments/ionic-angular/resources/generate/generate';
+import { detailPageHtml, detailPageTs, listComponentHtml, listComponentScss, listComponentTs, listPageHtmlContent, listPageTsContent, moduleContent, schemaContent, serviceContent } from './resources/generate/generate';
 
 
 

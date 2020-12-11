@@ -4,8 +4,6 @@ import { Terminal } from '../../utils/terminal';
 
 import { CodeProject } from '../../projects/code-project';
 import { DeploymentOptions } from '../../projects/types';
-import { Url } from 'url';
-import { url } from 'inspector';
 
 
 /**

@@ -23,7 +23,7 @@ export class TypescriptDependency extends TypescriptDeployment {
 
       const name = data.dependency || data.install || data.uninstall;
       const action = data.install ? 'install' : 'uninstall';
-      const type = data.type === '--save-dev' || data.type === '-D' ? '--save-dev' : '--save';
+      const type = data.type === '--save-dev' || data.type === '-D' ? '--save-dev' : '--save-prod';
 
       const has = project.hasDependency(name, type);
 
