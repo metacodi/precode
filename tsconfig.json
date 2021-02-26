@@ -12,6 +12,7 @@
   "include": ["src/"],
   "exclude": [
     "node_modules",
+    "doProject",
     "src/scripts/resources/*",
     "src/scripts/**/resources/*",
   ]
