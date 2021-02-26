@@ -145,19 +145,20 @@ then
   cd $2 && npm install capacitor-keep-screen-on && cd ..
   
   echo "------------------------------------------------------"
-  echo "nx-electrton"
+  echo "nx-electron"
   echo "------------------------------------------------------"
   cd $2 && npm install ngx-electron --save && cd ..
   
   echo "------------------------------------------------------"
-  echo "electron-download-manager"
+  echo "electron-download-manager && electron-windows-badge && electron-context-menu" 
   echo "------------------------------------------------------"
-  cd $2/electron && npm install electron-download-manager && cd .. && cd ..
+  cd $2/electron && npm install electron-download-manager && npm install electron-windows-badge && npm install electron-context-menu && cd .. && cd ..
   
   echo "------------------------------------------------------"
   echo "@angular/google-maps"
   echo "------------------------------------------------------"
   cd $2 && npm install @angular/google-maps --save && cd ..
+  
   
   echo "------------------------------------------------------"
   echo "Translate && tslib && file-saver && moment"

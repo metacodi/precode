@@ -26,7 +26,7 @@ import { AppConfig } from 'src/config';
 import { AbstractModelService } from 'src/core/abstract';
 import { ApiService } from 'src/core/api';
 
-import { UserService } from 'src/app/auth';
+import { UserService } from 'src/app/user';
 
 
 @Injectable({
@@ -128,7 +128,7 @@ export const listComponentTs = `import { Component, Injector, OnInit, OnDestroy 
 import { AppConfig } from 'src/config';
 import { AbstractListComponent } from 'src/core/abstract';
 
-import { UserService } from 'src/app/auth';
+import { UserService } from 'src/app/user';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
 import { {{EntityPlural}}Service } from './{{entityPlural}}.service';
@@ -241,7 +241,7 @@ export const detailPageTs = `import { Component, Injector, OnInit, OnDestroy } f
 import { AppConfig } from 'src/config';
 import { AbstractDetailComponent } from 'src/core/abstract';
 
-import { UserService } from 'src/app/auth';
+import { UserService } from 'src/app/user';
 
 import { {{EntityPlural}}Schema } from './{{entityPlural}}.schema';
 import { {{EntityPlural}}Service } from './{{entityPlural}}.service';
