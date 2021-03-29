@@ -1,21 +1,22 @@
 import { Injectable, OnDestroy, Injector } from '@angular/core';
 import { Router, NavigationExtras } from '@angular/router';
-import { Subscription, Observable, Subject, of, from, interval, SchedulerLike } from 'rxjs';
-import { ToastController, AnimationController } from '@ionic/angular';
-import { catchError, first, map, switchMap, tap } from 'rxjs/operators';
-import * as moment from 'moment';
+import { Subscription, Observable, Subject, of, from, interval, BehaviorSubject } from 'rxjs';
+import { ToastController, AnimationController, LoadingController } from '@ionic/angular';
+import { ToastOptions } from '@ionic/core';
+import { catchError, first, tap } from 'rxjs/operators';
 import { Plugins, PushNotification } from '@capacitor/core';
 import { FCM } from '@capacitor-community/fcm';
 import { ElectronService } from 'ngx-electron';
+import * as moment from 'moment';
 
 import { AppConfig } from 'src/core/app-config';
-import { AbstractModelService, EntityQuery } from 'src/core/abstract';
+import { AbstractModelService, EntityQuery, OrderByPipe } from 'src/core/abstract';
 import { AuthService, AuthenticationState } from 'src/core/auth';
-import { ApiSearchAndClauses, ApiService, ApiUserService, BlobService, findRowIndex } from 'src/core/api';
-import { StoragePlugin, DevicePlugin } from 'src/core/native';
+import { ApiService, ApiUserWrapperService, BlobService, findRowIndex, ApiSearchClauses } from 'src/core/api';
+import { StoragePlugin, DevicePlugin, MediaPlugin } from 'src/core/native';
 import { ConsoleService, evalExpr, deepAssign } from 'src/core/util';
 
-import { Notified } from './notifications.types';
+import { Notified, NotifiedUser } from './notifications.types';
 import { NotificationsSchema } from './notifications.schema';
 
 
@@ -27,72 +28,116 @@ const fcm = new FCM();
  * - Informa del token del dispositivo del usuario.
  * - Resuelve las notificaciones push del usuario.
  *
- * Extender la clase base en el nuevo proyecto e implementar las funciones específicas del proyecto para la correcta resolución de las acciones de la notificación.
+ * Para responder a las notificaciones en un servicio o componente del proyecto hay que suscribirse a `executeNotificationSubject`:
+ * ```typescript
+ * import { NotificationsService, NotifiedUser } from 'src/core/notifications';
+ *
+ * export class ServiciosService extends AbstractModelService implements OnDestroy {
+ *   executeNotificationSubscription: Subscription
+ *   constructor(
+ *     public push: NotificationsService,
+ *   ) {
+ *     this.executeNotificationSubscription = this.push.executeNotificationSubject.subscribe(nu => this.executeNotification(nu));
+ *   }
+ *   ngOnDestroy() {
+ *     if (this.executeNotificationSubscription) { this.executeNotificationSubscription.unsubscribe(); }
+ *   }
+ *
+ *   executeNotification(nu: NotifiedUser): void {
+ *     const action = nu.notified.action;
+ *     if (action === ACCION_NAVIGATE_SERVICIO) {
+ *     }
+ *   }
+ * }
+ * ```
  */
+@Injectable({
+  providedIn: 'root'
+})
 export abstract class NotificationsService extends AbstractModelService implements OnDestroy {
-  static defaultPushInterval = 30000;
   protected debug = true && AppConfig.debugEnabled;
 
-  /** Notifica cuando la operación  */
-  deleteAll: Subject<boolean> = new Subject<boolean>();
-
-  /** Informa de la cantidad de notificaciones desatendidas. */
-  unattendedNotifications: Subject<number> = new Subject<number>();
-
+  /** Token del dispositivo. */
   deviceToken: string;
+  /** Indica el estado de actualización del token en la base de dadtos. */
   pendingTokenUpdate = false;
 
+  /** Cache de servicios. */
+  cache: EntityQuery;
+  /** Notificación en ejecución. */
+  mandatoryPending: NotifiedUser;
+  /** Fecha de la última consulta. */
+  lastAuditTime: string;
+  /** Indica si el intervalo de auditoría está en marcha. */
+  auditCacheIntervalStarted = false;
+  /** @hidden */
+  auditCacheIntervalSubscription: Subscription;
 
-  /** Almacena las notificaciones recibidas a la espera de que puedan ser resueltas. */
-  notifications: Notified[] = [];
+  /** Notifica de forma genérica las acciones que hay que ejecutar. */
+  executeNotificationSubject: Subject<NotifiedUser> = new Subject<NotifiedUser>();
+  /** Notifica la recepción de una notificación. */
+  notificationReceivedSubject: Subject<NotifiedUser> = new Subject<NotifiedUser>();
+  /** Notifica la recepción de una notificación. */
+  newNotificationReceivedSubject: Subject<NotifiedUser> = new Subject<NotifiedUser>();
 
-  /** Almacena las notificaciones notificationsUnatended. */
-  notificationsUnatended: Notified[] = [];
+  /** Contador de notificaciones pendientes de entregar. Se utiliza para mostrarlo los badges de la aplicación. */
+  unattendedCount = 0;
+  /** Permite informar de la finalización de la ejecución de una notificación obligatoria. */
+  mandatoryNotificationCompleted: Subject<boolean> = new Subject<boolean>();
+  /** Opciones de personalización de los Toast para cada acción. */
+  toastOptions: { [key: number]: ToastOptions } = {};
 
+  /** Refrencia al componente loader. */
+  loader: HTMLIonLoadingElement;
+  /** Indica si existe una alerta de notificaciones abierta pendiente de responder. */
+  alert = false;
 
-  /** Propiedades del host que se pasan a las expresiones de código evaluado. */
-  filterProperties = ['showNotificationAlert', 'navigate'];
+  /** Permite notificar al componente de listado que hay que permutar entre ver todas las notificaciones o solo las no atendidas. */
+  toggleUnattended: Subject<void> = new Subject<void>();
 
-  /** Duración  Toast */
-  toastDuration: number;
+  /** Blob de configuración. */
+  notificationsSettings: any;
 
-  notificacionStored: any;
-
+  /** @category Dependencies */
   device: DevicePlugin;
+  /** @category Dependencies */
+  media: MediaPlugin;
+  /** @category Dependencies */
   auth: AuthService;
-  user: ApiUserService;
+  /** @category Dependencies */
+  user: ApiUserWrapperService;
+  /** @category Dependencies */
   router: Router;
+  /** @category Dependencies */
   console: ConsoleService;
+  /** @category Dependencies */
   blob: BlobService;
-  /** Este servicio administra su propia consulta. */
-  query: EntityQuery;
+  /** @category Dependencies */
   storage: StoragePlugin;
-  pushNotificationReceived: Subject<Notified>;
-
+  /** @category Dependencies */
   toastController: ToastController;
+  /** @category Dependencies */
+  loadingCtrl: LoadingController;
+  /** @category Dependencies */
   electronService: ElectronService;
+  /** @category Dependencies */
   animationCtrl: AnimationController;
-
-  /** @hidden */
-  authenticationChangedSubscription: Subscription;
-  /** @hidden Suscriptor a un intervalo de consultas. */
-  intervalRequest: Subscription;
-  /** @hidden */
-  blobSubscription: Subscription;
 
   constructor(
     public injector: Injector,
     public api: ApiService,
-    // public schema: EntitySchema,
   ) {
     super(injector, api);
+    if (this.debug) { console.log('NotificationsService:' + this.constructor.name + '.constructor()'); }
 
     /** @category Dependencies */
     this.device = this.injector.get<DevicePlugin>(DevicePlugin);
     /** @category Dependencies */
+    this.media = this.injector.get<MediaPlugin>(MediaPlugin);
+    /** @category Dependencies */
     this.auth = this.injector.get<AuthService>(AuthService);
     /** @category Dependencies */
-    this.user = this.injector.get<ApiUserService>(ApiUserService);
+    this.user = this.injector.get<ApiUserWrapperService>(ApiUserWrapperService);
     /** @category Dependencies */
     this.router = this.injector.get<Router>(Router);
     /** @category Dependencies */
@@ -104,84 +149,28 @@ export abstract class NotificationsService extends AbstractModelService implemen
     /** @category Dependencies */
     this.toastController = this.injector.get<ToastController>(ToastController);
     /** @category Dependencies */
+    this.loadingCtrl = this.injector.get<LoadingController>(LoadingController);
+    /** @category Dependencies */
     this.electronService = this.injector.get<ElectronService>(ElectronService);
     /** @category Dependencies */
     this.animationCtrl = this.injector.get<AnimationController>(AnimationController);
 
-    if (this.debug) { this.console.log(this.constructor.name + '.constructor()'); }
+    // Creamos una consulta para la cache.
+    this.cache = new EntityQuery(NotificationsSchema);
 
-    // Instanciamos una consulta independiente de cualquier AbstractListComponent.
-    this.query = new EntityQuery(NotificationsSchema);
+    // Cargamos la configuración de las notificaciones.
+    this.blob.get('notificationsSettings').then(behavior => this.subscriptions.push(behavior.subscribe(value => this.notificationsSettings = value)));
 
-    if (this.debug) { this.console.log(this.constructor.name + ' goto -> this.device.ready()'); }
-
-    // Instanciamos un nuevo emisor de eventos para notificar las notificaciones recibidas.
-    this.pushNotificationReceived = new Subject<any>();
+    // Monitorizamos la autenticación para detectar el login.
+    this.subscriptions.push(this.auth.authenticationChanged.subscribe((value: AuthenticationState) => this.onAuthenticationChanged(value)));
 
     // Monitorizamos el cambio de token del dispositivo del usuario.
-    this.device.ready().then(() => {
-      if (this.debug) { this.console.log(this.constructor.name + ' this.device.ready()'); }
-      if (this.device.isRealPhone) {
-        if (this.debug) { this.console.log(this.constructor.name + ' this.device.isRealPhone'); }
-        PushNotifications.requestPermission().then(result => {
-          if (result.granted) {
-            // Register with Apple / Google to receive push via APNS/FCM
-            PushNotifications.register().then(() => { }).catch(err => alert(JSON.stringify(err)));
-          } else {
-            // Show some error
-            // TODO: Mostrar un mensaje para sugerir al usuario que debe habilitar el sistema de notificaciones para esta aplicación.
-          }
-        });
-
-        // Establecemos el token del device.
-        fcm.getToken().then(response => this.setDeviceToken(response.token));
-      }
-
-      // Monitorizamos la autenticación para detectar el login.
-      this.authenticationChangedSubscription = this.auth.authenticationChanged.subscribe((value: AuthenticationState) => this.onAuthenticationChanged(value));
-
-      // Recibimos las notificaciones que van llegando en tiempo de ejecución.
-      if (this.device.isRealPhone) {
-        PushNotifications.addListener('pushNotificationReceived', (notification: PushNotification) => this.onPushNotificationReceived(notification));
-      }
-    });
-
+    this.device.ready().then(() => this.onDeviceReady());
   }
 
   ngOnDestroy(): void {
-    this.stopIntervalRequest();
-    if (this.authenticationChangedSubscription) { this.authenticationChangedSubscription.unsubscribe(); }
-    if (this.blobSubscription) { this.blobSubscription.unsubscribe(); }
-  }
-
-  // ---------------------------------------------------------------------------------------------------
-  //  AuthenticationChanged
-  // ---------------------------------------------------------------------------------------------------
-
-  onAuthenticationChanged(value: AuthenticationState): void {
-    if (this.debug) { this.console.log(this.constructor.name + '.constructor() -> authenticationChanged.subscribe(AuthenticationState)', value); }
-    if (value.isAuthenticated) {
-      // Comprobamos si todavía está pendiente de establecer el token.
-      if (this.pendingTokenUpdate) { this.saveDeviceToken(); }
-      // Obtenemos la configuración.
-      if (!this.device.isRealPhone) {
-        if (this.blobSubscription) { this.blobSubscription.unsubscribe(); }
-        this.blobSubscription = this.blob.get('notificationsSettings').subscribe(data => {
-          this.toastDuration = data.toastDuration;
-          NotificationsService.defaultPushInterval = data.pushInterval;
-          // Iniciamos el intervalo de consultas de notificaciones.
-          this.startIntervalRequest(data.pushInterval);
-        });
-      }
-
-    } else {
-      // Limpiamos la cola de notificaciones.
-      this.notifications = [];
-      // TODO: Remplazar el array interno por una consulta compartida con el componente de listado de notificaciones.
-      // this.query.clear();
-      // Detenemos el intervalo de consultas de notificaciones.
-      this.stopIntervalRequest();
-    }
+    this.stopAuditCacheInterval();
+    super.ngOnDestroy();
   }
 
 
@@ -189,8 +178,34 @@ export abstract class NotificationsService extends AbstractModelService implemen
   //  Device token
   // ---------------------------------------------------------------------------------------------------
 
+  protected onDeviceReady() {
+    if (this.device.isRealPhone) {
+      // Solicitamos los permisos al usuario.
+      PushNotifications.requestPermission().then(result => {
+        if (result.granted) {
+          // Register with Apple / Google to receive push via APNS/FCM
+          PushNotifications.register().then(() => { }).catch(err => alert(JSON.stringify(err)));
+        } else {
+          // TODO: Mostrar un mensaje para sugerir al usuario que debe habilitar el sistema de notificaciones para esta aplicación.
+        }
+      });
+      // Establecemos el token del device.
+      fcm.getToken().then(response => this.setDeviceToken(response.token));
+    }
+
+    // Recibimos las notificaciones que van llegando en tiempo de ejecución.
+    if (this.device.isRealPhone) {
+      PushNotifications.addListener('pushNotificationReceived', (notification: PushNotification) => this.onPushNotificationReceived(notification));
+    }
+
+    // Capturamos los clics sobre las notificaciones del sistema.
+    if (this.device.is('electron')) {
+      this.electronService.ipcRenderer.on('notificationClick', (event, args) => this.resolveNotificationResponse(args.nu, true));
+    }
+  }
+
   protected setDeviceToken(token: string): void {
-    if (this.debug) { this.console.log(this.constructor.name + '.setDeviceToken() -> token => ', token); }
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.setDeviceToken() -> token => ', token); }
     // Establecemos el indicador de estado.
     this.pendingTokenUpdate = !!token && this.deviceToken !== token;
     this.deviceToken = token;
@@ -207,9 +222,9 @@ export abstract class NotificationsService extends AbstractModelService implemen
   }
 
   protected saveDeviceToken(): void {
-    if (this.debug) { this.console.log(this.constructor.name + '.saveDeviceToken()'); }
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.saveDeviceToken()'); }
     this.user.get().pipe(first()).subscribe(user => {
-      if (this.debug) { this.console.log(this.constructor.name + '.saveDeviceToken() -> deviceToken => ', this.deviceToken); }
+      if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.saveDeviceToken() -> deviceToken => ', this.deviceToken); }
       // Actualizamos el nuevo token del dispositivo en el backend.
       this.api.put(`device?id=${user.device.idreg}`, { deviceToken: this.deviceToken }).pipe(
         tap(response => this.pendingTokenUpdate = false),
@@ -218,363 +233,390 @@ export abstract class NotificationsService extends AbstractModelService implemen
     });
   }
 
+
   // ---------------------------------------------------------------------------------------------------
-  //  Push
+  //  cache
   // ---------------------------------------------------------------------------------------------------
 
-  /** Atendemos la notificación llegada desde el plugin FCM. */
-  onPushNotificationReceived(notification: PushNotification): void {
-    // Si todavía no está autenticado...
-    if (!this.auth.isAuthenticated) {
-      // Almacenamos la notificación para que sea la primera en ejecutarse de la cola.
-      this.notificacionStored = notification.data;
-    } else {
-      // Cargamos la notificación.
-      this.loadNotification(+notification.data.idNotification).subscribe((notified: Notified) => {
-        // Emitimos la push para quien la quiera.
-        this.pushNotificationReceived.next(notified);
+  protected onAuthenticationChanged(value: AuthenticationState): void {
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.onAuthenticationChanged() =>', value); }
+    if (value.isAuthenticated) {
+      // Comprobamos si todavía está pendiente de establecer el token.
+      if (this.pendingTokenUpdate) { this.saveDeviceToken(); }
+      // Limpiamos la cache.
+      this.cache.clear();
+      // Cargamos las notificaciones del usuario.
+      this.loadCache(true).subscribe(() => {
+        // Iniciamos el intervalo de auditoría.
+        this.startAuditCacheInterval();
       });
+
+    } else {
+      // Detenemos el intervalo de consultas de notificaciones.
+      this.stopAuditCacheInterval();
+      // Anulamos el bloqueo por notificaciones obligatorias.
+      this.mandatoryPending = undefined;
     }
   }
 
-  /** Obtiene las notificaciones pendientes de la base de datos. */
-  load(): Observable<Notified[]> {
-    return this.requestNotifications({ AND: [['attended', 'is', null], ['deleted', 'is', null]] }).pipe(tap((response: Notified[]) => {
-      if (response) {
-        // Limpiamos la colección.
-        this.notifications = response;
-        // Marcar las notificaciones como recibidas.
-        this.markAllAsReceived(response);
-        // Contar las desatendidas.
-        this.unattendedNotifications.next(this.notifications.filter(n => !n.attended).length);
-        //
-        const idsPendents = [];
-        this.notifications.map(n => {
-          // const found = response.find(r => r.idreg === n.idreg && n.needToSolve ... condicions pq no ha vingut entre les pendets);
-          // if (!found) { idsPendents.push(found.idreg); }
-        });
-        if (idsPendents.length) {
+  /** Atendemos la notificación llegada desde el plugin FCM. */
+  protected onPushNotificationReceived(notification: PushNotification): void {
+    // Comprobamos si el intervalo de auditoría ya la ha obtenido antes y la ha tratado.
+    const found = (this.cache.rows as NotifiedUser[]).find(r => r.notified.notification.idreg === notification.data.idNotification);
+    if (!found?.notified.attended || found.notified.silent) {
+      // Ejecutamos la consulta de auditoría para recibir la notificación correspondiente de la base de datos.
+      this.auditCache();
+    }
+  }
 
-        }
-      }
-      return this.notifications;
+  loadCache(executeQueue?: boolean): Observable<NotifiedUser[]> {
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.loadCache()'); }
+    const cache = this.cache;
+    // Comprobamos si todavía quedan filas por cargar...
+    if (cache.completed) { return of([]); }
+    // NOTA: Podemos usar este servicio como host (cuando debería ser el componente de listado) pq desde
+    // los hooks del esquema se accede a miembros que también están disponibles en este servicio.
+    const host = this;
+    const itemsPerPage = this.notificationsSettings?.audit.itemsPerPage || 1000;
+    // NOTA: Creamos una nueva consulta para no sobrescribir la consulta de la cache.
+    const temp = new EntityQuery(NotificationsSchema); temp.page = cache.page;
+    // Delegamos en la capa abstracta para realizar una consulta según el esquema.
+    return this.getRows(temp, { itemsPerPage, host }).pipe(tap((rows: NotifiedUser[]) => {
+      // Añadimos las filas a la cache evitando las repeticiones.
+      this.pushRowsAvoidingRepetitions(cache, rows);
+      // Actualizamos la página de la consulta.
+      cache.page = temp.page;
+      cache.completed = temp.completed;
+      // Actualizamos la fecha de la última consulta.
+      this.lastAuditTime = moment().format('YYYY-MM-DD HH:mm:ss');
+      // Contar las desatendidas.
+      this.updateUnattendedCount();
+      // Ejecutamos la cola por si hay notificaciones nuevas.
+      if (executeQueue) { setTimeout(() => this.executeQueue(), 5000); }
     }));
   }
 
-  /** Obtiene las notificaciones pendientes de la base de datos. */
-  loadNotification(idNotification: number): Observable<Notified> {
-    return this.requestNotifications({ AND: [['idNotification', '=', idNotification]] }).pipe(switchMap((response: Notified[]) => {
-      if (!response?.length) { return of(); }
-      // Solo antendemos la primera recibida.
-      const notified = response[0];
-      this.markAsReceived(notified);
-      return of(notified);
-    }));
-  }
-
-  /** Obtiene las notificaciones de la base de datos. */
-  requestNotifications(search: ApiSearchAndClauses): Observable<Notified[]> {
-    // Obtenemos el identificador del usuario.
-    return this.user.get().pipe(switchMap<any, Observable<Notified[]>>(user => {
-      if (user) {
-        // Inyectamos la cláusula del usuario.
-        search.AND.push(['idUser', '=', user.idreg]);
-        // Consulta auto-administrada.
-        return from(this.query.resolveUrl({ paginate: false })).pipe(switchMap<string, Observable<Notified[]>>(url => {
-          // Solicitamos únicamente las notificaciones del usuario actual.
-          return this.api.post(url, search).pipe(map((notifications: Notified[]) => {
-            // Mapeamos las notificaciones que nos llegan del back-end.
-            if (notifications) {
-              return notifications.map(notified => {
-                if (!!notified.notification.data && typeof notified.notification.data === 'string') {
-                  try {
-                    notified.notification.data = JSON.parse(notified.notification.data as any);
-                  } catch (error) {
-                    if (this.debug) { console.error(this.constructor.name + '.requestNotifications', error); }
-                    // throw Error(error);
-                  }
-                }
-                notified.header = {
-                  key: Object.values(notified.notification.notificationType.localize).join('.'),
-                  interpolateParams: notified.notification.data as object
-                };
-                return notified;
-              });
-            }
-          }), catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false })));
-        }));
-      }
-    }));
-  }
-
-  /** @hidden */
-  protected mapNotified(notified: Notified): Notified {
-    notified.notification.data = JSON.parse(notified.notification.data as any);
-    notified.header = {
-      key: Object.values(notified.notification.notificationType.localize).join('.'),
-      interpolateParams: notified.notification.data as object
-    };
-    return notified;
-  }
-
-  // ---------------------------------------------------------------------------------------------------
-  //  Crea un timer que realiza llamadas periódicas para recuperar las notificaciones del backend.
-  // ---------------------------------------------------------------------------------------------------
-
-  /**
-   * Inicia un intervalo de consultas periódicas para recuperar las notificaciones desde _backend_.
-   *
-   * La operación se detiene con una llamada a {@link stopIntervalRequest}().
-   *
-   * @param search Cláusula válida para la API Rest. La función inyecta automáticamente la restricción del usuario actual: `['idUser', '=', user.idreg]`.
-   * @param period The interval size in milliseconds (by default) or the time unit determined by the scheduler's clock.
-   * @param scheduler The {@link SchedulerLike} to use for scheduling the emission of values, and providing a notion of "time".
-   */
-  protected startIntervalRequest(period?: number, scheduler?: SchedulerLike) {
-    if (!period) { period = NotificationsService.defaultPushInterval; }
+  startAuditCacheInterval(period?: number) {
     if (AppConfig.notifications?.allowIntervalRequest === false) { return; }
-    this.stopIntervalRequest();
-    this.intervalRequest = interval(period, scheduler).subscribe(() => {
-      // NOTA: Puede que hayamos detenido el interval pero el último ciclo aún se lanza cuando ya no está autenticado.
-      if (!this.auth.isAuthenticated) { return; }
-      // Recuperamos las notificaciones pendientes.
-      const data: ApiSearchAndClauses = { AND: [{ OR: [['received', 'is', null], ['attended', 'is', null]] }, ['deleted', 'is', null]] };
-      this.requestNotifications(data).subscribe(response => {
-        if (response) {
-          this.notificationsUnatended = response;
-          response.map(notified => {
-            // if (this.debug) { console.log(this.constructor.name + '.startIntervalRequest() -> requestNotifications', notified.received); }
-            if (!notified.received) {
-              // if (this.debug) { console.log(this.constructor.name + '.startIntervalRequest() -> requestNotifications -> pushNotificationReceived.next()'); }
-              this.pushNotificationReceived.next(notified);
-            }
-          });
-          // if (this.debug) { console.log(this.constructor.name + '.startIntervalRequest() -> unattendedNotifications.next'); }
-        }
-      });
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.startAuditCacheInterval()'); }
+    if (this.auditCacheIntervalSubscription) { this.auditCacheIntervalSubscription.unsubscribe(); }
+    this.auditCacheIntervalStarted = true;
+    period = period || this.notificationsSettings?.audit.period || 30;
+    this.auditCacheIntervalSubscription = interval(period * 1000).subscribe(() => this.auditCache().subscribe());
+    this.auditCache().subscribe();
+  }
+
+  stopAuditCacheInterval() {
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.stopAuditCacheInterval()'); }
+    this.auditCacheIntervalStarted = false;
+    if (this.auditCacheIntervalSubscription) { this.auditCacheIntervalSubscription.unsubscribe(); }
+  }
+
+  /** Permite modificar el intervalo de auditoría de la cache.
+   * Ej: cuando vamos a pagar un servicio reducimos el periodo del intervalo para intensificar la auditoría
+   * y así poder recibir antes la notificación de pago.
+   */
+  set auditCacheIntervalPeriod(seconds: number) {
+    this.stopAuditCacheInterval();
+    this.startAuditCacheInterval(seconds);
+  }
+
+  auditCache(): Observable<NotifiedUser[]> {
+    if (this.debug) { console.log('NotificationsService:' + this.constructor.name + '.auditCache()'); }
+    // NOTA: Podemos usar este servicio como host (cuando debería ser el componente de listado) pq desde
+    // los hooks del esquema se accede a miembros que también están disponibles en este servicio.
+    const host = this;
+    const cache = this.cache;
+    const lastAuditTime = this.lastAuditTime;
+    // NOTA: Restamos un minuto a la hora de la auditoria para asegurar que las recibimos todas.
+    const period = this.notificationsSettings?.audit.period || 30;
+    const nextAuditTime = moment().subtract(60, 'seconds').format('YYYY-MM-DD HH:mm:ss');
+    // Creamos una consulta no paginada.
+    const paginate = false;
+    const search: ApiSearchClauses = {
+      AND: [
+        ['idUser', '=', host.user.instant?.idreg],
+        { OR: [['notified.attended', '>', lastAuditTime], ['notified.notification.created', '>', lastAuditTime]] },
+      ]
+    };
+    // Evitamos las que están fuera de la paginación actual de la cache.
+    const limitBeofreDate = cache.rows.length ? cache.rows[cache.rows.length - 1].notified.notification.created : false;
+    if (limitBeofreDate) { search.AND.push(['notified.notification.created', '>=', limitBeofreDate]); }
+    // NOTA: Creamos una nueva consulta para no sobrescribir la consulta de la cache.
+    return this.getRows(new EntityQuery(NotificationsSchema), { search, paginate, host }).pipe(tap((rows: NotifiedUser[]) => {
+      // Actualizamos la fecha de la última consulta.
+      this.lastAuditTime = nextAuditTime;
+      // Comprobamos si ha habido cambios.
+      if (rows?.length) {
+        // Actualizamos las caches.
+        const news = this.refreshCache(rows);
+        // Notificamos las nuevas push recibidas.
+        news.map(nu => this.newNotificationReceivedSubject.next(nu));
+        // Contar las desatendidas.
+        this.updateUnattendedCount();
+        // Ejecutamos la cola por si hay notificaciones nuevas.
+        if (news.length) { this.executeQueue(); }
+      }
+    }));
+  }
+
+  refreshCache(auditRows: NotifiedUser[]): NotifiedUser[] {
+    const news: NotifiedUser[] = [];
+    if (this.debug) { console.log('NotificationsService:' + this.constructor.name + `.refreshCache(})`); }
+    const cache = this.cache;
+    // Tratamos cada fila auditada.
+    auditRows?.map(audit => {
+      // Obtenemos la fila auditada.
+      const row = cache.rows.find(r => r.idreg === audit.idreg);
+      if (this.debug) { console.log('NotificationsService:' + this.constructor.name + `.refreshCache(}) -> audit => `, { audit, row }); }
+      // Comprobamos si está dentro la paginación.
+      const outside = false;
+      // Actualizamos la cache.
+      if (!outside) { const res = this.refreshCacheRow(cache.rows, row, audit); if (res === 'NEW') { news.push(audit); } }
     });
+    // Ordenamos la filas.
+    const pipe = new OrderByPipe();
+    cache.rows = pipe.transform(cache.rows, cache.model.list.orderBy);
+    return news;
   }
 
-  /** Detiene un intervalo de consultas iniciado a través de {@link startIntervalRequest}(). */
-  protected stopIntervalRequest(): void {
-    if (this.intervalRequest) { this.intervalRequest.unsubscribe(); }
+  refreshCacheRow(rows: NotifiedUser[], row: NotifiedUser, audit: NotifiedUser): 'NEW' | 'UPDATED' | 'DELETED' {
+    if (row === undefined) {
+      // NEW
+      rows.push(audit);
+      if (this.debug) { console.log('NotificationsService:' + this.constructor.name + '.refreshCacheRow() -> NEW => ', audit); }
+      return 'NEW';
+
+    } else {
+      // UPDATED
+      deepAssign(row, audit);
+      if (this.debug) { console.log('NotificationsService:' + this.constructor.name + '.refreshCacheRow() -> UPDATED => ', row); }
+      return 'UPDATED';
+    }
   }
 
-  set pushInterval(milliseconds: number) {
-    this.stopIntervalRequest();
-    this.startIntervalRequest(milliseconds);
+
+  // ---------------------------------------------------------------------------------------------------
+  //  unattended
+  // ---------------------------------------------------------------------------------------------------
+
+  get unattended(): NotifiedUser[] {
+    return (this.cache.rows as NotifiedUser[]).filter(nu => !nu.notified.attended);
   }
+
+  protected updateUnattendedCount() {
+    // Contar las pendientes de entrega.
+    this.unattendedCount = this.unattended.length;
+    // TODO: Actualizar el badge de la aplicación a nivel de sistema.
+  }
+
 
   // ---------------------------------------------------------------------------------------------------
   //  Execute notifications
   // ---------------------------------------------------------------------------------------------------
 
-  /** Resuelve la siguiente notificación push pendiente de ser atendida. */
+  /** Comprueba las notificaciones push recibidas. */
   executeQueue(): void {
-    // Cargamos las notificaciones de la base de datos.
-    this.load().subscribe(() => {
-      if (this.debug) { this.console.log(this.constructor.name + '.executeQueue() -> this.load => ', this.notifications); }
-      // Resolvemos la primera que llega.
-      this.notificationsUnatended = this.notifications;
-      const found = this.notifications?.find((notified: Notified) => this.notificacionStored ? this.notificacionStored.idNotification === notified.notification.idreg : !notified.attended);
-      // if (this.debug) { this.console.log(this.constructor.name + '.executeQueue() -> found', found); }
-      // Borramos la información de la notificación almacenada.
-      this.notificacionStored = undefined;
-      if (found) {
-        // Comprobamos que va dirigida al usuario actual, sino volvemos a lanzar la ejecución de la cola.
-        if (found.idUser === this.user.instant.idreg) { this.pushNotificationReceived.next(found); } else { this.executeQueue(); }
+    // Separamos las silenciosas del resto para ejecutarlas en paralelo.
+    const silent = (this.cache.rows as NotifiedUser[]).filter(nu => nu.notified.silent && !nu.notified.attended);
+    silent.map(nu => this.executeNotification(nu, { forceAttended: true }));
+    // Informamos de las notificaciones recibidas.
+    const unprocessed = (this.cache.rows as NotifiedUser[]).filter(nu => !nu.processed);
+    unprocessed.map(nu => this.notificationReceivedSubject.next(nu));
+
+    // Si hay una obligatoria pendiente, no hacemos nada.
+    if (this.mandatoryPending) { return; }
+
+    // Damos prioridad a las obligatorias no atendidas.
+    const mandatory = (this.cache.rows as NotifiedUser[]).filter(nu => nu.notified.mandatory && !nu.notified.attended);
+    if (mandatory.length) {
+      const nu = mandatory[0];
+      this.mandatoryPending = nu;
+      // Mostramos un mensaje de alerta en primer plano con un solo botón para aceptar.
+      this.alertNotification(nu);
+      // Monitorizamos el fin de la acción.
+      const sub = this.mandatoryNotificationCompleted.subscribe(attended => {
+        sub.unsubscribe();
+        if (attended) { this.markAsAttended(nu); } else { this.avoidMamdatory(nu); }
+        this.mandatoryPending = undefined;
+        this.executeQueue();
+      });
+      // Ejecutamos la acción
+      this.executeNotification(nu);
+
+    } else {
+      // Obtenemos las pendientes de entrega.
+      const unattended = this.unattended;
+      // Si no hay obligatorias, deberemos comprobar la configuración actual del usuario.
+      if (!this.user.instant?.device?.notifications.disablePushNotifications) {
+        // Si solo hay una la ejecutamos ahora.
+        if (unattended.length === 1) {
+          const nu = unattended[0];
+          // Presentamos un Toast al usuario para que decida si quiere atenderla.
+          this.toastNotification(nu).then(response => this.resolveNotificationResponse(nu, response));
+
+        } else if (unattended.length > 1) {
+          // Comprobamos que no hay una alerta pendiente de resopnder.
+          if (!this.alert && !this.router.url.includes('notificaciones')) {
+            // Establecemos el indicador de estado.
+            this.alert = true;
+            // Si hay un lote de notificaciones pendientes, mostramos un prompt para que el usuario pueda elegir atenderlas.
+            this.showAlert({
+              header: 'notifications.deseaAtenderlas',
+              message: 'notifications.deseaAtenderlasMessage',
+              interpolateMessage: { count: unattended.length },
+              YesNo: true,
+            }).then(response => {
+              this.alert = false;
+              if (response) { this.navigateToNotifications(); }
+            });
+          }
+        }
       }
-    });
+    }
   }
 
-  /** Marca las notificaciones como recibidas. */
-  async markAllAsReceived(notifications: Notified[]): Promise<any> {
-    if (this.debug) { console.log(this.constructor.name + '.markAllAsReceived()'); }
-    const ids: number[] = notifications.filter(notified => !notified.received).map((notified: Notified) => {
-      notified.received = moment().format('YYYY-MM-DD HH:mm:ss');
-      if (this.debug) { console.log(this.constructor.name + '.markAllAsReceived(),', notified.received); }
-      return notified.idreg;
-    });
-    if (ids.length) {
-      // return this.api.post(`notified_received`, { ids, idUser: this.user.instant.idreg }).pipe(catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false }))).toPromise();
+  /** Gestiona la respuesta del usuario a la notificación presentada. */
+  protected resolveNotificationResponse(nu: NotifiedUser, response: boolean): void {
+    if (response) { this.executeNotification(nu, { forceAttended: !nu.notified.needToSolve }); }
+    else if (!nu.notified.needToSolve) { this.markAsAttended(nu); }
+  }
+
+  /** Ejecuta la acción asociada con la notificación. Antes la marca como atendida si no lo estaba ya. */
+  async executeNotification(nu: NotifiedUser, options?: { forceAttended?: boolean }): Promise<any> {
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.executeNotification(notified) => ', nu); }
+    if (!options) { options = {}; }
+    if (options.forceAttended === undefined) { options.forceAttended = false; }
+
+    if (this.loader) { this.loader.dismiss(); this.loader = undefined; }
+    if (options.forceAttended) {
+      return this.markAsAttended(nu).finally(() => this.executeNotificationSubject.next(nu));
     } else {
+      this.executeNotificationSubject.next(nu);
       return of().toPromise();
     }
   }
 
-  /** Marca la notificación indicada como solventada. */
-  async markAsReceived(notified: Notified): Promise<any> {
-    if (this.debug) { this.console.log(this.constructor.name + '.markAsReceived(notified) => ', notified); }
+  /** Presenta la notificación al usuario a través de un componente de alerta. */
+  async alertNotification(nu: NotifiedUser): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      const op: any = {};
+      const header = nu.notified.header || '';
+      if (header) { op.header = this.resolveTranslate(header); }
+      op.message = '';
+      op.buttons = [{
+        text: this.translate.instant('buttons.accept'),
+        handler: () => resolve(true)
+      }];
+      this.alertCtrl.create(op).then(alert => alert.present()).catch(error => reject(error));
+    });
+  }
 
-    // return of().toPromise();
-    // Envia al backend el estado de notificación atendida.
-    return this.api.put(`notified?id=${notified.idreg}`, { received: moment().format('YYYY-MM-DD HH:mm:ss') }).pipe(catchError(error => this.alertError({ error, message: 'notifications.errorGeneric' }))).toPromise();
+  /** Presenta la notificación al usuario a través de un componente toast. */
+  async toastNotification(nu: NotifiedUser): Promise<boolean> {
+    const type = nu.notified.notification.idNotificationType;
+    const showYesNo = nu.notified.needToSolve;
+    const op: ToastOptions = {
+      cssClass: 'toast-custom-class',
+      duration: (this.notificationsSettings?.toastDuration || 4) * 1000,
+      position: 'top',
+      buttons: [{ text: '', icon: 'notifications', side: 'start' }],
+    };
+    // Sobrescribimos las opciones por defecto con las definidas para este tipo de notificación (desde AppComponent).
+    if (Object.keys(this.toastOptions).includes(type.toString())) { deepAssign(op, this.toastOptions[type]); }
+    const header = nu.notified.header || '';
+    if (header) { op.header = this.resolveTranslate(header); }
+    op.message = showYesNo ? this.translate.instant('notificaciones.quiere_atenderla') : '';
+
+    if (this.user.instant.device.notifications.allowSonidoPush && showYesNo) {
+      if (!this.media.isPlay) { this.media.play({ src: 'audio/' + this.user.instant.device.notifications.sonidoPush }); }
+    }
+
+    // Lanzamos la notificación de sistema por si la aplicación está en segundo plano.
+    if (this.device.is('electron')) { this.electronService.ipcRenderer.invoke('sendNotification', { appId: AppConfig.app.package, header: op.header, message: op.message, nu }).then(() => { }); }
+
+    // Lanzamos el Toast.
+    return new Promise<boolean>((resolve, reject) => {
+      this.toastController.create(op).then((toast) => {
+        toast.present();
+        // Necesitamos saber cuando se cierra sin aceptar o hacer click en el botón o en el toast.
+        const listener: EventListenerOrEventListenerObject = (ev => {
+          if (this.debug) { console.log(this.constructor.name + '.ionToastDidDismiss', ev); }
+          toast.removeEventListener('ionToastDidDismiss', listener);
+          resolve(false);
+        });
+        toast.addEventListener('ionToastDidDismiss', listener);
+        // NOTA: el evento click en el componente Toast solo se lanza cuando pulsa el botón "Sí".
+        toast.addEventListener('click', (ev => {
+          if (this.debug) { console.log(this.constructor.name + '.click', ev); }
+          if (this.media.isPlay) { this.media.stop(); }
+          // this.media.stop();
+          this.showLoader().then(loader => this.loader = loader).finally(() => {
+            toast.removeEventListener('ionToastDidDismiss', listener);
+            toast.dismiss();
+            resolve(true);
+          });
+        }));
+      });
+    });
   }
 
   /** Indica que la notificación actual ha sido atendida correctamente. */
-  async markAsAttended(notified: Notified): Promise<any> {
-    // Envia al backend el estado de notificación atendida.
-    return this.api.put(`notified?id=${notified.idreg}`, { attended: moment().format('YYYY-MM-DD HH:mm:ss') }).pipe(
-      tap(() => {
-        // if (this.debug) { this.console.log(this.constructor.name + '.markAsAttended -> tap() => ', this.notifications); }
-        // Eliminamos la notificación atendida de la cola de notificaciones pendientes.
-        if (this.notifications.length) {
-          const idx: number = this.notifications.indexOf(notified);
-          if (!isNaN(idx)) {
-            // if (this.debug) { this.console.log(this.constructor.name + '.markAsAttended -> splice', idx); }
-            this.notifications.splice(idx, 1);
-          }
-        }
-      }),
-      catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false })),
+  async markAsAttended(nu: NotifiedUser): Promise<any> {
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.markAsAttended(notified) => ', nu); }
+    if (nu.notified.attended) { return of().toPromise(); }
+    // Marcamos la notificación como atendida (y tb recibida si todavía no lo estaba).
+    const attended = moment().format('YYYY-MM-DD HH:mm:ss');
+    const data: any = { idNotified: nu.idNotified, notified: { attended } };
+    // Marcamos ahora la notificación localmente sin esperar al callback de backend.
+    nu.notified.attended = attended;
+    // Realizamos la llamada a backend.
+    return this.api.put(`notifiedUser?id=${nu.idreg}&rel=notified`, data).pipe(
+      tap(() => this.updateUnattendedCount()),
+      catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false }))
     ).toPromise();
   }
 
   /** Marca la notificación indicada como solventada. */
-  async markAsSolved(notified: Notified): Promise<any> {
-    if (this.debug) { this.console.log(this.constructor.name + '.markAsSolved(notified) => ', notified); }
-
-    // Envia al backend el estado de notificación atendida.
-    return this.api.put(`notified?id=${notified.idreg}`, { solved: moment().format('YYYY-MM-DD HH:mm:ss'), attended: moment().format('YYYY-MM-DD HH:mm:ss') }).pipe(
-      tap(() => {
-        // if (this.debug) { this.console.log(this.constructor.name + '.markAsAttended -> tap() => ', this.notifications); }
-        // Eliminamos la notificación atendida de la cola de notificaciones pendientes.
-        if (this.notifications.length) {
-          const idx: number = this.notifications.indexOf(notified);
-          if (!isNaN(idx)) {
-            // if (this.debug) { this.console.log(this.constructor.name + '.markAsAttended -> splice', idx); }
-            this.notifications.splice(idx, 1);
-          }
-        }
-      }),
-      catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false })))
-      .toPromise();
+  async avoidMamdatory(nu: NotifiedUser): Promise<any> {
+    if (this.debug) { this.console.log('NotificationsService:' + this.constructor.name + '.avoidMamdatory(notified) => ', nu); }
+    if (!nu.notified.mandatory) { return of().toPromise(); }
+    const data: any = { notified: { mandatory: false }, idNotified: nu.idNotified };
+    // Marcamos ahora la notificación localmente sin esperar al callback de backend.
+    nu.notified.mandatory = false;
+    // Realizamos la llamada a backend.
+    return this.api.put(`notifiedUser?id=${nu.idreg}&rel=notified`, data).pipe(
+      catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false }))
+    ).toPromise();
   }
 
-
-  async markAll(notified: Notified): Promise<any> {
-    if (this.debug) { this.console.log(this.constructor.name + '.markAsSolved(notified) => ', notified); }
-
-    // Envia al backend el estado de notificación atendida.
-    return this.api.put(`notified?id=${notified.idreg}`, { solved: moment().format('YYYY-MM-DD HH:mm:ss'), received: moment().format('YYYY-MM-DD HH:mm:ss'), attended: moment().format('YYYY-MM-DD HH:mm:ss') })
-      .pipe(catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false }))).toPromise();
-  }
-
-  /** Marca la notificación indicada como solventada. */
-  async markNotificationAsSolved(notified: Notified): Promise<any> {
-    if (this.debug) { this.console.log(this.constructor.name + '.markAsSolved(notified) => ', notified); }
-    // Envia al backend el estado de notificación atendida.
-    return this.api.put(`notification?id=${notified.idNotification}`, { solved: moment().format('YYYY-MM-DD HH:mm:ss') })
-      .pipe(catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false }))).toPromise();
-  }
-
-  /** Elimina todas las notificacione ya atendidas. */
-  async deleteAllAttended(): Promise<any> {
-    if (this.debug) { this.console.log(this.constructor.name + '.deleteAllAttended()'); }
-
-    return this.api.get('notified_archivar').pipe(catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false }))).toPromise().then(() => {
-      this.query.rows = this.query.rows.filter(row => !row.attended);
+  /** Muestra un loader hasta que se termina de ejecutar la notificación. */
+  async showLoader(message?: string): Promise<HTMLIonLoadingElement> {
+    return this.loadingCtrl.create({
+      message: this.translate.instant(message || 'api.updating') + '...',
+      duration: 5000,
+      spinner: 'circles',
+    }).then(loader => {
+      loader.present();
+      return loader;
     });
   }
 
-  async deteleNotification(notified: Notified): Promise<any> {
-    if (this.debug) { this.console.log(this.constructor.name + '.markAsSolved(notified) => ', notified); }
-    // Envia al backend el estado de notificación atendida.
-    return this.api.put(`notified?id=${notified.idreg}`, { solved: moment().format('YYYY-MM-DD HH:mm:ss'), received: moment().format('YYYY-MM-DD HH:mm:ss'), attended: moment().format('YYYY-MM-DD HH:mm:ss'), deleted: moment().format('YYYY-MM-DD HH:mm:ss') })
-      .pipe(
-        tap(() => {
-          // if (this.debug) { this.console.log(this.constructor.name + '.markAsAttended -> tap() => ', this.notifications); }
-          // Eliminamos la notificación atendida de la cola de notificaciones pendientes.
-
-          // const idx: number = this.notifications.indexOf(notified);
-          // if (!isNaN(idx)) {
-          //   // if (this.debug) { this.console.log(this.constructor.name + '.markAsAttended -> splice', idx); }
-          //   this.notifications.splice(idx, 1);
-          // }
-
-        }),
-        catchError(error => this.alertError({ error, message: 'notifications.errorGeneric', emitError: false })))
-      .toPromise();
-  }
-
-
 
   // ---------------------------------------------------------------------------------------------------
-  //  Proceso de ejecució de una notificación
+  //  Componente de listado
   // ---------------------------------------------------------------------------------------------------
 
-  /** Ejecuta la acción de la notificación en función de su estado. Si no está atendida, lanza una alerta primero. */
-  async executeNotification(notified: Notified, isNew?: boolean): Promise<any> {
-    if (this.debug) { console.log(this.constructor.name + '.executeNotification', notified); }
-
-    if (isNew) {
-      if (!notified.attended) {
-        return this.doAttend(notified);
-      } else if (!notified.solved && isNew && !notified.notification.notificationType.needToSolve) {
-        return this.doAlert(notified).then(() => this.markNotificationAsSolved(notified));
-      } else if (!notified.solved && notified.SolvedActions) {
-        return this.doSolve(notified, notified.SolvedActions.code);
-      } else {
-        return from(undefined).toPromise();
-      }
-    } else {
-      if (!notified.attended) {
-        return this.doAttend(notified);
-      } else if (notified.SolvedActions) {
-        return this.doSolve(notified, notified.SolvedActions.code).then(() => {
-          if (!notified.solved && !notified.notification.notificationType.needToSolve) { this.markNotificationAsSolved(notified); }
-        });
-      } else if (notified.AttendedActions) {
-        this.doSolve(notified, notified.AttendedActions.code);
-      }
-      else {
-        return from(undefined).toPromise();
-      }
-    }
-  }
-
-  async doAttend(notified: Notified): Promise<any> {
-    if (notified.notification.notificationType.showAlert) {
-      return this.doAlert(notified);
-    } else if (notified.notification.notificationType.needToSolve) {
-      return this.markAsAttended(notified).then(() => this.doSolve(notified, notified.AttendedActions.code));
-    } else {
-      return this.markNotificationAsSolved(notified);
-    }
-  }
-
-  async doAlert(notified: Notified): Promise<any> {
-    if (!notified.notification.notificationType.needToSolve && !notified.notification.notificationType.showYesNo) {
-      this.markNotificationAsSolved(notified);
-    }
-    return this.presentToast(notified, notified.header, notified.notification.notificationType.showYesNo ? { key: 'notificaciones.quiere_atenderla' } : undefined).then(async response => {
-      if (response) {
-        if (notified.notification.notificationType.needToSolve) {
-          return this.markAsAttended(notified).then(() => this.doSolve(notified, notified.AttendedActions.code));
-        } else if (!notified.solved && !notified.notification.notificationType.needToSolve) {
-          return this.doSolve(notified, notified.AttendedActions?.code ? notified.AttendedActions.code : notified.SolvedActions.code).then(() => this.markNotificationAsSolved(notified).then(() => this.markAsAttended(notified)));
-        }
-      } else {
-        return from(undefined).toPromise();
-      }
-    });
-  }
-
-  async doSolve(notified: Notified, code: string): Promise<any> {
-    return this.executeActions(notified, code);
-  }
-
-  /** Resuelve una notificación y devuelve un valor booleano indicando si ha sido resuelta. */
-  async executeActions(notified: Notified, code: string, args?: { [key: string]: any }): Promise<any> {
-    if (this.debug) { this.console.log(this.constructor.name + '.execute(notified) => ', notified); }
-    // Pasamos notified dentro de notified para que sus propiedades tb se propaguen en las expresiones de código.
-    (notified as any).notified = notified;
-    // Propagamos las propiedades de data a la notificación.
-    notified = deepAssign(notified, notified.notification.data);
-    // Propagamos los argumentos adicionales suministrados.
-    notified = deepAssign(notified, args);
-    // Propagamos todas las propiedades de 'notified' y las del host indicadas en 'filterProperties'.
-    return evalExpr(code, { args: notified, host: this, filterProperties: this.filterProperties });
+  /**
+   * Navega hacia el componente de listado de notificaciones del proyecto final.
+   *
+   * Sobrescribir para pasar una ruta diferente.
+   * ```typescript
+   * this.push.navigateToNotifications = (): Promise<boolean> => this.router.navigate([`/notificaciones`]);
+   * ```
+   */
+  async navigateToNotifications(): Promise<boolean> {
+    return this.router.navigate([`/notificaciones`]);
   }
 
 
@@ -584,64 +626,6 @@ export abstract class NotificationsService extends AbstractModelService implemen
 
   async navigate(commands: any[], extras?: NavigationExtras): Promise<boolean> {
     return this.router.navigate(commands, extras);
-  }
-
-  async showNotificationAlert(notified: Notified, header: { key: string; interpolateParams: { [key: string]: any } }, message?: any): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
-      const showYesNo = notified.notification.notificationType.showYesNo;
-      const op: any = {};
-      if (header) { op.header = this.resolveTranslate(this.translate.instant(header.key, header.interpolateParams)); }
-      if (message) { op.message = this.resolveTranslate(this.translate.instant(message.key, message.interpolateParams)); }
-      if (showYesNo) {
-        op.buttons = [
-          {
-            text: this.translate.instant('buttons.no'),
-            handler: () => resolve(false),
-          }, {
-            text: this.translate.instant('buttons.yes'),
-            handler: () => {
-              this.markAsAttended(notified).then(() => notified.attended = moment().format('YYYY-MM-DD HH:mm:ss'));
-              resolve(true);
-            }
-          }
-        ];
-
-      } else {
-        this.markAsAttended(notified).then(() => notified.attended = moment().format('YYYY-MM-DD HH:mm:ss'));
-        op.buttons = [{
-          text: this.translate.instant('buttons.accept'),
-          handler: () => resolve(true)
-        }];
-      }
-
-      this.alertCtrl.create(op).then(alert => alert.present()).catch(error => reject(error));
-    });
-  }
-
-  async presentToast(notified: Notified, header: { key: string; interpolateParams: { [key: string]: any } }, message?: any, duration?: number, css?: string): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-
-      const showYesNo = notified.notification.notificationType.showYesNo;
-      const op: any = {};
-      if (header) { op.header = this.resolveTranslate(this.translate.instant(header.key, header.interpolateParams)); }
-      if (message) { op.message = this.resolveTranslate(this.translate.instant(message.key, message.interpolateParams)); }
-      if (!duration) { duration = this.toastDuration; }
-      if (!css) { css = 'toast-custom-class'; }
-      op.duration = duration ? duration : 4000;
-      op.buttons = [{ text: '', icon: 'notifications', side: 'start' }, ];
-      op.position = 'top';
-      op.cssClass = css;
-      this.toastController.create(op).then((toast) => {
-        toast.present();
-        if (notified.notification.notificationType.needToSolve || notified.notification.notificationType.showYesNo) {
-          toast.addEventListener('click', (ev => {
-            toast.dismiss();
-            resolve(true);
-          }));
-        }
-      });
-      if (this.device.is('electron')) { this.electronService.ipcRenderer.invoke('sendNotification', { header: op.header, message: op.message }).then(() => { }); }
-    });
   }
 
 }

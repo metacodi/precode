@@ -1,5 +1,4 @@
 export { AuthModule } from './auth.module';
-export { UserService } from './user.service';
 export { LoginPage } from './login/login.page';
 export { RecoveryPage } from './recovery/recovery.page';
 export { RegisterSuccessPage } from './register/register-success.page';

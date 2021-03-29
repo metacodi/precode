@@ -1,0 +1,25 @@
+:host {
+
+  .color-ball {
+    width: 14px;
+    height: 14px;
+    border-radius: 14px;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+    margin-top: -3px;
+  }
+
+  .legend {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .legend ion-row:last-of-type ion-text {
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--ion-text-color);
+  }
+
+}

@@ -4,27 +4,39 @@ import { EntitySchema } from '../abstract/model/entity-schema';
 
 
 export const NotificationsSchema: EntitySchema = {
-  name: 'notified',
+  name: { singular: 'notifiedUser', plural: 'notifiedUsers' },
   list: {
     map: (row: any, host: any) => {
-      row.notification.data = JSON.parse(row.notification.data);
-      row.header = {
-        key: Object.values(row.notification.notificationType.localize).join('.'),
-        interpolateParams: row.notification.data
+      const notification = row.notified.notification;
+      try {
+        if (!!notification.data && typeof notification.data !== 'object') {
+          notification.data = JSON.parse(notification.data);
+        }
+      } catch (ex) {
+        console.log(notification.data);
+      }
+      row.notified.header = {
+        key: Object.values(notification.notificationType.localize).join('.'),
+        interpolateParams: notification.data
       };
-      row.alert = host.resolveTranslate({
-        key: Object.values(row.notification.notificationType.localize).join('.'),
-        interpolateParams: row.notification.data
+      row.notified.alert = host.resolveTranslate({
+        key: Object.values(notification.notificationType.localize).join('.'),
+        interpolateParams: notification.data
       });
+      // Creamos un indicador interno de procesado para las notificaciones no recibidas.
+      row.processed = !!row.notified.silent;
       return row;
     },
-    search: (host: any): ApiSearchClauses => ({ AND: [['idUser', '=', host.user.idreg], ['deleted', 'is', null]] }),
-    fields: 'idreg,idUser,idNotification,received,attended,solved,failed,notification(idNotificationType,data,created,sent,solved),idAttendedAction,idSolvedAction',
+    paginate: true,
+    // itemsPerPage: 100,
+    search: (host: any): ApiSearchClauses => ['idUser', '=', host.user.instant?.idreg],
+    fields: 'idreg,idUser,idNotified',
     foreign: {
-      idNotification: { notification: 'idNotificationType,data,created,sent', notificationTypes: 'idLocalize,description,showAlert,showYesNo,needToSolve', localize: 'path,key' },
-      idAttendedAction: { 'notificationActions->AttendedActions(idAttendedAction)': 'code' },
-      idSolvedAction: { 'notificationActions->SolvedActions(idSolvedAction)': 'code' }
+      idNotified: {
+        notified: 'idNotification,action,silent,mandatory,needToSolve,attended',
+        notification: 'idNotificationType,data,created', notificationType: 'idLocalize,description', localize: 'path,key',
+      },
     },
-    orderBy: 'notification.created-',
+    orderBy: 'notified.notification.created-',
   }
 };

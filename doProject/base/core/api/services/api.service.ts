@@ -11,7 +11,7 @@ import { ConsoleService } from 'src/core/util';
 
 import { ApiRequest, ApiRequestOptions, HttpMethod } from '../model/api.types';
 import { Blob, BlobService } from './blob.service';
-import { UserSettingsService } from './user-settings.service';
+import { UserSettings, UserSettingsService } from './user-settings.service';
 
 
 /**
@@ -22,20 +22,8 @@ import { UserSettingsService } from './user-settings.service';
  *   - Using static default configuration
  *   - Present and dismiss a loader
  *
- * **Usage**
- *
  * ```typescript
- * import { ApiService } from 'src/core/api';
- *
- * export class AppComponent {
- *
- *   // Inject the api service.
- *   constructor(private api: ApiService) {
- *     // Provide delagates
- *     api.presentAlert = (message?: string): void => { ... };
- *     api.presentLoader = (message?: string): Promise<any> => { ... };
- *   }
- * }
+ * this.api.get('user/123').subscribe(user => user);
  * ```
  */
 @Injectable({
@@ -45,7 +33,7 @@ export class ApiService {
   /** Url base. */
   static url: string;
 
-  private verbose = true && AppConfig.debugEnabled;
+  private verbose = false && AppConfig.debugEnabled;
   private debug = true && AppConfig.debugEnabled;
 
   constructor(
@@ -64,7 +52,7 @@ export class ApiService {
     // Monitorizamos la conexión.
     this.network.addListenerNetworkStatusChange((status: NetworkStatus) => {
       this.connected = status.connected;
-      if (this.debug && this.verbose) { this.console.log('Network connected!'); }
+      if (this.debug && this.verbose) { this.console.log('Network connected!', status); }
     });
   }
 
@@ -128,7 +116,7 @@ export class ApiService {
     // withCredentials: true,
 
     // -> our own properties
-    showLoader: true,
+    showLoader: false,
     showErrors: true,
     // loaderText: 'Please, wait',
     // subject: new Subject<any>(),
@@ -277,7 +265,7 @@ export class ApiService {
     options.body = this.getFormValue(options.body);
     if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.defineRequest(options)', options); }
 
-    // Definimos una nueva consutla.
+    // Definimos una nueva consulta.
     return {
       method: method instanceof HttpRequest ? (method as HttpRequest<any>).method : method,
       url: method instanceof HttpRequest ? (method as HttpRequest<any>).url : url,
@@ -316,11 +304,11 @@ export class ApiService {
 
       // Comprobamos si hay que realizar una petición de blobs.
       this.requestBlobs(request).then((req: ApiRequest) => {
-        if (this.debug) { this.console.log(this.constructor.name + '.initRequest(requests) -> requestBlobs()'); }
+        if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.initRequest(requests) -> requestBlobs()'); }
 
         // Comprobamos si hay que realizar una petición de ajustes de usuario.
         this.requestUserSettings(req).then((req2: ApiRequest) => {
-          if (this.debug) { this.console.log(this.constructor.name + '.initRequest(requests) -> requestUserSettings()'); }
+          if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.initRequest(requests) -> requestUserSettings()'); }
           if (request.options.showLoader) { this.showLoader(request); }
           resolve(req2);
 
@@ -361,22 +349,22 @@ export class ApiService {
     });
   }
 
-  private errorRequest(request: ApiRequest, results: any): void {
+  private errorRequest(request: ApiRequest, error: any): void {
     // Finalizamos la consulta.
     this.finishRequest(request);
     // Recuperamos el mensaje de error.
     let message = '';
-    if (results instanceof HttpErrorResponse) {
-      if (!!results.error && results.error.message) {
-        message = results.error.message;
-      } else if (results.status) {
+    if (error instanceof HttpErrorResponse) {
+      if (!!error.error && error.error.message) {
+        message = error.error.message;
+      } else if (error.status) {
         // status = 0 -> Not connected or server not response!
-        message = results.message;
+        message = error.message;
       }
-    } else if (results && results.message) {
-      message = results.message;
+    } else if (error && error.message) {
+      message = error.message;
     }
-    if (this.debug) { this.console.error(this.constructor.name + '.errorRequest(request) => ', { request, results, connected: this.connected }); }
+    if (this.debug) { this.console.error(this.constructor.name + '.errorRequest(request) => ', { request, error, connected: this.connected }); }
     // Evitamos publicar urls.
     if (message.includes('http://') || message.includes('https://')) { message = (message + ' ').replace(/http.*(?=\s)/, '').trim(); }
     // Comprobamos si el error es debido a la falta de conexión a Internet.
@@ -385,7 +373,7 @@ export class ApiService {
     // Comprobamos si hay que mostrar el mensaje de error.
     if (request.options.showErrors && typeof this.presentAlert === 'function') { this.presentAlert(message); }
     // Notificamos los resultados a los suscriptores.
-    request.subject.error(results);
+    request.subject.error(error);
   }
 
   private finishRequest(request: ApiRequest): void {
@@ -429,29 +417,29 @@ export class ApiService {
         (options.params instanceof HttpParams && !options.params.has('blobs'))
         || (typeof options.params === 'object' && !options.params.hasOwnProperty('blobs'))
       )) {
-        if (this.debug) { this.console.log(this.constructor.name + '.requestBlobs(request) => ', true); }
+        if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestBlobs(request) => ', true); }
         // Obtenemos las versiones indicadas para el parámetro de solicitud de blobs.
         this.blob.resume(options.blobs).then((versions: any) => {
           // Añadimos el parámetro 'blobs' según el tipo de parametrización suministrada.
           if (options.params instanceof HttpParams) {
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestBlobs() -> params instanceof HttpParams => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestBlobs() -> params instanceof HttpParams => ', options.params); }
             options.params = (options.params as HttpParams).set('blobs', this.blob.param(versions));
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestBlobs() -> params2 instanceof HttpParams => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestBlobs() -> params2 instanceof HttpParams => ', options.params); }
 
           } else if (typeof options.params === 'object') {
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestBlobs() -> params === \'object\' => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestBlobs() -> params === \'object\' => ', options.params); }
             options.params = Object.assign(options.params, { blobs: this.blob.param(versions) });
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestBlobs() -> params2 === \'object\' => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestBlobs() -> params2 === \'object\' => ', options.params); }
           }
           resolve(request);
 
         }).catch(error => {
           // Mostramos el error sin interrumpir la ejecución y notificamos los resultados a los suscriptores.
-          if (this.debug) { this.console.error(this.constructor.name + '.requestBlobs() -> resume(error) => ', { options, error }); }
+          if (this.debug && this.verbose) { this.console.error(this.constructor.name + '.requestBlobs() -> resume(error) => ', { options, error }); }
           resolve(request);
         });
       } else {
-        if (this.debug) { this.console.log(this.constructor.name + '.requestBlobs(request) => ', false); }
+        if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestBlobs(request) => ', false); }
         resolve(request);
       }
     });
@@ -459,18 +447,21 @@ export class ApiService {
 
   private processBlobs(results: any): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
-      if (this.debug) { this.console.log(this.constructor.name + '.processBlobs(results) ' + (results?.hasOwnProperty('blobs')) + ' => ', results); }
+      if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.processBlobs(results) ' + (results?.hasOwnProperty('blobs')) + ' => ', results); }
       // Comprobamos si se ha devuelto información de los blobs.
-      if (!results?.hasOwnProperty('blobs')) { resolve(false); }
-      // Guardamos los nuevos blobs.
-      this.blob.store(results.blobs).then(() => {
-        // Emitimos los cambios para que los suscriptores actualicen los blobs modificados.
-        (results.blobs as Blob[]).map(blob => this.blob.updated.next(blob));
-        // Quitamos la info de la respuesta.
-        delete results.blobs;
-        // Blobs procesados.
-        resolve(true);
-      }).catch(error => reject(error));
+      if (!results?.hasOwnProperty('blobs')) {
+        resolve(false);
+      } else {
+        // Guardamos los nuevos blobs.
+        this.blob.store(results.blobs).then(() => {
+          // Emitimos los cambios para que los suscriptores actualicen los blobs modificados.
+          (results.blobs as Blob[]).map(blob => this.blob.updated.next(blob));
+          // Quitamos la info de la respuesta.
+          delete results.blobs;
+          // Blobs procesados.
+          resolve(true);
+        }).catch(error => reject(error));
+      }
     });
   }
 
@@ -483,29 +474,29 @@ export class ApiService {
         (options.params instanceof HttpParams && !options.params.has('userSettings'))
         || (typeof options.params === 'object' && !options.params.hasOwnProperty('userSettings'))
       )) {
-        if (this.debug) { this.console.log(this.constructor.name + '.requestUserSettings(request) => ', true); }
+        if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestUserSettings(request) => ', true); }
         // Obtenemos las versiones indicadas para el parámetro de solicitud de ajustes de usuario.
         this.settings.resume(options.userSettings).then((versions: any) => {
           // Añadimos el parámetro 'userSettings' según el tipo de parametrización suministrada.
           if (options.params instanceof HttpParams) {
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestUserSettings() -> params instanceof HttpParams => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestUserSettings() -> params instanceof HttpParams => ', options.params); }
             options.params = (options.params as HttpParams).set('userSettings', this.settings.param(versions));
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestUserSettings() -> params2 instanceof HttpParams => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestUserSettings() -> params2 instanceof HttpParams => ', options.params); }
 
           } else if (typeof options.params === 'object') {
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestUserSettings() -> params === \'object\' => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestUserSettings() -> params === \'object\' => ', options.params); }
             options.params = Object.assign(options.params, { userSettings: this.settings.param(versions) });
-            // if (this.debug) { this.console.log(this.constructor.name + '.requestUserSettings() -> params2 === \'object\' => ', options.params); }
+            // if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestUserSettings() -> params2 === \'object\' => ', options.params); }
           }
           resolve(request);
 
         }).catch(error => {
           // Mostramos el error sin interrumpir la ejecución y notificamos los resultados a los suscriptores.
-          if (this.debug) { this.console.error(this.constructor.name + '.requestUserSettings() -> resume(error) => ', { options, error }); }
+          if (this.debug && this.verbose) { this.console.error(this.constructor.name + '.requestUserSettings() -> resume(error) => ', { options, error }); }
           resolve(request);
         });
       } else {
-        if (this.debug) { this.console.log(this.constructor.name + '.requestUserSettings(request) => ', false); }
+        if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.requestUserSettings(request) => ', false); }
         resolve(request);
       }
     });
@@ -513,16 +504,21 @@ export class ApiService {
 
   private processUserSettings(results: any): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
-      if (this.debug) { this.console.log(this.constructor.name + '.processUserSettings(results) ' + (results?.hasOwnProperty('userSettings')) + ' => ', results); }
+      if (this.debug && this.verbose) { this.console.log(this.constructor.name + '.processUserSettings(results) ' + (results?.hasOwnProperty('userSettings')) + ' => ', results); }
       // Comprobamos si se ha devuelto información de los ajustes de usuario.
-      if (!results?.hasOwnProperty('userSettings')) { resolve(false); }
-      // Guardamos los nuevos ajustes de usuario.
-      this.settings.store(results.userSettings).then(() => {
-        // Quitamos la info de la respuesta.
-        delete results.userSettings;
-        // UserSettings procesados.
-        resolve(true);
-      }).catch(error => reject(error));
+      if (!results?.hasOwnProperty('userSettings')) {
+        resolve(false);
+      } else {
+        // Guardamos los nuevos ajustes de usuario.
+        this.settings.store(results.userSettings).then(() => {
+          // Emitimos los cambios para que los suscriptores actualicen los blobs modificados.
+          (results.userSettings as UserSettings[]).map(us => this.settings.updated.next(us));
+          // Quitamos la info de la respuesta.
+          delete results.userSettings;
+          // UserSettings procesados.
+          resolve(true);
+        }).catch(error => reject(error));
+      }
     });
   }
 
@@ -531,9 +527,9 @@ export class ApiService {
   //  Loader
   // ---------------------------------------------------------------------------------------------------
 
-  showLoader(request: ApiRequest): Promise<any> {
-    return new Promise((resolve, reject) => {
-        // Esperamos un momento antes de lanzar el loader.
+  showLoader(request: ApiRequest): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      // Esperamos un momento antes de lanzar el loader.
       timer(this.loaderDelay).pipe(first()).subscribe(() => {
         // Comprobamos si la consulta todavía está en marcha.
         if (this.getRequest(request) && typeof this.presentLoader === 'function') {

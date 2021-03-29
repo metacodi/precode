@@ -19,9 +19,12 @@ export interface GroupByValue {
 export class GroupByPipe implements PipeTransform {
   private debug = false;
 
-  transform(rows: any[], groupBy: GroupByTypeComplex, orderBy?: string): Array<any> {
+  transform(rows: any[], groupBy: string | ((row: any, host: any) => any) | GroupByTypeComplex, orderBy?: string): Array<any> {
     if (!rows || !Array.isArray(rows)) { return [{ key: '', rows: [] }]; }
     if (this.debug) { console.log('GroupByPipe => ', { rows, groupBy }); }
+
+    if (!groupBy.hasOwnProperty('property')) { throw new Error(`El argumento 'groupBy' para GroupByPipe no es de tipo 'GroupByTypeComplex'`); }
+    groupBy = groupBy as GroupByTypeComplex;
 
     // const arr: { [key: string]: Array<any> } = {};
     const groups: GroupByValue[] = [];
@@ -34,7 +37,7 @@ export class GroupByPipe implements PipeTransform {
     // Agrupamos las filas.
     for (const row of rows) {
       // Obtenemos el valor de la propiedad (o los valores combinados con un espacio si hay más de una propiedad).
-      const value: any = (typeof prop === 'function' ? prop(row, host) : this.getValue(row, prop)) || null;
+      const value: any = this.avoidEmptyGroups((typeof prop === 'function' ? prop(row, host) : this.getValue(row, prop)));
       // Comprobamos si hay que crear un nuevo grupo.
       let group: GroupByValue = groups.find(g => g.key === value);
       if (!group) {
@@ -74,7 +77,7 @@ export class GroupByPipe implements PipeTransform {
           return this.getValue(row[table], columns.join('.'));
 
         } else {
-          return '';
+          return undefined;
         }
 
       } else {
@@ -82,6 +85,11 @@ export class GroupByPipe implements PipeTransform {
         return row[prop];
       }
     }
+  }
+
+  protected avoidEmptyGroups(value: any): any {
+    if (value === '') { return undefined; }
+    return value;
   }
 
 }

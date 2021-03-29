@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform, EventEmitter } from '@angular/core';
 import { exception } from 'console';
 
-import { OrderByType, OrderByDirectionType, isOrderByDirectionType, ApiEntity } from 'src/core/api';
+import { OrderByType, OrderByDirectionType, isOrderByDirectionType, ApiEntity, OrderByTypeComplex, normalizeDirection, resolveDirection, sanitizePropertyName } from 'src/core/api';
 import { compareValues } from 'src/core/util';
 
 
@@ -39,8 +39,14 @@ import { compareValues } from 'src/core/util';
 })
 export class OrderByPipe implements PipeTransform {
 
+  static isComplex(order: any): boolean {
+    return typeof order === 'object' && typeof order.callback === 'function';
+  }
+
   transform(values?: any[], order?: OrderByType): any {
     if (!values || !values.length) { return []; }
+    // Obtenemos una referencia del filtro complejo si es posible.
+    const complex = OrderByPipe.isComplex(order) ? order as OrderByTypeComplex : undefined;
 
     // Evaluamos el tipo de valores.
     if (typeof values[0] === 'object') {
@@ -51,10 +57,9 @@ export class OrderByPipe implements PipeTransform {
       // console.log('order => ', order);
       let pipe = order;
       // Compropbamos si es un definición compleja.
-      if (typeof order === 'object') { pipe = (order as any).pipe; }
-      // console.log('pipe 1 => ', pipe);
+      if (complex) { pipe = complex.pipe; }
       // Pasamos de 'state, -price' a ['state', '-price']
-      if (typeof pipe === 'string') { pipe = this.splitFields(pipe); }
+      if (typeof pipe === 'string') { pipe = ApiEntity.splitFields(pipe); }
       // console.log('pipe 2 => ', pipe);
       // Array de objetos.
       if (!pipe || !Array.isArray(pipe) || !pipe.length) { throw new Error('Invalid arguments for sorting an array of objects. An array of properties was expected.'); }
@@ -65,7 +70,7 @@ export class OrderByPipe implements PipeTransform {
       // Aplicamos la función de ordenación al array.
       const sorted = values.sort(this.compareProperties(properties));
       // Realizamos la llamada al callback.
-      if (typeof order === 'object' && typeof (order as any).callback === 'function') { (order as any).callback((order as any).host); }
+      if (complex) { complex.callback(complex.host); }
       return sorted;
 
     } else {
@@ -74,16 +79,11 @@ export class OrderByPipe implements PipeTransform {
       // Solo se espera una dirección para ordenar los primitivos.
       if (!isOrderByDirectionType(order)) { throw new Error('Invalid arguments for sorting an array of primitives. A direction of type OrderByDirectionType was expected.'); }
       // Aplicamos la función de ordenación al array.
-      const sorted = values.sort((a, b) => compareValues(a, b, { direction: this.normalizeDirection(order as OrderByDirectionType) }));
+      const sorted = values.sort((a, b) => compareValues(a, b, { direction: normalizeDirection(order as OrderByDirectionType) as 1 | -1 }));
       // Realizamos la llamada al callback.
-      if (typeof order === 'object' && typeof (order as any).callback === 'function') { (order as any).callback((order as any).host); }
+      if (complex) { complex.callback(complex.host); }
       return sorted;
     }
-  }
-
-  private splitFields(fields: string): string[] {
-    // Ej: 'tarifas(descripcion), mes, dia' => [ 'tarifas(descripcion)', 'mes', 'dia' ]
-    return fields.match(/([^(,]*(?:\([^\)]*\))?)|(?:,)/g).map(s => s.trim()).filter(s => !!s);
   }
 
   private normalizeProperty(prop: any): any {
@@ -95,20 +95,12 @@ export class OrderByPipe implements PipeTransform {
         // Ej: 'user(email)'
         const { table, columns, direction } = ApiEntity.splitTableAndFields(prop);
         if (columns.length > 1) { throw new Error('No se admiten múltiples campos en la notación con paréntesis para las cláusulas del pipe OrderBy.'); }
-        return { [this.sanitizePropertyName(table)]: this.normalizeProperty(direction + columns.join(',')) };
-        // const parts = prop.replace(')', '').split('(');
-        // if (debug) { console.log(`prop.includes('(') => `, { parts }); }
-        // const direction = parts[0].startsWith('-') || parts[0].endsWith('-') ? '-' : '';
-        // return { [this.sanitizePropertyName(parts[0])]: this.normalizeProperty(direction + parts[1]) };
+        return { [sanitizePropertyName(table)]: this.normalizeProperty(direction + columns.join(',')) };
 
       } else if (prop.includes('.')) {
         // Ej: 'cliente?.user?.email'
         const { table, columns, direction } = ApiEntity.splitTableAndFields(prop);
-        return { [this.sanitizePropertyName(table)]: this.normalizeProperty(direction + columns.join('.')) };
-        // const [table, ...rest] = prop.split('.');
-        // if (debug) { console.log(`prop.includes('.') => `, { table, rest }); }
-        // const direction = table.startsWith('-') ? '-' : '';
-        // return { [this.sanitizePropertyName(table)]: this.normalizeProperty(rest.map(s => direction + s.trim()).filter(s => !!s).join('.')) };
+        return { [sanitizePropertyName(table)]: this.normalizeProperty(direction + columns.join('.')) };
 
       } else {
         // Pasamos de 'field desc' a ['field', 'desc']
@@ -122,7 +114,7 @@ export class OrderByPipe implements PipeTransform {
         if (prop.hasOwnProperty(p)) {
           // Ej: { tarifa: 'descripcion' }
           if (debug) { console.log(`typeof prop === 'object' && !Array.isArray(prop) => `, { [p]: prop[p] }); }
-          return { [this.sanitizePropertyName(p)]: this.normalizeProperty(prop[p]) };
+          return { [sanitizePropertyName(p)]: this.normalizeProperty(prop[p]) };
         }
       }
     }
@@ -130,48 +122,27 @@ export class OrderByPipe implements PipeTransform {
     let [propName, propDirection] = prop;
     // Pasamos de '-field' a ['field', 'desc']
     if (propName[0] === '-') { [propName, propDirection] = [propName.substring(1), 'desc']; }
-    // Pasamos de ['field', 'desc'] a ['-field']
+    // Pasamos de ['field', 'desc'] a '-field'
     if (debug) { console.log(`normalizeProperty finally => `, { propName, propDirection }); }
-    return (this.normalizeDirection(propDirection) === -1 ? '-' : '') + propName;
+    return (normalizeDirection(propDirection) === -1 ? '-' : '') + propName;
   }
 
-  private sanitizePropertyName(prop: string): string {
-    if (prop.startsWith('-')) { prop = prop.substring(1); }
-    if (prop.endsWith('-')) { prop = prop.slice(0, -1); }
-    if (prop.endsWith('?')) { prop = prop.slice(0, -1); }
-    if (prop.includes('->')) {
-      // Ej: poblaciones->origen(nombre)
-      const parts = prop.split('->');
-      // console.log(`prop.includes('->') => `, { parts });
-      // Nos quedamos únicamente con el alias de los campos.
-      return parts[1];
-    }
-    return prop;
-  }
-
-  private normalizeDirection(direction?: OrderByDirectionType): 1|-1 {
-    // Valor por defecto.
-    if (!direction) { direction = 'asc'; }
-    // Normalizamos la dirección reduciéndola a una expresión numérica.
-    return direction === 'desc' || direction === '-' || direction === -1 ? -1 : 1;
-  }
-
-  /** Obtiene el valor primitivo resolviendo el árbol del valor cuando es un objeto */
-  private getTerminalValue(value: any, prop: any): any {
+  /** Obtiene el valor primitivo resolviendo el árbol de propiedades del objeto. */
+  private resolvePropertyValue(value: any, prop: any): any {
     if (!value) { return undefined; }
     // Ej: value = { precio: 5.5, tarifa: { descripcion: 'T-1' } }
     if (typeof prop === 'string') {
       // Ej: prop = 'precio'
-      return value[this.sanitizePropertyName(prop)];
+      return value[sanitizePropertyName(prop)];
 
     } else if (typeof prop === 'object') {
       // Ej: prop = { tarifa: 'descripcion' }
       for (const p in prop) {
-        // Ej: p = 'tarifa'
-        if (prop.hasOwnProperty(this.sanitizePropertyName(p))) {
-          const sp = this.sanitizePropertyName(p);
+        // Ej: p = 'tarifa'v
+        if (prop.hasOwnProperty(sanitizePropertyName(p))) {
+          const sp = sanitizePropertyName(p);
           // Ej: value[tarifa] = { descripcion: 'T-1' }, prop[tarifa] = 'descripcion'
-          return this.getTerminalValue(value[sp], prop[sp]);
+          return this.resolvePropertyValue(value[sp], prop[sp]);
         }
       }
       return undefined;
@@ -181,37 +152,13 @@ export class OrderByPipe implements PipeTransform {
     }
   }
 
-  /** Obtiene el valor primitivo resolviendo el árbol del valor cuando es un objeto */
-  private getDirection(prop: any): 1 | -1 {
-    // Ej: value = { precio: 5.5, tarifa: { descripcion: 'T-1' } }
-    if (typeof prop === 'string') {
-      // Ej: prop = 'precio'
-      return prop.startsWith('-') || prop.endsWith('-') ? -1 : 1;
-
-    } else if (typeof prop === 'object') {
-      // Ej: prop = { tarifa: 'descripcion' }
-      for (const p in prop) {
-        // Ej: p = 'tarifa'
-        if (prop.hasOwnProperty(p)) {
-          // Ej: value[tarifa] = { descripcion: 'T-1' }, prop[tarifa] = 'descripcion'
-          return this.getDirection(prop[p]);
-        }
-      }
-      return 1;
-
-    } else {
-      throw new Error(`Invalid type '${typeof prop}' of property for obtain direction in OrderByPipe`);
-    }
-  }
-
-  private compareProperties = (properties: any) => (a: any, b: any) => properties.map((o: any) => {
+  private compareProperties = (properties: any) => (a: any, b: any) => properties.map((prop: any) => {
     // let direction: 1|-1 = 1;
-    const direction = this.getDirection(o);
-    const valueA = this.getTerminalValue(a, o);
-    const valueB = this.getTerminalValue(b, o);
+    const direction = resolveDirection(prop);
+    const valueA = this.resolvePropertyValue(a, prop);
+    const valueB = this.resolvePropertyValue(b, prop);
     if (valueA === undefined || valueB === undefined) { return 0; }
     // console.log('values => ', { valueA, valueB });
-    // return this.compareValues(a[o], b[o], direction);
     return compareValues(valueA, valueB, { direction });
   }).reduce((p: any, n: any) => p ? p : n, 0)
 

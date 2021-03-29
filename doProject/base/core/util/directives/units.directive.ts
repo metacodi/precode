@@ -184,8 +184,8 @@ export class UnitsDirective implements OnInit, OnDestroy, ControlValueAccessor {
           // Referenciamos el elemento nativo.
           const element = this.elRef.nativeElement;
           // Conservamos la selección.
-          let start = 0; if (typeof (el as any).selectionStart !== 'undefined') { start = (el as any).selectionStart; }
-          let end = 0; if (typeof (el as any).selectionEnd !== 'undefined') { end = (el as any).selectionEnd; }
+          const start = (el as any).selectionStart || 0;
+          const end = (el as any).selectionEnd || 0;
           // Comprobamos si ya contiene el separador decimal.
           if (this.unselectedValue(el).includes(this.decimalSep)) {
             // if (this.debug) { console.log('value.includes => ', value); }
@@ -221,8 +221,8 @@ export class UnitsDirective implements OnInit, OnDestroy, ControlValueAccessor {
     // Si no hay valor devolvemos una cadena vacía.
     if (!value) { return ''; }
     // Obtenemos los límites de la selección.
-    let start = 0; if (typeof el.selectionStart !== 'undefined') { start = el.selectionStart; }
-    let end = 0; if (typeof el.selectionEnd !== 'undefined') { end = el.selectionEnd; }
+    const start = el.selectionStart || 0;
+    const end = el.selectionEnd || 0;
     // Obtenemos la parte del valor que no forma parte de la selección actual.
     let unselected = '';
     for (let i = 0; i < value.length; i++) {

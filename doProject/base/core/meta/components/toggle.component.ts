@@ -1,6 +1,6 @@
 import { Component, Injector } from '@angular/core';
 
-import { ToggleControlType, FieldType } from '../model/meta-types';
+import { ToggleControlType, FieldType, ToggleComponentType } from '../model/meta-types';
 import { DynamicFieldComponent } from './dynamic-field.component';
 
 
@@ -70,6 +70,6 @@ export class ToggleComponent extends DynamicFieldComponent {
   constructor(protected injector: Injector) { super(injector); }
 
   get control(): ToggleControlType {
-    return (this.field.component as any).toggle;
+    return (this.field.component as ToggleComponentType).toggle;
   }
 }

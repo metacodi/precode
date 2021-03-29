@@ -1,0 +1,14 @@
+// @import 'src/core/abstract/components/abstract-list.component.scss';
+// @include multiselect;
+
+ion-item-divider {
+  padding-right: 20px;
+  top: -1px;
+}
+
+ion-list ion-item.compact img {
+  width: 16px;
+  height: 16px;
+  top: 2px;
+  position: relative;
+}

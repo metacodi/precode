@@ -7,7 +7,7 @@ import { defaultLightTheme } from 'src/assets/themes/light/default/theme';
 import { defaultDarkTheme } from 'src/assets/themes/dark/default/theme';
 
 import { AppConfig } from 'src/core/app-config';
-import { StoragePlugin, StatusBarPlugin, DevicePlugin } from 'src/core/native';
+import { StoragePlugin, StatusBarPlugin, DevicePlugin, NavigationBarColorPlugin } from 'src/core/native';
 
 import { ConsoleService } from './console.service';
 import { capitalize } from '../ts-utils';
@@ -61,6 +61,7 @@ export class ThemeService {
   constructor(
     public storage: StoragePlugin,
     public statusBar: StatusBarPlugin,
+    public navigationBarColor: NavigationBarColorPlugin,
     public device: DevicePlugin,
     public console: ConsoleService,
     public resolver: ComponentFactoryResolver,
@@ -307,6 +308,7 @@ export class ThemeService {
 
     const factory = this.resolver.resolveComponentFactory(this.checkdComponents.current.constructor);
     const element = document.getElementsByTagName(`${factory.selector}`)[0];
+    if (!element) { return; }
     let bgColor = this.findBackgroundColor(element);
     if (!bgColor) {
       // Un component de llista anidat dins una pàgina no té toolbar. Hem d'anar a buscar la del seu pare, la pàgina amb tabs que el conté.
@@ -318,6 +320,7 @@ export class ThemeService {
       if (this.device.isReal('android')) {
         this.statusBar.setBackgroundColor({ color: bgColor });
         this.statusBar.setStatusBar(this.idealTextColor(bgColor) === '#000000' ? 'dark' : 'light');
+        this.navigationBarColor.setColor(bgColor);
       } else if (this.device.isReal('ios')) {
         this.statusBar.setStatusBar(this.idealTextColor(bgColor) === '#000000' ? 'light' : 'dark');
       }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
 import { AppConfig } from 'src/core/app-config';
@@ -26,12 +26,15 @@ export class ApiUserService {
   private user: any = undefined;
 
   constructor(
+    // public injector: Injector,
     public storage: StoragePlugin,
-  ) { }
+  ) {
+    // super(injector);
+  }
 
 
   get idreg(): 'new' | number {
-    if (!!this.user && this.user.idreg) { return this.user.idreg; }
+    if (this.user?.idreg) { return this.user.idreg; }
     return 'new';
   }
 

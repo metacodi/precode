@@ -6,7 +6,6 @@ import { AppCoreModule } from 'src/core';
 import { LoginPage } from './login/login.page';
 import { RecoveryPage } from './recovery/recovery.page';
 import { RegisterPage, RegisterSuccessPage, RegisterTermsPage } from './register';
-import { EstadoConductorComponent } from './estado-conductor/estado-conductor.component';
 
 
 const routes: Routes = [
@@ -28,7 +27,6 @@ const routes: Routes = [
     RegisterPage,
     RegisterTermsPage,
     RegisterSuccessPage,
-    EstadoConductorComponent,
   ],
   exports: [
     RouterModule,

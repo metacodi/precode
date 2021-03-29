@@ -1,6 +1,6 @@
 import { Component, Injector } from '@angular/core';
 
-import { InputControlType, FieldType } from '../model/meta-types';
+import { InputControlType, FieldType, InputComponentType } from '../model/meta-types';
 import { DynamicFieldComponent } from './dynamic-field.component';
 
 
@@ -90,7 +90,7 @@ export class InputComponent extends DynamicFieldComponent {
   constructor(protected injector: Injector) { super(injector); }
 
   get control(): InputControlType {
-    return (this.field.component as any).input;
+    return (this.field.component as InputComponentType).input;
   }
 
 }

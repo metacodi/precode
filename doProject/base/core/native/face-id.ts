@@ -1,8 +1,10 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Plugins, PluginResultError } from '@capacitor/core';
+import { Subject, of } from 'rxjs';
 
 import { AppConfig } from 'src/core/app-config';
 
+import { DevicePlugin } from './device';
 
 const { FaceId } = Plugins;
 
@@ -10,20 +12,6 @@ export type FaceIdResponse = 'TouchId' | 'FaceId' | 'None';
 
 /**
  * Wrapper para el plugin `FaceId`.
- *
- *
- * **Cordova**
- *
- * - Docs: {@link https://ionicframework.com/docs/native/geolocation}
- * - Repo: {@link https://github.com/apache/cordova-plugin-geolocation}
- *
- * ```bash
- * ionic cordova plugin add cordova-plugin-geolocation
- * npm install @ionic-native/geolocation
- * ```
- * ```typescript
- * import { FaceId } from '@ionic-native/geolocation/ngx';
- * ```
  *
  * **Capacitor**
  *
@@ -40,18 +28,25 @@ export type FaceIdResponse = 'TouchId' | 'FaceId' | 'None';
 export class FaceIdPlugin {
   protected debug = true && AppConfig.debugEnabled;
 
-  constructor() {
+  constructor(
+    public device: DevicePlugin
+  ) {
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
   }
 
   /** Checks if Face ID or Touch ID is available, and returns type if so. */
   isAvailable(): Promise<{ value: FaceIdResponse }> {
-    return FaceId.isAvailable();
+    return this.device.getInfo().then(value => {
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return FaceId.isAvailable(); }
+    });
+    
   }
 
   /** Displays the Face ID or Touch ID screen. */
   auth(options?: {reason?: string}): Promise<void> {
-    return FaceId.auth(options);
+    return this.device.getInfo().then(value => {
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return FaceId.auth(options); }
+    });
   }
 
 }

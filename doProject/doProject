@@ -22,9 +22,9 @@ fi
 if [ $FIRST_ARGUMENT == "start" ] 
 then
   echo "------------------------------------------------------"
-  echo "ionic start $2 blank --type angular --capacitor --no-confirmn"
+  echo "ionic start $2 blank --type angular --capacitor"
   echo "------------------------------------------------------"
-  ionic start $2 blank --no-confirm --type angular --capacitor && cd $2 && npm audit fix && cd ..
+  ionic start $2 blank --type angular --capacitor && cd $2 && npm audit fix && cd ..
 fi
 
 if [ $FIRST_ARGUMENT == "resources" ] 
@@ -42,6 +42,7 @@ then
   echo "------------------------------------------------------"
   echo "cd $2 && npx cap init $3 $4"
   echo "------------------------------------------------------"
+  cd $2 && npm install @capacitor/cli @capacitor/core && cd ..
   cd $2 && npx cap init $3 $4 && cd ..
   cd $2 && npm install electron --save-dev && cd ..
   cd $2 && npm install electron-builder --save-dev && cd ..
@@ -118,9 +119,47 @@ then
   echo "Biometric"
   echo "------------------------------------------------------"
   cd $2 && npm install capacitor-face-id && cd ..
+  cd $2 && npm install @ionic-native/core && cd ..
   cd $2 && npm install @ionic-native/android-fingerprint-auth && cd ..
   cd $2 && npm install cordova-plugin-android-fingerprint-auth && cd ..
   
+  echo "------------------------------------------------------"
+  echo "Datepicker"
+  echo "------------------------------------------------------"
+  cd $2 && npm install @logisticinfotech/ionic4-datepicker && cd ..
+  cd $2 && npm install @ionic-native/splash-screen @ionic-native/status-bar && cd ..
+
+  echo "------------------------------------------------------"
+  echo "Media"
+  echo "------------------------------------------------------"
+  cd $2 && npm install cordova-plugin-media && cd ..
+  cd $2 && npm install @ionic-native/media && cd ..
+  
+  echo "------------------------------------------------------"
+  echo "Navigation Bar && Color"
+  echo "------------------------------------------------------"
+  cd $2 && npm install cordova-plugin-navigationbar-color && cd ..
+  cd $2 && npm install cordova-plugin-navigationbar && cd ..
+  cd $2 && npm install @ionic-native/navigation-bar && cd ..
+  
+  echo "------------------------------------------------------"
+  echo "Launch Navigator"
+  echo "------------------------------------------------------"
+  cd $2 && npm install uk.co.workingedge.phonegap.plugin.launchnavigator && cd ..
+  cd $2 && npm install @ionic-native/launch-navigator && cd ..
+  
+  echo "------------------------------------------------------"
+  echo "File Opener"
+  echo "------------------------------------------------------"
+  cd $2 && npm install @ionic-native/file-opener && cd ..
+  cd $2 && npm install cordova-plugin-file-opener2 && cd ..
+
+  echo "------------------------------------------------------"
+  echo "Device Orientation"
+  echo "------------------------------------------------------"
+  cd $2 && npm install @ionic-native/device-orientation && cd ..
+  cd $2 && npm install cordova-plugin-device-orientation && cd ..
+
   echo "------------------------------------------------------"
   echo "Calendar"
   echo "------------------------------------------------------"
@@ -138,30 +177,46 @@ then
   echo "------------------------------------------------------"
   cd $2 && npm install cordova-plugin-inappbrowser && cd ..
   cd $2 && npm install @ionic-native/in-app-browser && cd ..
+
+  echo "------------------------------------------------------"
+  echo "Splash Screen"
+  echo "------------------------------------------------------"
+  cd $2 && npm install cordova-plugin-splashscreen @ionic-native/splash-screen && cd ..
   
   echo "------------------------------------------------------"
-  echo "Ionic Capacitor Keep Screen On plugin"
+  echo "Chart.js"
+  echo "------------------------------------------------------"
+  cd $2 && npm install ng2-charts@2.4.2 --save && cd ..
+  cd $2 && npm install chart.js --save && cd ..
+  cd $2 && npm install chartjs-plugin-datalabels --save && cd ..
+  
+  echo "------------------------------------------------------"
+  echo "Ionic Capacitor capacitor-plugin-file-downloader"
   echo "------------------------------------------------------"
   cd $2 && npm install capacitor-keep-screen-on && cd ..
   
   echo "------------------------------------------------------"
-  echo "nx-electron"
+  echo "Ionic Capacitor Keep Screen On plugin"
   echo "------------------------------------------------------"
-  cd $2 && npm install ngx-electron --save && cd ..
+  cd $2 && npm install capacitor-plugin-file-downloader && cd ..
   
   echo "------------------------------------------------------"
-  echo "electron-download-manager && electron-windows-badge && electron-context-menu" 
+  echo "ngx-electron"
   echo "------------------------------------------------------"
-  cd $2/electron && npm install electron-download-manager && npm install electron-windows-badge && npm install electron-context-menu && cd .. && cd ..
+  cd $2 && npm install ngx-electron --save && cd ..
   
   echo "------------------------------------------------------"
   echo "@angular/google-maps"
   echo "------------------------------------------------------"
   cd $2 && npm install @angular/google-maps --save && cd ..
   
+  echo "------------------------------------------------------"
+  echo "Updating @types/node"
+  echo "------------------------------------------------------"
+  cd $2 && npm i @types/node@14.14.35 --save-dev && cd ..
   
   echo "------------------------------------------------------"
-  echo "Translate && tslib && file-saver && moment"
+  echo "Translate && tslib && file-saver && moment && angular-svg-icon"
   echo "------------------------------------------------------"
   cd $2 && npm install @ngx-translate/core --save-prod && cd ..
   cd $2 && npm install @ngx-translate/http-loader --save-prod && cd ..
@@ -169,6 +224,20 @@ then
   cd $2 && npm install --save file-saver && cd ..
   cd $2 && npm install @types/file-saver --save-dev && cd ..
   cd $2 && npm install moment --save-prod && cd ..
+  cd $2 && npm i angular-svg-icon --save && cd ..
+
+  echo "------------------------------------------------------"
+  echo "jetifier, Para Android Sudio X, necesario para File Opener"
+  echo "------------------------------------------------------"
+  cd $2 && npm install jetifier && cd ..
+  cd $2 && npx jetify && cd ..
+
+  echo "------------------------------------------------------"
+  echo "electron-download-manager && electron-windows-badge && electron-context-menu" 
+  echo "------------------------------------------------------"
+  cd $2/electron && npm install electron-download-manager && npm install electron-windows-badge && npm install electron-context-menu && npm install sound-player && npm install --save @types/fs-extra@9.0.7 && cd .. && cd ..
+  
+
 fi
 
 if [ $FIRST_ARGUMENT == "install-base" ] 

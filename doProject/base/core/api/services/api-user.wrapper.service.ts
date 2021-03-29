@@ -1,7 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { AppConfig } from 'src/config';
+
+import { AbstractBaseClass } from '../../abstract/abstract-base.class';
 
 import { ApiUserService } from './api-user.service';
 
@@ -9,12 +11,16 @@ import { ApiUserService } from './api-user.service';
 @Injectable({
   providedIn: 'root'
 })
-export class ApiUserWrapperService {
+export class ApiUserWrapperService extends AbstractBaseClass {
   protected debug = true && AppConfig.debugEnabled;
 
   constructor(
+    public injector: Injector,
     public service: ApiUserService,
-  ) {}
+  ) {
+    super(injector);
+  }
+
 
   // ---------------------------------------------------------------------------------------------------
   //  ApiUserService wrapper

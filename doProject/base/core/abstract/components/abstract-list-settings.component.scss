@@ -1,0 +1,116 @@
+
+ion-content {
+  --padding-top: 16px;
+}
+
+h2 {
+  padding-left: 16px;
+  margin-top: 10px;
+  margin-bottom: 18px;
+}
+
+ion-item {
+  --background: transparent;
+  font-size: 15px;
+}
+
+ion-list {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+ion-item-divider {
+  margin-bottom: 8px;
+}
+
+ion-item-divider ion-label {
+  font-size: 17px;
+  letter-spacing: 0.5px;
+}
+
+ion-item-divider ion-icon:first-of-type {
+  margin-left: -8px;
+  margin-right: 14px;
+}
+
+ion-list:not(first-of-type) ion-item ion-label {
+  font-size: 14px;
+  white-space: normal;
+}
+
+ion-list ion-item > ion-icon {
+  margin-right: 12px;
+  margin-bottom: 10px;
+}
+
+ion-item ion-spinner {
+  height: 20px;
+  margin-right: 8px;
+  position: relative;
+  left: -2px;
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  Buscar
+// ---------------------------------------------------------------------------------------------------
+
+ion-item.selected {
+  --background: var(--ion-color-step-150);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+ion-item.item-disabled {
+  opacity: 0.3 !important;
+}
+
+
+ion-list:not(first-of-type) ion-grid,
+ion-list:not(first-of-type) ion-row {
+  padding-left: 0px;
+}
+
+ion-list:not(first-of-type) ion-badge {
+  font-size: 11px;
+  margin-right: 8px;
+}
+
+// Estado servicio
+ion-col > div {
+  width: 16px;
+  height: 16px;
+  border-radius: 16px;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+ion-list.settingsOn {
+
+  background: var(--ion-color-light);
+  border-bottom: 0.55px solid var(--ion-border-color);
+  border-top: 0.55px solid var(--ion-border-color);
+  
+  ion-item-divider {
+    --background: var(--ion-color-light);
+  }
+
+  ion-col > div {
+    top: calc(50% - 9px);
+    position: relative;
+  }
+  
+  ion-text {
+    color: var(--ion-color-medium);
+    font-size: 14px;
+    font-weight: bold;
+  }
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  Vista
+// ---------------------------------------------------------------------------------------------------
+
+ion-item.indent {
+  --padding-start: 37px;
+}

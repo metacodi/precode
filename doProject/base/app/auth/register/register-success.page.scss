@@ -9,7 +9,7 @@
 }
 
 .fondo-gris * {
-	max-width: 300px;
+	max-width: 320px;
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -20,4 +20,31 @@
 
 .fondo-gris p {
 	font-size: 12px;
+}
+
+.logo {
+  width: 450px;
+  max-width: 90%;
+  margin-bottom: 40px;
+  margin-top: 60px;
+}
+
+@media (max-width: 330px) {
+  .logo {
+    margin-bottom: 25px;
+    margin-top: 50px;
+  }
+}
+
+ion-item {
+  --border-style: none; 
+  // --border-radius: 8px;
+  // --padding-start: 0px;
+  --padding-start: 32px;
+  --inner-padding-end: 0px;
+  // --background: var(--input-background-color);
+  // --color: var(--text-login);
+  // --background-activated: var(--input-background-color);
+  // --background-focused: var(--input-background-color);
+  // --background-hover: var(--input-background-color);
 }

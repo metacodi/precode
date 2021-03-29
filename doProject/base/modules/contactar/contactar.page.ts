@@ -6,7 +6,7 @@ import { ApiService, ApiUserService } from 'src/core/api';
 import { AuthService } from 'src/core/auth';
 import { ThemeService } from 'src/core/util';
 
-import { UserService } from 'src/app/auth';
+import { UserService } from 'src/app/user';
 
 import { ContactarSchema } from './contactar.schema';
 import { ContactarService } from './contactar.service';

@@ -101,8 +101,8 @@ export abstract class AbstractSearchComponent extends AbstractComponent implemen
 
   /** @category Lifecycle */
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     if (this.debug) { console.log('AbstractSearchComponent:' + this.constructor.name + '.ngOnDestroy()'); }
+    super.ngOnDestroy();
   }
 
   /** @category Lifecycle */
@@ -113,8 +113,8 @@ export abstract class AbstractSearchComponent extends AbstractComponent implemen
 
   /** @category Lifecycle */
   ionViewDidLeave(): void {
-    super.ionViewDidLeave();
     if (this.debug) { console.log('AbstractSearchComponent:' + this.constructor.name + '.ionViewDidLeave()'); }
+    super.ionViewDidLeave();
   }
 
   /** @category Lifecycle */
@@ -125,8 +125,8 @@ export abstract class AbstractSearchComponent extends AbstractComponent implemen
 
   /** @category Lifecycle */
   ionViewDidEnter(): void {
-    super.ionViewDidEnter();
     if (this.debug) { console.log('AbstractSearchComponent:' + this.constructor.name + '.ionViewDidEnter()'); }
+    super.ionViewDidEnter();
   }
 
 }

@@ -50,13 +50,9 @@ export class StoragePlugin {
   }
 
   /** Clear the entire key value of app storage. */
-  clear(moduleName?: string): Promise<void> {
-    return new Promise<any>((resolve: any, reject: any) => {
-      this.keys(moduleName).then(keys => {
-        const promises: Promise<any>[] = [];
-        keys.forEach((key: any) => promises.push(this.remove(key)));
-        forkJoin(promises).pipe(first()).subscribe(() => resolve(true));
-      });
+  async clear(moduleName?: string): Promise<void> {
+    return this.keys(moduleName).then(keys => {
+      Promise.all(keys.map(key => this.remove(key)));
     });
   }
 
@@ -75,8 +71,8 @@ export class StoragePlugin {
   }
 
   /** Returns a promise that resolves with the keys in the app storage. */
-  keys(moduleName?: string): Promise<any> {
-    return new Promise<any>((resolve: any, reject: any) => {
+  keys(moduleName?: string): Promise<string[]> {
+    return new Promise<string[]>((resolve: any, reject: any) => {
         const appName: string = this.packageName + (moduleName ? '.' + moduleName : '');
         Storage.keys().then(result => {
           // resolve(result.keys.filter(key => key.startsWith(`${appName}.`)).map(key => key.slice(0, `${appName}.`.length)));

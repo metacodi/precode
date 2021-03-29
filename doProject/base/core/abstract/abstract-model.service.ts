@@ -1,30 +1,42 @@
-import { Injectable, Injector, ComponentFactoryResolver } from '@angular/core';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
 import { FormGroup} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertController, ModalController, PopoverController } from '@ionic/angular';
-import { TranslateService } from '@ngx-translate/core';
-import { Observable, of, Subscription, Subject } from 'rxjs';
+import { AlertController, ModalController, PopoverController, LoadingController } from '@ionic/angular';
+import { Observable, of, Subscription, Subject, Subscriber } from 'rxjs';
 import { map, first } from 'rxjs/operators';
 
 import { AppConfig } from 'src/core/app-config';
 import { ApiService, ApiEntity, CompareNames, findRowIndex } from 'src/core/api';
-import { resolveComponentFactory, resolveTranslate, deepAssign, ThemeService } from 'src/core/util';
+import { booleanOrExpr, numberOrExpr, stringOrExpr } from 'src/core/meta';
+import { resolveComponentFactory, resolveTranslate, deepAssign, ThemeService, EvalExpressionOptions, evalExpr } from 'src/core/util';
 
+import { AbstractBaseClass } from './abstract-base.class';
+import { AbstractListRequestOptions } from './components/abstract-list.component';
+import { AbstractListSettings, ListSettingsActionEvent } from './components/abstract-list-settings';
 import { EntityName, EntityModel } from './model/entity-model';
 import { EntityQuery } from './model/entity-query';
-import { EntitySchema, EntityType, EntityListSchema, PickRowOptions, PickRowNotificationType, RowModelType } from './model/entity-schema';
-import { AbstractBaseClass } from './abstract-base.class';
+import { EntitySchema, EntityType, EntityListSchema, PickRowOptions, PickRowNotificationType, RowModelType, ConfirmMessage } from './model/entity-schema';
+import { EntityCache } from './model/entity-cache';
+import { LocalizationService } from '../localization/localization.service';
 
 
-export abstract class AbstractModelService extends AbstractBaseClass {
+@Injectable({
+  providedIn: 'root'
+})
+export abstract class AbstractModelService extends AbstractBaseClass implements OnDestroy {
 
   /** Permite al componente de listado notificar la fila seleccionada por el usuario. */
   static pickRowNotify: Subject<PickRowNotificationType> = new Subject<PickRowNotificationType>();
 
   protected debug = true && AppConfig.debugEnabled;
 
-  /** Caché de consultas registradas por los componentes de lista en el servicio. */
+  /** Consultas registradas por los componentes de lista en el servicio. */
   queries: EntityQuery[] = [];
+  // /** Caché de consultas para las entidades registradas. */
+  // cache: { [key: string]: EntityCache } = {};
+
+  /** El componente de listado recibe una orden de búsqueda desde el side-menu. */
+  listSettingsAction: Subject<{ action: ListSettingsActionEvent, data?: any }> = new Subject<any>();
 
   /**
    * Permite que el componente `AbstractDetailComponent` notifique la fila abierta en cada momento a otros componentes.
@@ -72,6 +84,9 @@ export abstract class AbstractModelService extends AbstractBaseClass {
    * @category Subject
    */
   refreshList: Subject<RowModelType> = new Subject<any>();
+
+  /** Referencia a la fila que el componente cargará al iniciarse. */
+  preloadedRow: any;
 
   /**
    * Permite que el componente `AbstractDetailComponent` notifique la fila abierta en cada momento a otros componentes.
@@ -203,8 +218,12 @@ export abstract class AbstractModelService extends AbstractBaseClass {
    */
   multiSelectModeChanged: Subject<any> = new Subject<any>();
 
-  preloadedRow: any;
+  /** Subscribers correspondientes a observables que habrá que completar al destruir el componente. */
+  subscribers: Subscriber<any>[] = [];
+  /** Subscriptores de los que habrá que desubscribirse al destruir el componente. */
+  subscriptions: Subscription[] = [];
 
+  /** @category Dependencies */ loadCtrl: LoadingController;
   /** @category Dependencies */ modal: ModalController;
   /** @category Dependencies */ popover: PopoverController;
   /** @category Dependencies */ alertCtrl: AlertController;
@@ -220,6 +239,7 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.constructor()'); }
 
     // this.translate = this.injector.get<TranslateService>(TranslateService);
+    this.loadCtrl = this.injector.get<LoadingController>(LoadingController);
     this.modal = this.injector.get<ModalController>(ModalController);
     this.popover = this.injector.get<PopoverController>(PopoverController);
     this.alertCtrl = this.injector.get<AlertController>(AlertController);
@@ -228,6 +248,17 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     this.theme = this.injector.get<ThemeService>(ThemeService);
 
   }
+
+  /** @category Lifecycle */
+  ngOnDestroy(): void {
+    if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.ngOnDestroy()'); }
+    // Completamos y cancelamos las suscripciones.
+    if (this.subscribers?.length) { this.subscribers.map(sub => sub.complete()); }
+    if (this.subscriptions?.length) { this.subscriptions.map(sub => sub.unsubscribe()); }
+  }
+
+  /** Referencia a la configuración por defecto del componente de listado asociado con el srevicio. */
+  defaultListSettings(key: string): AbstractListSettings { return; }
 
 
   // ---------------------------------------------------------------------------------------------------
@@ -250,6 +281,9 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     } else {
       // Creamos una nueva consulta para la clave o el modelo indicados.
       const query = new EntityQuery(model as EntityModel, queryKey);
+      // Si requiere el uso de una caché creamos una ahora.
+      if (model.list.cache) { query.cache = new EntityCache(query, this.api); }
+      // Añadimos la consulta a la colección.
       this.queries.push(query);
       if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.registerQuery() -> created => ', { queryKey, query }); }
       return query;
@@ -276,46 +310,51 @@ export abstract class AbstractModelService extends AbstractBaseClass {
   // ---------------------------------------------------------------------------------------------------
 
   /** Obtiene las filas de la página actual.
-   * @param host Referencia al componente heredado de _AbstractDetailComponent_.
-   * @param entity Entidad principal de datos de la consulta.
-   * @param event Evento generado por el componente _ion-infinite-scroll_.
+   * ```typescript
+   * interface AbstractListRequestOptions { host?: any; search?: EntityListSchema['search']; event?: any; clearBefore?: boolean; }
+   * ```
+   * @param host Referencia al componente heredado de _AbstractListComponent_.
+   * @param event: evento disparado por el componente `ion-infinite-scroll`.
    */
-  refresh(query: EntityQuery, options?: { host?: any, event?: any, clearBefore?: boolean }): Promise<any[]> {
+  request(query: EntityQuery, options?: AbstractListRequestOptions): Promise<any[]> {
     // Obtenemos la consulta a partir del nombre de la entidad.
     const list: EntityListSchema = query.model.list;
     if (!options) { options = {}; }
-    if (options.event === undefined) { options.event = false; }
-    if (options.clearBefore === undefined) { options.clearBefore = false; }
-    const event = options.event;
+    const host = options.host;
+    const event = options.event || false;
+    const search = options.search || null;
+    const clearBefore = options.clearBefore === undefined ? false : options.clearBefore;
 
-    if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.refresh(event) => ', { query, options }); }
+    if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.request(event) => ', { query, options }); }
     return new Promise<any[]>(resolve => {
       // Solo eliminamos las filas pero conservamos la paginación actual (a diferencia de la llamada a query.clear() que la inicializa a 0)
-      if (options.clearBefore) { query.rows = []; if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.refresh() -> clearBefore()', query); } }
+      if (clearBefore) { query.rows = []; if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.request() -> clearBefore()', query); } }
       // Si es la primera carga, inicializamos la colección.
-      if (!event && !list.cache) { query.clear(); if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.refresh() -> query.clear()', { query, '!event': !event, '!list.cache': !list.cache, '!event && !list.cache' : !event && !list.cache}); } }
+      if (!event) { query.clear(); if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.request() -> query.clear()', query); } }
       // Solicitamos las filas de la página atual.
-      this.getRows(query, { host: options.host, paginate: list.paginate, showLoader: query.model.list.showLoader }).pipe(first()).subscribe(rows => {
+      this.getRows(query, { host, search }).pipe(first()).subscribe(rows => {
         // Referenciamos el componente ion-infinite-scroll
-        if (event && event.target) { query.infinite = event.target; }
+        // if (event?.target instanceof IonInfiniteScroll) { query.infinite = event.target; }
+        if (event?.target) { query.infinite = event.target; }
         // Damos el evento de ion-infinite-scroll por completado.
-        if (query.infinite && typeof query.infinite.complete === 'function') { query.infinite.complete(); }
+        if (query.infinite) { query.infinite.complete(); }
         // Comprobamos si hay que deshabilitarlo.
-        if (query.infinite && query.paginationComplete) { query.infinite.disabled = true; }
+        if (query.infinite && query.completed) { query.infinite.disabled = true; }
         resolve(rows);
       });
     });
   }
 
-  getRows(query: EntityQuery, options?: { host?: any, paginate?: boolean, customFields?: string, showLoader?: boolean }): Observable<any[]> {
+  getRows(query: EntityQuery, options?: { host?: any, search?: EntityListSchema['search'], paginate?: boolean, itemsPerPage?: number, customFields?: string, showLoader?: boolean }): Observable<any[]> {
     // Obtenemos la consulta a partir del nombre de la entidad.
     const list: EntityListSchema = query.model.list;
     if (options === undefined) { options = {}; }
     if (options.paginate === undefined) { options.paginate = list.paginate; }
-    if (options.showLoader === undefined) { options.showLoader = query.model.detail.showLoader; }
+    if (options.itemsPerPage === undefined) { options.itemsPerPage = list.itemsPerPage; }
+    if (options.showLoader === undefined) { options.showLoader = list.showLoader; }
 
     // Comprobamos si ya se han cargado todas las filas.
-    if (query.paginationComplete) {
+    if (query.completed) {
       if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.getRows() -> of(query.rows) => ', query.rows); }
       // tslint:disable-next-line: deprecation
       return of(query.rows);
@@ -323,11 +362,11 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     // Caché no disponible
     return new Observable<any[]>(observer => {
       // Elegimos el método.
-      const method = list.search ? 'POST' : 'GET';
+      const method = options.search || list.search ? 'POST' : 'GET';
       // Obtenemos la url base.
       query.resolveUrl(options).then(url => {
         // Obtenemos las condiciones.
-        EntityModel.resolveAsyncValue(list.search, options.host).pipe(first()).subscribe(search => {
+        EntityModel.resolveAsyncValue(options.search || list.search, options.host).pipe(first()).subscribe(search => {
           // Referenciamos el cuerpo de la consulta.
           const body = search || null;
           // Obtenemos las filas del backend.
@@ -337,13 +376,13 @@ export abstract class AbstractModelService extends AbstractBaseClass {
               if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.getRows -> api.request(' + method + ').subscribe(data) => ', data); }
               if (options.paginate) {
                 // Actualizamos la paginación.
-                query.page = query.paginationComplete ? 0 : +query.page + 1;
-                if (data && data.length < list.itemsPerPage) { query.paginationComplete = true; }
+                query.page = query.completed ? 0 : +query.page + 1;
+                if (data && data.length < options.itemsPerPage) { query.completed = true; }
               } else {
                 // Si no es una operación paginada vaciamos el array.
                 query.clear();
               }
-              if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.getRows -> api.request(' + method + ') -> query.page2 => ', query.page); }
+              if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.getRows -> api.request(' + method + ') -> query.page => ', query.page); }
 
               // Si nos han llegado resultados...
               if (data && data.length) {
@@ -377,6 +416,26 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     });
   }
 
+  /** Añade las filas obtenidas de la siguiente página a la consulta actual evitando las repeticiones. */
+  pushRowsAvoidingRepetitions(query: EntityQuery, rows: any[], options?: { checkAlways?: boolean }) {
+    if (!options) { options = {}; }
+    if (options.checkAlways === undefined) { options.checkAlways = false; }
+    // Al principio damos por hecho que hay repeticiones que comprobar.
+    let checkRepeated = true;
+    // NOTA: Tanto la query como las filas obtenidas de la siguiente página están ordenadas de la misma manera.
+    rows?.map(row => {
+      // Si se requiere, buscamos si la fila ya existe.
+      const found = checkRepeated && query.rows.find(r => r.idreg === row.idreg);
+      // Si no existe...
+      if (!found) {
+        // Añadimos la fila de la página a la consulta actual.
+        query.rows.push(row);
+        // Como están ordenadas, podemos garantizar que el resto de filas ya no estarán repetidas.
+        if (!options.checkAlways) { checkRepeated = false; }
+      }
+    });
+  }
+
   /** Elimina las filas de la caché y restablece las paginaciones de todas las consultas. */
   clearCache(): Promise<any> {
     // Devolvemos una promise que se resuelve inmediatamente para poder usarla en un forkJoin()
@@ -398,7 +457,7 @@ export abstract class AbstractModelService extends AbstractBaseClass {
    * this.service.pickRow({
    *   mode: 'modal',
    *   component: MisDireccionesListComponent,
-   *   initialize: { selected },
+   *   selected,
    *   canCreate: true,
    * }).then(row => {
    *   if (row) { ... }
@@ -408,66 +467,60 @@ export abstract class AbstractModelService extends AbstractBaseClass {
   pickRow(options: PickRowOptions): Promise<any> {
     if (!options) { options = {}; }
     if (options.mode === undefined) { options.mode = 'modal'; }
+    if (options.selected === undefined) { options.selected = null; }
     if (options.canCreate === undefined) { options.canCreate = false; }
-    if (options.initialize === undefined) { options.initialize = { selected: null }; }
+    if (options.initialize === undefined) { options.initialize = {}; }
+    const selected = options.selected;
+    const filter = options.filter;
+    const canCreate = options.canCreate;
+    const initialize = options.initialize;
+    const cssClass = options.cssClass;
 
     return new Promise<any>((resolve: any, reject: any) => {
 
       if (options.mode === 'modal') {
         // Creamos el modal.
-        this.resolveFactory(options.component).then(component => {
-          // Si no se proporciona una inicialización válida para el getter `initializePickRow` creamos el encapsulado ahora.
-          const componentProps = options.initialize.initializePickRow === undefined ? { initializePickRow: options.initialize } : options.initialize;
-          this.modal.create({
-            component,
-            // En el modo modal, aprovechamos para pasar la opción de creación de filas nuevas a através de `initializePickRow`.
-            componentProps: deepAssign(componentProps, { initializePickRow: { canCreate: options.canCreate, isModal: true } }),
-          }).then(modal => {
-            // Nos suscribimos para recibir la notificación por parte del componente de lista.
-            const subscripion: Subscription = AbstractModelService.pickRowNotify.pipe(first()).subscribe((data: PickRowNotificationType) => {
-              // Cerramos la suscripción una vez recibida la primera notificación.
-              subscripion.unsubscribe();
-              // Resolvemos el resultado obtenido del componente de lista.
-              this.resolvePickRowList(data, options).then(row => resolve(row)).catch(error => reject(error));
-            });
-            modal.onDidDismiss().then(() => this.theme.checkStatusBar());
-            modal.present();
-          }).catch(error => reject(error));
+        const component = options.component;
+        const componentProps = { initializePickRow: deepAssign({ selected, filter, canCreate, isModal: true }, { initialize }) };
+        this.modal.create({ component, componentProps, cssClass }).then(modal => {
+          // Nos suscribimos para recibir la notificación por parte del componente de lista.
+          const subscripion: Subscription = AbstractModelService.pickRowNotify.subscribe((data: PickRowNotificationType) => {
+            // Cerramos la suscripción una vez recibida la primera notificación.
+            subscripion.unsubscribe();
+            // Resolvemos el resultado obtenido del componente de lista.
+            this.resolvePickRow(data, options).then(row => resolve(row)).catch(error => reject(error));
+          });
+          modal.onDidDismiss().then(() => this.theme.checkStatusBar());
+          modal.present();
         }).catch(error => reject(error));
 
       } else if (options.mode === 'navigation') {
         // Depuramos la ruta.
         const route = Array.isArray(options.route) ? options.route : [options.route];
         // Navegamos hacia el componente de lista.
-        this.router.navigate(route, { queryParams: { pickRowNotify: true, canCreate: options.canCreate, selected: options?.initialize?.selected, filter: options?.initialize?.filter } });
+        this.router.navigate(route, { queryParams: deepAssign({ pickRowNotify: true, selected, filter, canCreate }, { initialize }) });
         // Nos suscribimos para recibir la notificación por parte del componente de lista.
-        const subscripion: Subscription = AbstractModelService.pickRowNotify.pipe(first()).subscribe((data: PickRowNotificationType) => {
+        const subscripion: Subscription = AbstractModelService.pickRowNotify.subscribe((data: PickRowNotificationType) => {
           // Cerramos la suscripción una vez recibida la primera notificación.
           subscripion.unsubscribe();
           // Resolvemos el resultado obtenido del componente de lista.
-          this.resolvePickRowList(data, options).then(row => resolve(row)).catch(error => reject(error));
+          this.resolvePickRow(data, options).then(row => resolve(row)).catch(error => reject(error));
         });
 
       } else if (options.mode === 'popover') {
-        // Creamos el modal.
-        this.resolveFactory(options.component).then(component => {
-          // Si no se proporciona una inicialización válida para el getter `initializePickRow` creamos el encapsulado ahora.
-          const componentProps = options.initialize.initializePickRow === undefined ? { initializePickRow : options.initialize } : options.initialize;
-          this.popover.create({
-            component,
-            // En el modo modal, aprovechamos para pasar la opción de creación de filas nuevas a através de `initializePickRow`.
-            componentProps: deepAssign(componentProps, { canCreate: options.canCreate, isPopover: true }),
-          }).then(popover => {
-            // Nos suscribimos para recibir la notificación por parte del componente de lista.
-            const subscripion: Subscription = AbstractModelService.pickRowNotify.pipe(first()).subscribe((data: PickRowNotificationType) => {
-              // Cerramos la suscripción una vez recibida la primera notificación.
-              subscripion.unsubscribe();
-              // Resolvemos el resultado obtenido del componente de lista.
-              this.resolvePickRowList(data, options).then(row => resolve(row)).catch(error => reject(error));
-            });
-            popover.onDidDismiss().then(() => this.theme.checkStatusBar());
-            popover.present();
-          }).catch(error => reject(error));
+        // Creamos el popover.
+        const component = options.component;
+        const componentProps = { initializePickRow: deepAssign({ selected, filter, canCreate, isPopover: true }, { initialize }) };
+        this.popover.create({ component, componentProps, cssClass }).then(popover => {
+          // Nos suscribimos para recibir la notificación por parte del componente de lista.
+          const subscripion: Subscription = AbstractModelService.pickRowNotify.subscribe((data: PickRowNotificationType) => {
+            // Cerramos la suscripción una vez recibida la primera notificación.
+            subscripion.unsubscribe();
+            // Resolvemos el resultado obtenido del componente de lista.
+            this.resolvePickRow(data, options).then(row => resolve(row)).catch(error => reject(error));
+          });
+          popover.onDidDismiss().then(() => this.theme.checkStatusBar());
+          popover.present();
         }).catch(error => reject(error));
 
       } else {
@@ -476,32 +529,32 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     });
   }
   /** @hidden Resuelve el resultado obtenido del componente de lista. */
-  protected resolvePickRowList(info: PickRowNotificationType, options: PickRowOptions): Promise<any> {
+  protected resolvePickRow(data: PickRowNotificationType, options: PickRowOptions): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
       // Si ha elegido crear una nueva fila...
-      if (info?.row[info.model.primaryKey] === 'new') {
-        // Resolvemos la ruta para ir a la fichad de detalle.
-        info.model.resolveRoute(info.model.detail.route, info.row, this).pipe(first()).subscribe((route: any) => {
-          if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.pickRow() -> resolveRoute() => ', route); }
-          const { canCreate, isModal, isPopover, ...extra } = options.initialize;
-          // Obtenemos los parámetros extra.
-          const queryParams = deepAssign({ pickRowNotify: true }, extra);
+      if (data?.row[data.model.primaryKey] === 'new') {
+        // Resolvemos la ruta para ir a la ficha de detalle.
+        data.model.resolveRoute(data.model.detail.route, data.row, this).pipe(first()).subscribe((route: any) => {
+          if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.resolvePickRow() -> resolveRoute() => ', route); }
+          // Añadimos los parámetros adicionales.
+          const queryParams = deepAssign({ pickRowNotify: true }, options.params || {});
           // Navegamos hacia la ruta obtenida y tras finalizar restablecemos el indicador de precarga.
           this.router.navigate(route, { queryParams });
           // Nos suscribimos para recibir la notificación por parte del componente de detalle.
-          const subscripion: Subscription = AbstractModelService.pickRowNotify.pipe(first()).subscribe((data: PickRowNotificationType) => {
+          const subscripion: Subscription = AbstractModelService.pickRowNotify.pipe(first()).subscribe((response: PickRowNotificationType) => {
             // Cerramos la suscripción una vez recibida la primera notificación.
             subscripion.unsubscribe();
             // Devolvemos el resultado del componente de detalle.
-            resolve(data?.row);
+            resolve(response?.row);
           });
         });
       } else {
         // Devolvemos el resultado del componente de lista.
-        resolve(info?.row);
+        resolve(data?.row);
       }
     });
   }
+
 
   // ---------------------------------------------------------------------------------------------------
   //  Detail
@@ -520,21 +573,27 @@ export abstract class AbstractModelService extends AbstractBaseClass {
    * });
    * ```
    */
-  preloadRow(query: EntitySchema | EntityModel | EntityQuery, id: number | 'new', options?: { navigate?: string, parent?: any, preloading?: string, paginate?: boolean }): Promise<any> {
+  preloadRow(query: EntitySchema | EntityModel | EntityQuery, id: number | 'new', options?: { navigate?: string, parent?: any, preloading?: string, paginate?: boolean; showLoader?: boolean }): Promise<any> {
+    if (!options) { options = {}; }
+    if (options.paginate === undefined) { options.paginate = false; }
+    if (options.showLoader === undefined) { options.showLoader = false; }
+    if (!(query instanceof EntityQuery)) { query = this.registerQuery(query); }
+    if (options.parent) {
+      if (options.preloading === undefined) { options.preloading = (query as EntityQuery).model.name.plural; }
+      options.parent.preloading = options.preloading;
+    }
     return new Promise<any>((resolve: any, reject: any) => {
-      if (!options) { options = {}; }
-      if (options.paginate === undefined) { options.paginate = false; }
-      if (!(query instanceof EntityQuery)) { query = this.registerQuery(query); }
-      if (options.parent) {
-        if (options.preloading === undefined) { options.preloading = (query as EntityQuery).model.name.plural; }
-        options.parent.preloading = options.preloading;
-      }
-      return this.getRow(query as EntityQuery, id, { paginate: options.paginate }).subscribe(row => {
+      this.getRow(query as EntityQuery, id, { paginate: options.paginate, showLoader: options.showLoader }).subscribe(row => {
         this.preloadedRow = row;
-        if (options.navigate) { this.router.navigate([options.navigate]); }
         if (options.parent) { options.parent.preloading = false; }
-      });
+        if (options.navigate) { this.router.navigate([options.navigate]).finally(() => resolve(row)); } else { resolve(row); }
+      }, error => reject(error));
     });
+    // return this.getRow(query as EntityQuery, id, { paginate: options.paginate, showLoader: options.showLoader }).pipe(tap(row => {
+    //   this.preloadedRow = row;
+    //   if (options.navigate) { this.router.navigate([options.navigate]); }
+    //   if (options.parent) { options.parent.preloading = false; }
+    // })).toPromise();
   }
 
   getRow(query: EntityQuery, id: number | 'new', options?: { host?: any, paginate?: boolean, customFields?: string, showLoader?: boolean }): Observable<any> {
@@ -640,7 +699,7 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     });
   }
 
-  protected insertCacheRow(query: EntityQuery, created: any, options?: { host?: any }): Promise<any> {
+  insertCacheRow(query: EntityQuery, created: any, options?: { host?: any }): Promise<any> {
     const entityName: string = EntityName.resolve(query.model.backend).singular;
     const primaryKey: string = query.model.primaryKey;
     const foreign = query.model.list.foreign;
@@ -648,10 +707,10 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     return new Promise<any>((resolve: any, reject: any) => {
       // NOTA: Si todavía quedan páginas por cargar e insertamos ahora el nuevo elemento
       // se puede dar el caso que aparezca duplicado tras recibirlo en las páginas que faltan.
-      if (query.page && !query.paginationComplete) {
+      if (query.page && !query.completed) {
         if (this.debug) { console.log('AbstractModelService:' + this.constructor.name + '.insertCacheRow() CREATE -> Limpiamos colección ', {page: query.page}); }
         // Limpiamos la colección para evitar duplicados y cargamos la primera página de nuevo.
-        query.clear(); this.refresh(query, { host: options.host });
+        query.clear(); this.request(query, { host: options.host });
         resolve(false);
 
       } else {
@@ -682,7 +741,7 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     });
   }
 
-  protected updateCacheRow(query: EntityQuery, updated: any, options?: { host?: any }): Promise<any> {
+  updateCacheRow(query: EntityQuery, updated: any, options?: { host?: any }): Promise<any> {
     const entityName: string = EntityName.resolve(query.model.backend).singular;
     const primaryKey: string = query.model.primaryKey;
     return new Promise<any>((resolve: any, reject: any) => {
@@ -823,7 +882,7 @@ export abstract class AbstractModelService extends AbstractBaseClass {
 
   deleteRow(query: EntityQuery, data: object | FormGroup, options?: { host?: any }): Observable<boolean> {
     // Comprobamos si hay que preguntar al usuario antes de borrar la fila.
-    if (!(query.model.detail.confirmDelete as any).confirm) {
+    if (!(query.model.detail.confirmDelete as ConfirmMessage).confirm) {
       // Vamos directos a eliminar la fila al backend.
       return this.removeRow(query, data, { host: options.host });
 
@@ -977,6 +1036,23 @@ export abstract class AbstractModelService extends AbstractBaseClass {
 
 
   // ---------------------------------------------------------------------------------------------------
+  //  Controllers
+  // ---------------------------------------------------------------------------------------------------
+
+  presentLoader(message?: string): Promise<HTMLIonLoadingElement> {
+    return new Promise<HTMLIonLoadingElement>((resolve, reject) => {
+      this.loadCtrl.create({
+        message: this.translate.instant(message || 'api.updating') + '...',
+        spinner: 'circles',
+      }).then(loader => {
+        loader.present();
+        resolve(loader);
+      }).catch(error => reject(error));
+    });
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
   //  Resolvers
   // ---------------------------------------------------------------------------------------------------
 
@@ -1029,5 +1105,12 @@ export abstract class AbstractModelService extends AbstractBaseClass {
     return resolveTranslate(str, concat);
   }
 
+  /** Permite evaluar expresiones de código (como los presentes en `AbstractListSettings`) suministrando un contexto para el argumento `host` si hace falta. */
+  evalOrExpr(value: stringOrExpr | booleanOrExpr | numberOrExpr, options?: EvalExpressionOptions): string | boolean | number {
+    if (!value) { return (value as any); }
+    if (!options) { options = {}; }
+    if (options.host === undefined) { options.host = this; }
+    return typeof value === 'object' && value.hasOwnProperty('expr') ? evalExpr(value.expr, options) : value;
+  }
 }
 

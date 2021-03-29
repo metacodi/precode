@@ -6,11 +6,11 @@ import { matchWords } from '../ts-utils';
 
 
 type TextColorized = { text: string, filtered: boolean, css?: string };
-type TextColorizedOptions = { splitWords?: boolean, distinguishWords?: boolean, maxDistinctions?: number, ignoreAccents?: boolean };
+type TextColorizedOptions = { splitWords?: boolean, ignoreCase?: boolean, ignoreAccents?: boolean, distinguishWords?: boolean, maxDistinctions?: number };
 
 /**
  * ```html
- * <text-colorized [value]="myText" [search]="search" [options]="colorizeOptions"></text-colorized>
+ * <text-colorized [value]="myText" [match]="match" [options]="colorizeOptions"></text-colorized>
  * ```
  */
 @Component({
@@ -26,23 +26,23 @@ export class TextColorizedComponent implements OnInit, AfterViewChecked {
   /** @hidden */
   protected debug = AppConfig.debugEnabled;
 
-  protected elements: TextColorized[];
+  elements: TextColorized[];
 
   text = '';
   @Input() set value(text: string) {
     if (this.text !== text) {
       // if (this.debug) { console.log(this.constructor.name + '.@input value()'); }
       this.text = text;
-      this.elements = this.colorMatch(this.text, this.match, this.colorizeOptions);
+      this.elements = this.colorMatch(this.text, this.filter, this.colorizeOptions);
     }
   }
 
-  match = '';
-  @Input() set search(match: string) {
-    if (this.match !== match) {
-      // if (this.debug) { console.log(this.constructor.name + '.@input search()'); }
-      this.match = match;
-      this.elements = this.colorMatch(this.text, this.match, this.colorizeOptions);
+  filter = '';
+  @Input() set match(match: string) {
+    if (this.filter !== match) {
+      // if (this.debug) { console.log(this.constructor.name + '.@input match()'); }
+      this.filter = match;
+      this.elements = this.colorMatch(this.text, this.filter, this.colorizeOptions);
     }
   }
 
@@ -51,7 +51,7 @@ export class TextColorizedComponent implements OnInit, AfterViewChecked {
     if (this.colorizeOptions !== colorizeOptions) {
       // if (this.debug) { console.log(this.constructor.name + '.@input options()'); }
       this.colorizeOptions = colorizeOptions;
-      this.elements = this.colorMatch(this.text, this.match, this.colorizeOptions);
+      this.elements = this.colorMatch(this.text, this.filter, this.colorizeOptions);
     }
   }
 
@@ -71,18 +71,20 @@ export class TextColorizedComponent implements OnInit, AfterViewChecked {
     if (!match || !text) { return [{ text, filtered: false }]; }
     if (!options) { options = {}; }
     if (options.splitWords === undefined) { options.splitWords = true; }
+    if (options.ignoreCase === undefined) { options.ignoreCase = true; }
     if (options.ignoreAccents === undefined) { options.ignoreAccents = true; }
     if (options.distinguishWords === undefined) { options.distinguishWords = true; }
     if (options.maxDistinctions === undefined) { options.maxDistinctions = 3; }
     if (typeof text !== 'string') { text = String(text); }
+    const flags = options.ignoreCase ? 'ig' : 'g';
 
     const mark = '<~#~>';
 
     if (!options.distinguishWords && !options.ignoreAccents) {
       // Separamos las palabras escritas y eliminamos los signos de puntuación.
       match = options.splitWords ? matchWords(match).join('|') : match;
-      // text = text.replace(new RegExp('(' + match + ')(?![^<]*>|[^<>]*</)', 'ig'), '<div class="filtered">$1</div>');
-      text = text.replace(new RegExp('(' + match + ')(?![^<]*>|[^<>]*</)', 'ig'), mark + '$1' + mark);
+      // text = text.replace(new RegExp('(' + match + ')(?![^<]*>|[^<>]*</)', flags), '<div class="filtered">$1</div>');
+      text = text.replace(new RegExp('(' + match + ')(?![^<]*>|[^<>]*</)', flags), mark + '$1' + mark);
       // Devolvemos las unidades de texto coloreadas.
       return text.split(new RegExp(mark)).filter(s => !!s).map(word => {
         const filtered = match.split('|').includes(word);
@@ -102,7 +104,7 @@ export class TextColorizedComponent implements OnInit, AfterViewChecked {
         // Marcamos las palabras buscadas.
         words.map(word => {
           // Buscamos las posiciones de todas las ocurrencias en la cadena normalizada.
-          let replaced = normalized.replace(new RegExp('(' + word + ')(?![^<]*>|[^<>]*</)', 'ig'), `${mark}$1`);
+          let replaced = normalized.replace(new RegExp('(' + word + ')(?![^<]*>|[^<>]*</)', flags), `${mark}$1`);
           // Puede haber más de una variante que coincida con la palabra buscada, por ejemplo: "más" y "mas"
           const variants = []; let i = 0; do {
             // Mientras existan ocurrencias...
@@ -124,8 +126,8 @@ export class TextColorizedComponent implements OnInit, AfterViewChecked {
           matches[i].map(variant => {
             // Remplazamos cada variante.
             wordCss.push({ word: variant, css: css.join(' ') });
-            // text = text.replace(new RegExp('(' + variant + ')(?![^<]*>|[^<>]*</)', 'ig'), `<div class="${css.join(' ')}">$1</div>`);
-            text = text.replace(new RegExp('(' + variant + ')(?![^<]*>|[^<>]*</)', 'ig'), mark + '$1' + mark);
+            // text = text.replace(new RegExp('(' + variant + ')(?![^<]*>|[^<>]*</)', flags), `<div class="${css.join(' ')}">$1</div>`);
+            text = text.replace(new RegExp('(' + variant + ')(?![^<]*>|[^<>]*</)', flags), mark + '$1' + mark);
           });
         }
         // Devolvemos las unidades de texto coloreadas.
@@ -140,8 +142,8 @@ export class TextColorizedComponent implements OnInit, AfterViewChecked {
         for (let i = 0; i < words.length; i++) {
           const css = ['filtered']; if (options.distinguishWords) { css.push(`filtered-word-${i % options.maxDistinctions + 1}`); }
           wordCss.push({ word: words[i], css: css.join(' ') });
-          // text = text.replace(new RegExp('(' + words[i] + ')(?![^<]*>|[^<>]*</)', 'ig'), `<div class="${css.join(' ')}">$1</div>`);
-          text = text.replace(new RegExp('(' + words[i] + ')(?![^<]*>|[^<>]*</)', 'ig'), mark + '$1' + mark);
+          // text = text.replace(new RegExp('(' + words[i] + ')(?![^<]*>|[^<>]*</)', flags), `<div class="${css.join(' ')}">$1</div>`);
+          text = text.replace(new RegExp('(' + words[i] + ')(?![^<]*>|[^<>]*</)', flags), mark + '$1' + mark);
         }
         // Devolvemos las unidades de texto coloreadas.
         return text.split(new RegExp(mark)).filter(s => !!s).map(word => {

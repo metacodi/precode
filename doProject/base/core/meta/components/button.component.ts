@@ -1,6 +1,6 @@
 import { Component, Injector, ViewEncapsulation } from '@angular/core';
 
-import { ButtonControlType, FieldType } from '../model/meta-types';
+import { ButtonComponentType, ButtonControlType, FieldType } from '../model/meta-types';
 import { DynamicFieldComponent } from './dynamic-field.component';
 
 
@@ -59,6 +59,6 @@ export class ButtonComponent extends DynamicFieldComponent {
   constructor(protected injector: Injector) { super(injector); }
 
   get control(): ButtonControlType {
-    return (this.field.component as any).button;
+    return (this.field.component as ButtonComponentType).button;
   }
 }

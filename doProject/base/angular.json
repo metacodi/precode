@@ -15,7 +15,9 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "allowedCommonJsDependencies": [
-              "file-saver"
+              "file-saver",
+              "chart.js",
+              "chartjs-plugin-datalabels"
             ],
             "outputPath": "www",
             "index": "src/index.html",

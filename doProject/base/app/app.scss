@@ -7,20 +7,12 @@
 
 
 // ---------------------------------------------------------------------------------------------------
-// Fuentes de letra
+//  Fuentes de letra
 // ---------------------------------------------------------------------------------------------------
-
-// @import "src/theme/fonts.scss";
 
 :root {
   // --ion-font-family: "-apple-system", sans-serif !important;
   --ion-font-family: sans-serif !important;
-}
-
-// NOTA: Google-Maps cambia la fuente de la aplicación.
-body, .ionic-body  {
-  // font-family: "-apple-system", sans-serif !important;    /* HACK! google maps downloads roboto font and blinks the view */
-  font-family: sans-serif !important;    /* HACK! google maps downloads roboto font and blinks the view */
 }
 
 
@@ -31,11 +23,6 @@ body, .ionic-body  {
 // NOTA: A veces no hydrata la clase. Forzamos que siempre se muestre.
 ion-app {
   visibility: visible;
-  // color: #ffce00;
-  // color: #ff9100;
-  // color: #10dc60;
-  // color: #f04141;
-  // color: #3880ff;
 }
 
 // NOTA: Completamos el punto de ruptura que le falta a ionic.
@@ -79,26 +66,14 @@ body {
 
 
 // ---------------------------------------------------------------------------------------------------
-// Quitamos el padding lateral a la grid principal que articula el contenido de las secciones.
+//  En dispositivos pequeños, estrechamos la altura del header y del footer.
 // ---------------------------------------------------------------------------------------------------
 
-ion-content > ion-grid, ion-content > ion-grid > ion-row {
-  padding-left: 0px;
-  padding-right: 0px;
-}
-
-ion-content > ion-grid > ion-row > ion-col:first-of-type {
-  padding-left: 0px;
-}
-
-ion-content > ion-grid > ion-row > ion-col:last-of-type {
-  padding-right: 0px;
-}
-
-// En dispositivos pequeños, estrechamos la altura del header y del footer.
 @media (max-width: 720px) {
-  ion-header > ion-grid, ion-header > ion-grid > ion-row, ion-header > ion-grid > ion-row > ion-col,
-  ion-footer > ion-grid, ion-footer > ion-grid > ion-row, ion-footer > ion-grid > ion-row > ion-col {
+  ion-header > ion-grid,
+  ion-header > ion-grid > ion-row > ion-col,
+  ion-footer > ion-grid,
+  ion-footer > ion-grid > ion-row > ion-col {
     padding-top: 0px;
     padding-bottom: 0px;
   }
@@ -156,6 +131,18 @@ ion-footer ion-grid:last-of-type {
   ion-modal ion-footer ion-grid:last-of-type {
     margin-bottom: 0px;
   }
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  rejilla para el contenido
+// ---------------------------------------------------------------------------------------------------
+//  <ion-grid fixed class="no-padding">
+// ---------------------------------------------------------------------------------------------------
+
+ion-grid.no-padding,
+ion-grid.no-padding > ion-row > ion-col {
+  padding: 0px !important;
 }
 
 
@@ -231,7 +218,7 @@ ion-searchbar {
   padding: 0px;
   max-width: 720px;
   margin: 8px;
-  --background: transparent !important;
+  --background: transparent;
   box-shadow: rgba(var(--ion-color-dark-rgb), 0.12) 0px 4px 16px;
 }
 
@@ -294,7 +281,7 @@ ion-searchbar {
 .detail ion-item ion-label {
   font-size: 15px !important;
   white-space: normal !important;
-  // max-width: none;
+  max-width: unset !important;
 }
 
 // Fuente de letra de los controles.
@@ -396,6 +383,13 @@ ion-content ion-textarea {
   margin: 10px 0;
 }
 
+.full-size {
+  .modal-wrapper {
+    --min-width: 90% !important;
+    --min-height: 90% !important;
+  }
+}
+
 ion-item ion-icon[slot=start] {
   margin-inline-end: 14px;
 }
@@ -403,6 +397,7 @@ ion-item ion-icon[slot=start] {
 ion-textarea textarea {
   overflow: hidden;
   padding-left: 0px !important;
+  height: auto !important;
 }
 
 ion-action-sheet {
@@ -525,19 +520,36 @@ $filtered-base-color: #10dc60;
 }
 
 .shadow {
-  box-shadow: rgba(var(--ion-color-dark-rgb), 0.12) 0px 4px 16px;
+  box-shadow: var(--box-shadow);
 }
 .no-shadow {
   box-shadow: none !important;
 }
-
+// Deshabilitamos esta regla que impide mostrar la sombra en los headers dentro de los modales.
+.sc-ion-modal-ios-h {
+  --box-shadow: unset !important;
+}
 
 // ---------------------------------------------------------------------------------------------------
-//  animations
+//  animations: rotate
+// ---------------------------------------------------------------------------------------------------
+
+.animated {
+  transition: all 250ms;
+  transform: none;
+  cursor: pointer;
+}
+.rotate90 {
+  transform: rotate(90deg);
+}
+
+// ---------------------------------------------------------------------------------------------------
+//  animations: collapsed . expanded
 // ---------------------------------------------------------------------------------------------------
 
 .collapsed {
   transition: all 250ms ease-out;
+  min-height: 0px !important;
   max-height: 0px !important;
   opacity: 0 !important;
   margin-top: 0px !important;
@@ -555,9 +567,39 @@ $filtered-base-color: #10dc60;
   opacity: 1 !important;
 }
 
+.expanded-50 {
+  transition: all 250ms ease-in;
+  max-height: 50px !important;
+  opacity: 1 !important;
+}
+
+.expanded-100 {
+  transition: all 250ms ease-in;
+  max-height: 100px !important;
+  opacity: 1 !important;
+}
+
+.expanded-200 {
+  transition: all 250ms ease-in;
+  max-height: 200px !important;
+  opacity: 1 !important;
+}
+
+.expanded-300 {
+  transition: all 250ms ease-in;
+  max-height: 300px !important;
+  opacity: 1 !important;
+}
+
 .expanded-400 {
   transition: all 250ms ease-in;
   max-height: 400px !important;
+  opacity: 1 !important;
+}
+
+.expanded-500 {
+  transition: all 250ms ease-in;
+  max-height: 500px !important;
   opacity: 1 !important;
 }
 
@@ -567,19 +609,49 @@ $filtered-base-color: #10dc60;
   opacity: 1 !important;
 }
 
+.expanded-700 {
+  transition: all 250ms ease-in;
+  max-height: 700px !important;
+  opacity: 1 !important;
+}
+
 .expanded-800 {
   transition: all 250ms ease-in;
   max-height: 800px !important;
   opacity: 1 !important;
 }
 
+.expanded-900 {
+  transition: all 250ms ease-in;
+  max-height: 900px !important;
+  opacity: 1 !important;
+}
+
 .expanded-1000 {
   transition: all 250ms ease-in;
-  max-height: 800px !important;
+  max-height: 1000px !important;
   opacity: 1 !important;
 }
 
 
+
+// ---------------------------------------------------------------------------------------------------
+// Notificaciones
+// ---------------------------------------------------------------------------------------------------
+
+.unattendedNotifications {
+  font-size: 10px;
+  --padding-top: 2px;
+  --padding-end: 0px;
+  --padding-bottom: 0px;
+  --padding-start: 0px;
+  height: 15px;
+  width: 15px;
+  text-align: center;
+  position: absolute;
+  top: 5px;
+  right: 2px;
+}
 
 // ---------------------------------------------------------------------------------------------------
 //  pestañas decorativas

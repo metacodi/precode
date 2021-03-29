@@ -26,8 +26,8 @@
             <ion-row><ion-col class="city"><ion-label>{{departure.city | uppercase }}</ion-label></ion-col></ion-row>
             <ion-row>
               <ion-col class="fecha">
-                <ion-label>{{locale.mediumDate(vuelo?.departureDate?.dateLocal, 'll')}}</ion-label>
-                <ion-label>{{locale.hour(vuelo?.departureDate?.dateLocal)}}</ion-label>
+                <ion-label>{{vuelo?.departureDate?.dateLocal | localize:'mediumDate'}}</ion-label>
+                <ion-label>{{vuelo?.departureDate?.dateLocal | localize:'hour'}}</ion-label>
               </ion-col>
             </ion-row>
             <ion-row><ion-col class="airport-name"><ion-label>{{departure.name}}</ion-label></ion-col></ion-row>
@@ -51,8 +51,8 @@
             <ion-row><ion-col class="city"><ion-label>{{arrival.city | uppercase }}</ion-label></ion-col></ion-row>
             <ion-row>
               <ion-col class="fecha">
-                <ion-label>{{locale.mediumDate(vuelo?.arrivalDate?.dateLocal, 'll')}}</ion-label>
-                <ion-label>{{locale.hour(vuelo?.arrivalDate?.dateLocal)}}</ion-label>
+                <ion-label>{{vuelo?.arrivalDate?.dateLocal | localize:'mediumDate'}}</ion-label>
+                <ion-label>{{vuelo?.arrivalDate?.dateLocal | localize:'hour'}}</ion-label>
               </ion-col>
             </ion-row>
             <ion-row><ion-col class="airport-name"><ion-label>{{arrival.name}}</ion-label></ion-col></ion-row>

@@ -7,35 +7,41 @@ import { isBreakpoint } from '../functions';
 
 @Component({
   selector: 'expand-button',
-  template: `<ion-icon [name]="open ? 'chevron-up' : 'chevron-down'" size="small" slot="end" style="cursor: pointer;"></ion-icon>`,
+  template: `<ion-icon name="chevron-up" class="chevron-up-down" [ngClass]="{'chevron-up-down-collapsed': !expanded}" [size]="size" style="cursor: pointer;"></ion-icon>`,
+  styles: [
+    'ion-icon { transition: transform 250ms ease-out; }',
+    '.chevron-up-down-collapsed { transform: rotate(-180deg) !important; }',
+  ]
 })
 export class ExpandButtonComponent implements OnInit, AfterViewChecked {
   /** @hidden */
   protected debug = AppConfig.debugEnabled;
   private breakpoint: 'sm' | 'md' | 'lg' | 'xl' = undefined;
 
-  @Input() open = true;
+  @Input() expanded = true;
 
-  @Input() set openSm(condition: boolean) {
-    this.open = condition;
+  @Input() size: 'small' | 'large' | undefined = 'small';
+
+  @Input() set expandedSm(condition: boolean) {
+    this.expanded = condition;
     this.breakpoint = 'sm';
     this.checkBreakpoint();
   }
 
-  @Input() set openMd(condition: boolean) {
-    this.open = condition;
+  @Input() set expandedMd(condition: boolean) {
+    this.expanded = condition;
     this.breakpoint = 'md';
     this.checkBreakpoint();
   }
 
-  @Input() set openLg(condition: boolean) {
-    this.open = condition;
+  @Input() set expandedLg(condition: boolean) {
+    this.expanded = condition;
     this.breakpoint = 'lg';
     this.checkBreakpoint();
   }
 
-  @Input() set openXl(condition: boolean) {
-    this.open = condition;
+  @Input() set expandedXl(condition: boolean) {
+    this.expanded = condition;
     this.breakpoint = 'xl';
     this.checkBreakpoint();
   }
@@ -54,13 +60,12 @@ export class ExpandButtonComponent implements OnInit, AfterViewChecked {
   }
 
   protected checkBreakpoint() {
+    if (!this.breakpoint || !this.el?.nativeElement?.classList) { return; }
     const list: DOMTokenList = this.el.nativeElement.classList;
-    if (!!this.breakpoint) {
-      if (isBreakpoint(this.breakpoint)) {
-        list.add(`ion-hide-${this.breakpoint}-up`);
-      } else {
-        list.remove(`ion-hide-${this.breakpoint}-up`);
-      }
+    if (isBreakpoint(this.breakpoint)) {
+      list.add(`ion-hide-${this.breakpoint}-up`);
+    } else {
+      list.remove(`ion-hide-${this.breakpoint}-up`);
     }
   }
 

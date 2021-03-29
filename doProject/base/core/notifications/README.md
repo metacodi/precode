@@ -16,14 +16,14 @@ Aquest document descriu el protocol de notificacions d'una aplicació de forma a
   - `Sent`: la notificació ha estat enviada per l'emissor.
   - `Received`: la notificació ha estat rebuda pel receptor al seu dispositiu.
   - `Attended`: (Opcional) la notificació ha estat atesa pel receptor (l'ha llegit i, per tant, se n'ha assabentat).
-  - `Solved`: (Opcional) quan la notificació requereix d'una acció determinada per part del receptor.
+  - ~~`Solved`: (Opcional) quan la notificació requereix d'una acció determinada per part del receptor.~~
 
   ```mermaid
   graph LR
-    Sent --> Received .-> Attended .-> Solved
+    Sent --> Received .-> Attended
   ```
 
-<br /> 
+<br />
 
 ## [Emissió d'una notificació](#notifications)
 
@@ -33,7 +33,6 @@ Aquest document descriu el protocol de notificacions d'una aplicació de forma a
   - El <u>registre a base de dades</u> de la notificació a la taula `notifications`, i dels seus notificats a la taula `notified`.
   - Opcionalment, també l'emissió d'una <u>notificació push</u> a través del servei FMC.
   - Opcionalment, també l'enviament d'un <u>correu electrònic</u> a través dels servidors de correu.
-
 
 - L'alerta no s'ha de mostrar mai a l'usuari emissor de la notificació, per tant, l'emissor no ha d'estar mai registrat entre els notificats (`notified`).
 
@@ -76,7 +75,6 @@ Aquest document descriu el protocol de notificacions d'una aplicació de forma a
       idAttendedAction int
       idSolvedAction int
       sent datetime 
-      received datetime 
       attended datetime 
       solved datetime 
       deleted datetime 

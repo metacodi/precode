@@ -1,16 +1,18 @@
-import { Injector, OnInit, OnDestroy, ComponentFactoryResolver, Component } from '@angular/core';
+import { Injector, OnInit, OnDestroy, ComponentFactoryResolver, Component, ComponentFactory } from '@angular/core';
 import { FormGroup, FormControl, FormArray } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { LoadingController } from '@ionic/angular';
 
+import { AbstractBaseClass } from '../abstract-base.class';
 import { AppConfig } from 'src/core/app-config';
+import { LocalizationService } from 'src/core/localization';
 import { isBreakpoint, resolveComponentFactory, resolveTranslate, matchWords } from 'src/core/util';
 
 import { AbstractModelService } from '../abstract-model.service';
 import { EntityModel } from '../model/entity-model';
 import { EntityName } from '../model/entity-model';
 import { EntitySchema } from '../model/entity-schema';
-import { AbstractBaseClass } from '../abstract-base.class';
+import { Subscriber, Subscription } from 'rxjs';
 
 
 /**
@@ -38,27 +40,43 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
   service: AbstractModelService;
 
   /**
+   * Instance of the loader controller, loading controllers programmatically control the loading component.
+   * @category Dependencies
+   */
+  loadingCtrl: LoadingController;
+
+  /** @hidden Referencia a la instancia del controlador */
+  loader: any;
+
+  /** Referencia a la `factory` que resuelve isntancias para este componente.
+   * ```typescript
+   * this.factory = this.resolver.resolveComponentFactory(this.constructor as any);
+   * ```
+   */
+  factory: ComponentFactory<unknown>;
+
+  /** Subscribers correspondientes a observables que habrá que completar al destruir el componente. */
+  subscribers: Subscriber<any>[] = [];
+  /** Subscriptores de los que habrá que desubscribirse al destruir el componente. */
+  subscriptions: Subscription[] = [];
+
+  // Dependencies
+  // ---------------------------------------------------------------------------------------------------
+
+  /**
    * Reference to a _ComponentFactoryResolver_ instance, a registry that maps Components to generated ComponentFactory classes that can be used to create instances of components.
    * @category Dependencies
    */
   resolver: ComponentFactoryResolver;
 
   /**
-   * Instance of the loader controller, loading controllers programmatically control the loading component.
-   * @category Dependencies
-   */
-  loadingCtrl: LoadingController;
-
-  /**
    * Instance of the document sanitizer, helps preventing Cross Site Scripting Security bugs (XSS)
    * by sanitizing values to be safe to use in the different DOM contexts.
    * @category Dependencies
    */
-  sanitizer: DomSanitizer;
+   sanitizer: DomSanitizer;
 
-  /** @hidden Referencia a la instancia del controlador */
-  loader: any;
-
+   /** @category Dependencies */ localize: LocalizationService;
 
   /**
    * @param schema Scheme of the Model associated with the Component.
@@ -66,55 +84,34 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
   constructor(
     /** @hidden */ public injector: Injector,
     /** @hidden */ public schema: EntitySchema,
-    // /** @hidden */ public service?: any,
   ) {
     super(injector);
 
-    /** @category Dependencies */
-    // tslint:disable-next-line: deprecation
-    this.sanitizer = this.injector.get(DomSanitizer);
-
-    /** @category Dependencies */
-    // tslint:disable-next-line: deprecation
-    this.resolver = this.injector.get(ComponentFactoryResolver);
+    // Inject required dependencies.
+    this.sanitizer = this.injector.get<DomSanitizer>(DomSanitizer);
+    this.resolver = this.injector.get<ComponentFactoryResolver>(ComponentFactoryResolver);
+    this.localize = this.injector.get<LocalizationService>(LocalizationService);
 
     // Obtenemos una instancia del modelo.
     if (this.schema) { this.model = new EntityModel(this.schema, this.translate); }
-
-    // // Obtenemos una instancia del servicio.
-    // if (!!this.service && typeof service === 'function') { this.service = this.injector.get<any>(service); }
   }
 
 
   // ---------------------------------------------------------------------------------------------------
-  //  Loader
+  //  selector
   // ---------------------------------------------------------------------------------------------------
 
-  presentLoader(message?: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      // Comprobamos si el loader está compartido.
-      if (!this.loader) {
-        // Creamos un nuevo loader.
-        this.loadingCtrl.create({
-          message: this.translate.instant(message || 'api.updating') + '...',
-          spinner: 'circles',
-          // translucent: true,
-
-        }).then(loader => {
-          // Mostramos el loader.
-          loader.present();
-          // Devolvemos una referencia al loader.
-          resolve(loader);
-
-        }).catch(error => reject(error));
-      }
-    });
-  }
-
-  dismissLoader(loader: any): void {
-    if (this.debug) { console.log('AbstractComponent:' + this.constructor.name + '.dismissLoader(loader) => ', loader); }
-    // Ocultamos el loader actual.
-    if (loader) { loader.dismiss(); }
+  /** Devuelve el selector del presente componente declarado en el atributo decorador `@Component({ selector })`.
+   *
+   * Se puede utilizar para realizar consultaas dirigidas únicamente al DOM del componente. Por ejemplo para
+   * referenciar su componente hijo `ion-list`, como se muestra a continuación:
+   * ```typescript
+   * const list = document.querySelector(`${this.selector} ion-list`);
+   * ```
+   */
+  get selector(): string {
+    if (!this.factory) { this.factory = this.resolver.resolveComponentFactory(this.constructor as any); }
+    return this.factory?.selector || '';
   }
 
 
@@ -130,6 +127,9 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
   /** @category Lifecycle */
   ngOnDestroy(): void {
     if (this.debug) { console.log('AbstractComponent:' + this.constructor.name + '.ngOnDestroy()'); }
+    // Completamos y cancelamos las suscripciones.
+    if (this.subscribers?.length) { this.subscribers.map(sub => sub.complete()); }
+    if (this.subscriptions?.length) { this.subscriptions.map(sub => sub.unsubscribe()); }
   }
 
   /** @category Lifecycle */
@@ -240,7 +240,13 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
   }
 
   getter(formControlName: string): any {
-    // if (!this.hasOwnProperty(formControlName)) { throw new Error(`No se ha encontrado la propiedad '${formControlName}' para mapear el getter.`); }
+    const descriptor = Object.getOwnPropertyDescriptor(this, formControlName);
+    if (typeof descriptor?.get !== 'function') {
+      const proto = Object.getPrototypeOf(this);
+      const descriptorProto = Object.getOwnPropertyDescriptor(proto, formControlName);
+      // console.log('descriptor => ', { descriptor, proto });
+      if (typeof descriptorProto?.get !== 'function') { throw new Error(`No se ha encontrado del descriptor de la propiedad '${formControlName}' para mapear el getter.`); }
+    }
     return this[formControlName];
   }
 
@@ -296,22 +302,24 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
    *
    * **Usage**
    * ```html
-   * <text-colorized [value]="row.nombre" [search]="search"></text-colorized>
+   * <text-colorized [value]="row.nombre" [match]="match"></text-colorized>
    * ```
    */
-  colorMatch(text: string, match: string, options?: { splitWords?: boolean, distinguishWords?: boolean, maxDistinctions?: number, ignoreAccents?: boolean }): SafeHtml {
+  colorMatch(text: string, match: string, options?: { splitWords?: boolean, ignoreCase?: boolean, ignoreAccents?: boolean, distinguishWords?: boolean, maxDistinctions?: number }): SafeHtml {
     if (!match || !text) { return text; }
     if (!options) { options = {}; }
     if (options.splitWords === undefined) { options.splitWords = true; }
+    if (options.ignoreCase === undefined) { options.ignoreCase = true; }
     if (options.ignoreAccents === undefined) { options.ignoreAccents = true; }
     if (options.distinguishWords === undefined) { options.distinguishWords = true; }
     if (options.maxDistinctions === undefined) { options.maxDistinctions = 3; }
     if (typeof text !== 'string') { text = String(text); }
+    const flags = options.ignoreCase ? 'ig' : 'g';
 
     if (!options.distinguishWords && !options.ignoreAccents) {
       // Separamos las palabras escritas y eliminamos los signos de puntuación.
       match = options.splitWords ? matchWords(match).join('|') : match;
-      text = text.replace(new RegExp('(' + match + ')(?![^<]*>|[^<>]*</)', 'ig'), '<span class="filtered">$1</span>');
+      text = text.replace(new RegExp('(' + match + ')(?![^<]*>|[^<>]*</)', flags), '<span class="filtered">$1</span>');
       return this.sanitizer.bypassSecurityTrustHtml(text);
 
     } else {
@@ -325,7 +333,7 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
         // Marcamos las palabras buscadas.
         const mark = '<~#~>'; words.map(word => {
           // Buscamos las posiciones de todas las ocurrencias en la cadena normalizada.
-          let replaced = normalized.replace(new RegExp('(' + word + ')(?![^<]*>|[^<>]*</)', 'ig'), `${mark}$1`);
+          let replaced = normalized.replace(new RegExp('(' + word + ')(?![^<]*>|[^<>]*</)', flags), `${mark}$1`);
           // Puede haber más de una variante que coincida con la palabra buscada, por ejemplo: "más" y "mas"
           const variants = []; let i = 0; do {
             // Mientras existan ocurrencias...
@@ -346,7 +354,7 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
           // Para cada palabra buscada...
           matches[i].map(variant => {
             // Remplazamos cada variante.
-            text = text.replace(new RegExp('(' + variant + ')(?![^<]*>|[^<>]*</)', 'ig'), `<span class="${css.join(' ')}">$1</span>`);
+            text = text.replace(new RegExp('(' + variant + ')(?![^<]*>|[^<>]*</)', flags), `<span class="${css.join(' ')}">$1</span>`);
           });
         }
 
@@ -354,7 +362,7 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
         // Encapsulamos las palabras originales con un tag <span> y las clases 'filtered'.
         for (let i = 0; i < words.length; i++) {
           const css = ['filtered']; if (options.distinguishWords) { css.push(`filtered-word-${i % options.maxDistinctions + 1}`); }
-          text = text.replace(new RegExp('(' + words[i] + ')(?![^<]*>|[^<>]*</)', 'ig'), `<span class="${css.join(' ')}">$1</span>`);
+          text = text.replace(new RegExp('(' + words[i] + ')(?![^<]*>|[^<>]*</)', flags), `<span class="${css.join(' ')}">$1</span>`);
         }
       }
       return this.sanitizer.bypassSecurityTrustHtml(text);
@@ -369,6 +377,38 @@ export abstract class AbstractComponent extends AbstractBaseClass implements OnI
   /** Realiza un media query para conocer cuando se ha producido un punto de ruptura en el tamaño del dispositivo.  */
   isBreakpoint(size: string, direction?: 'up' | 'down' | 'min-width' | 'max-width') {
     return isBreakpoint(size, direction);
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  Loader
+  // ---------------------------------------------------------------------------------------------------
+
+  presentLoader(message?: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      // Comprobamos si el loader está compartido.
+      if (!this.loader) {
+        // Creamos un nuevo loader.
+        this.loadingCtrl.create({
+          message: this.translate.instant(message || 'api.updating') + '...',
+          spinner: 'circles',
+          // translucent: true,
+
+        }).then(loader => {
+          // Mostramos el loader.
+          loader.present();
+          // Devolvemos una referencia al loader.
+          resolve(loader);
+
+        }).catch(error => reject(error));
+      }
+    });
+  }
+
+  dismissLoader(loader: any): void {
+    if (this.debug) { console.log('AbstractComponent:' + this.constructor.name + '.dismissLoader(loader) => ', loader); }
+    // Ocultamos el loader actual.
+    if (loader) { loader.dismiss(); }
   }
 
 

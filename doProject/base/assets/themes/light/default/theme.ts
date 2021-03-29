@@ -32,12 +32,12 @@ export const defaultLightTheme: ThemeScheme = {
         '--ion-color-tertiary-tint': '#4c8dff',
 
         // ** success **/
-        '--ion-color-success': '#10dc60',
-        '--ion-color-success-rgb': '16, 220, 96',
+        '--ion-color-success': '#0d9845',
+        '--ion-color-success-rgb': '13,152,69',
         '--ion-color-success-contrast': '#ffffff',
-        '--ion-color-success-contrast-rgb': '255, 255, 255',
-        '--ion-color-success-shade': '#0ec254',
-        '--ion-color-success-tint': '#28e070',
+        '--ion-color-success-contrast-rgb': '255,255,255',
+        '--ion-color-success-shade': '#0b863d',
+        '--ion-color-success-tint': '#25a258',
 
         // ** warning **/
         '--ion-color-warning': '#ff9100',

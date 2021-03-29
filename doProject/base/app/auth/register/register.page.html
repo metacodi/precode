@@ -26,7 +26,7 @@
     <p>{{'common.campos_obligatorios' | translate}}</p>
 
     <form [formGroup]="frm" (ngSubmit)="saveRow()">
-
+      <ion-list>
       <ion-item>
         <ion-icon name="person" slot="start"></ion-icon>
         <ion-input #nombreRef formControlName="nombre" type="text" placeholder="{{'person.nombre' | translate}} *" spellcheck="false" required></ion-input>
@@ -51,11 +51,11 @@
         <ion-icon name="mail" slot="start"></ion-icon>
         <ion-input formControlName="email" type="text" placeholder="{{'person.email' | translate}} *" spellcheck="false" required></ion-input>
       </ion-item>
-
+      </ion-list>
       <div formGroupName="passwords">
 
         <p>{{'usuario.password_requirements' | translate}}</p>
-
+        <ion-list>
         <ion-item class="collapse">
           <ion-icon name="lock-open" slot="start"></ion-icon>
           <ion-input type="password" formControlName="password" placeholder="{{'login.password' | translate}} *" spellcheck="false" required></ion-input>
@@ -65,8 +65,8 @@
           <ion-icon name="lock-open" slot="start"></ion-icon>
           <ion-input type="password" formControlName="confirm" placeholder="{{'login.confirm_password' | translate}} *" spellcheck="false" required></ion-input>
         </ion-item>
+      </ion-list>
       </div>
-
       <ion-item>
         <ion-label><a (click)="verCondiciones()">{{'register.acepto_condiciones' | translate}}</a></ion-label>
         <ion-toggle formControlName="aceptoCondiciones" slot="end"></ion-toggle>

@@ -1,0 +1,33 @@
+<ion-header>
+
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="modal.dismiss()">
+        <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon slot="start" name="navigate"></ion-icon>
+      {{'maps.recorrido' | translate}}
+    </ion-title>
+  </ion-toolbar>
+
+  <ion-grid class="info visible">
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <ion-spinner *ngIf="loading" name="lines-small"></ion-spinner>
+        <span *ngIf="distance"><ion-icon name="car"></ion-icon> {{distance | currency:'':'':'1.0-2':user.instant.language }} km</span>
+        <span *ngIf="duration"><ion-icon name="time"></ion-icon> {{moment.duration(duration, 'seconds').humanize()}}</span>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+</ion-header>
+<ion-content>
+
+  <google-map>
+    <map-marker #recogidaMarker [position]="recogida?.position" [options]="recogida?.options"></map-marker>
+    <map-marker #destinoMarker [position]="destino?.position" [options]="destino?.options"></map-marker>
+  </google-map>
+
+</ion-content>

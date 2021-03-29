@@ -1,4 +1,4 @@
-<ion-header class="page ribbon">
+<ion-header >
 
   <ion-toolbar>
     <ion-buttons slot="start">
@@ -8,7 +8,7 @@
   </ion-toolbar>
 
 </ion-header>
-<ion-content>
+<ion-content class="ion-text-center ios-login">
 
     <img  class="logo" [src]="theme.resource('login/header.jpg')" />
 
@@ -22,14 +22,11 @@
 
         <p>{{'recovery.check_mail' | translate}}</p>
 
-          <ion-input type="hidden" formControlName="idreg"></ion-input>
-          <ion-input formControlName="pin" type="number" placeholder="{{'register.intro_cod_session' | translate}} *" style="text-align: center;" spellcheck="false" required></ion-input>
+        <ion-input type="hidden" formControlName="idreg"></ion-input>
 
-        </div>
-
-      <!-- <div class="error ion-text-start">
-          <p *ngIf="getter('pin').errors?.required">{{'register.cod_session' | translate}} {{'required' | translate}} </p>
-      </div> -->
+        <ion-input formControlName="pin" type="number" placeholder="{{'register.intro_cod_session' | translate}} *" style="text-align: center;" spellcheck="false" required></ion-input>
+      
+      </div>
       <ion-button type="submit" [disabled]="frm.invalid || frm.pristine" color="secondary" expand="block">{{'register.validate_pin' | translate}}</ion-button>
     </form>
   </div>

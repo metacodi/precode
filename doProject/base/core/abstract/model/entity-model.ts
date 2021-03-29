@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { ApiEntity, ApiFieldsType, CompareNames, isOrderByDirectionType, OrderByDirectionType, OrderByTypeComplex } from 'src/core/api';
 
+import { EntityQueryType } from './entity-query';
 import { EntityType, EntitySchema, EntityDetailSchema, EntityListSchema, FilterTypeComplex, GroupByTypeComplex, RowHookFunction } from './entity-schema';
 
 
@@ -218,6 +219,9 @@ export class EntityModel {
     // Tomamos la fila de la caché.
     if (schema.list.cache === undefined) { schema.list.cache = false; }
 
+    // Vaciamos la consulta al destruir el componente.
+    if (schema.list.clearQueryOnDestroy === undefined) { schema.list.clearQueryOnDestroy = true; }
+
     // Suscribe el componente a las notificaciones de fila (created, modified, deleted) para actualizar automáticamente la caché, es decir, las filas de la EntityQuery registrada por el componente.
     if (schema.list.notifyCacheRow === undefined) { schema.list.notifyCacheRow = true; }
 
@@ -261,6 +265,12 @@ export class EntityModel {
     if (translate && typeof schema.list.headerText === 'string') { schema.list.headerText = translate.instant(schema.list.headerText); }
     if (translate && typeof schema.list.addNewText === 'string') { schema.list.addNewText = translate.instant(schema.list.addNewText); }
     if (translate && typeof schema.list.loadingText === 'string') { schema.list.loadingText = translate.instant(schema.list.loadingText); }
+
+    // Habilitamos el control del scroll.
+    if (schema.list.scrollToTop === undefined) { schema.list.scrollToTop = {}; }
+    if (schema.list.scrollToTop.allow === undefined) { schema.list.scrollToTop.allow = true; }
+    if (schema.list.scrollToTop.allowFabButton === undefined) { schema.list.scrollToTop.allowFabButton = true; }
+    if (schema.list.scrollToTop.headerCssClass === undefined) { schema.list.scrollToTop.headerCssClass = 'shadow'; }
 
     // console.log('schema => ', schema);
     // Devolvemos el esquema.
@@ -325,7 +335,7 @@ export class EntityModel {
    * ```
    * @category Resolvers
    */
-  static resolveRowHook(resolver: object | ((data: any | any[], host: any) => any) | ((data: any | any[], host: any) => Observable<any>), data: any | any[], ...args: any[]): any | Observable<any | any[]> {
+  static resolveRowHook(resolver: object | ((data: any | any[], host: any) => any) | ((data: any | any[], host: any) => Observable<any>), data: any | any[], ...args: any[]): Observable<any | any[]> {
     const debug = false;
     return new Observable<any>((observer: any) => {
       if (debug) { console.log('EntityModel.resolveRowHook(resolver) => ', { resolver, typeof: typeof resolver, data }); }
@@ -486,24 +496,22 @@ export class EntityModel {
     });
   }
 
-  /** Resuelve asíncronamente la url para la Api Rest.
+  /** Resuelve los componentes para una consulta a la API Rest.
    * @category Resolvers
    */
-  static resolveUrl(options?: {
+  static resolveQuery(options?: {
     host?: any,
     entityName?: string,
     id?: number | 'new' | undefined,
     fields?: ApiFieldsType,
     foreign?: { [key: string]: { [key: string]: string | RowHookFunction } },
     params?: string | string[] | ((host: any) => string) | ((host: any) => Observable<string>),
-    search?: string | object | ((host: any) => any) | ((host: any) => Observable<any>),
-    searchOR?: boolean,
     orderBy?: OrderByDirectionType | ApiFieldsType | OrderByTypeComplex,
-  }): Promise<string> {
+  }): Promise<EntityQueryType> {
 
     if (!options) { options = {}; }
 
-    return new Promise<string>((resolve: any, reject: any) => {
+    return new Promise<EntityQueryType>((resolve: any, reject: any) => {
 
       const passEntitiesAsQueryParams = true;
       const entitiesSep = ',';
@@ -527,8 +535,9 @@ export class EntityModel {
         const fields: string[] = ApiEntity.stringifyFields(main, entitiesWithForeigns);
 
         // Extraemos las entidades de la propiedad `orderBy`.
+        // NOTA: reducimos los campos anidados. Ej: de 'notified.notification.created-' a 'notification(created-)'
         const order = options.orderBy?.hasOwnProperty('pipe') ? (options.orderBy as OrderByTypeComplex).pipe : isOrderByDirectionType(options.orderBy) ? undefined : options.orderBy as ApiFieldsType;
-        const entitiesFromSort: ApiEntity[] = order ? ApiEntity.parseFields(main, order) : [];
+        const entitiesFromSort: ApiEntity[] = order ? ApiEntity.parseFields(main, order, { reduceNestedFields: true }) : [];
         const sort: string[] = ApiEntity.stringifyFields(main, entitiesFromSort);
 
         // Fusionamos las entidades con las obtenidas de la propiedad `orderBy`.
@@ -536,29 +545,92 @@ export class EntityModel {
         const relatedEntities = entities.filter((entity: ApiEntity) => entity.table.aliasOrName !== main);
         const related = relatedEntities.length ? segmentsSep + relatedEntities.map(e => e.tableToUrl()).join(entitiesSep) : '';
 
-        // Comprobamos si es una consulta de tipo POST /search -> GET
-        const search = !id && options.search ? 'search/' + (options.searchOR ? '(OR)' : '') : '';
-
         // Obtenemos los atributos de la consulta.
         EntityModel.resolveAsyncValue(options.params, options.host).pipe(first()).subscribe((params: string) => {
-          const queryString = [];
-          if (passEntitiesAsQueryParams) {
-            if (id) { queryString.push(`id=${id}`); }
-            if (related) { queryString.push(`rel=${related}`); }
-          }
-          if (fields.length) { queryString.push(`fields=${fields.join(',')}`); }
-          if (sort.length && !id) { queryString.push(`sort=${sort.join(',')}`); }
-          if (params) { queryString.push(params); }
 
-          // Unimos todas las partes de la URL.
-          if (passEntitiesAsQueryParams) {
-            resolve(search + main + (queryString.length ? '?' + queryString.join('&') : ''));
-          } else {
-            resolve(search + main + id + related + (queryString.length ? '?' + queryString.join('&') : ''));
-          }
+          resolve({
+            main, related, id,
+            fields: fields.join(','),
+            sort: sort.join(','),
+            params
+          });
+
         });
       });
     });
+  }
+
+  /** Resuelve asíncronamente la url para la Api Rest.
+   * @category Resolvers
+   */
+  static resolveUrl(options?: {
+    host?: any,
+    entityName?: string,
+    id?: number | 'new' | undefined,
+    fields?: ApiFieldsType,
+    foreign?: { [key: string]: { [key: string]: string | RowHookFunction } },
+    params?: string | string[] | ((host: any) => string) | ((host: any) => Observable<string>),
+    search?: string | object | ((host: any) => any) | ((host: any) => Observable<any>),
+    searchOR?: boolean,
+    orderBy?: OrderByDirectionType | ApiFieldsType | OrderByTypeComplex,
+  }): Promise<string> {
+
+    if (!options) { options = {}; }
+
+    return new Promise<string>((resolve: any, reject: any) => {
+      // Obtenemos las partes por separado.
+      EntityModel.resolveQuery(options).then((query) => {
+        // Obtenemos las partes de la url.
+        const { main, related, id, fields, sort, params } = query;
+        // Comprobamos si es una consulta de tipo POST /search -> GET
+        const search = !id && options.search ? 'search' + (options.searchOR ? '(OR)/' : '/') : '';
+        // Construimos los parámetros de la consulta.
+        const queryString = [];
+        if (id) { queryString.push(`id=${id}`); }
+        if (related) { queryString.push(`rel=${related}`); }
+        if (fields) { queryString.push(`fields=${fields}`); }
+        if (sort && !id) { queryString.push(`sort=${sort}`); }
+        if (params) { queryString.push(params); }
+
+        // Unimos todas las partes de la URL.
+        resolve(search + main + (queryString.length ? '?' + queryString.join('&') : ''));
+      });
+    });
+  }
+
+  /** Resuelve la información para la clave foránea */
+  static resolveForeignKey(foreign: EntityDetailSchema['foreign'], parent: EntityModel, foreignKey?: any): null | { foreignKey: string, foreignProp: string, entity: ApiEntity, model: EntityModel, parentKey: string, parentDisplay: string | RowHookFunction } {
+    // Extraemos la info del esquema.
+    if (foreign) {
+      // Ej: foreign: { idorigen: { 'poblacion->origen': 'nombre,amb' }, ... }
+      for (const key of Object.keys(foreign)) {
+        // Ej: key = 'idorigen'
+        // Ej: foreign = { 'poblacion->origen': 'nombre,amb' }
+        const foreignInfo = foreign[key];
+        const foreignEntity = new ApiEntity(Object.keys(foreignInfo)[0]);
+        // Comprobamos si es la entidad foránea que buscamos.
+        if ((!!foreignKey && key === foreignKey) || (!foreignKey && (EntityName.equals(parent, foreignEntity.table.name) || EntityName.equals(parent, foreignEntity.table.aliasOrName)))) {
+          // Obtenemos la descripción de la entidad foránea.
+          let parentDisplay: string | RowHookFunction = Object.values(foreignInfo)[0] as string | RowHookFunction;
+          // Si se han indicado varias propiedades...
+          if (typeof parentDisplay === 'string' && (parentDisplay === '*' || parentDisplay === '')) {
+            // Creamos una función que itere TODAS las propiedades de la fila foránea para obtener el resultado como un objeto.
+            parentDisplay = (row: any) => { const obj = {}; Object.keys(row).map(prop => obj[prop] = row[prop]); return obj; };
+
+          } else if (typeof parentDisplay === 'string' && parentDisplay.includes(',')) {
+            // Creamos un array con las propiedades
+            const props = parentDisplay.split(',').map(s => s.trim());
+            // Creamos una función que itere las propiedades de la fila foránea para obtener el resultado como un objeto.
+            parentDisplay = (row: any) => { const obj = {}; props.map(prop => obj[prop] = row[prop]); return obj; };
+          }
+          // Obtenemos el nombre de la propiedad para los datos foráneos.
+          const foreignProp = foreignEntity.table.aliasOrName;
+          // Devolvemos la info obtenida del modelo.
+          return { foreignKey: key, foreignProp, entity: foreignEntity, model: parent as EntityModel, parentKey: parent.primaryKey, parentDisplay };
+        }
+      }
+    }
+    return null;
   }
 
   /** Resuelve las entidades foráneas declaradas en la propiedad `foreign` del esquema. @category Resolvers */
@@ -594,21 +666,25 @@ export class EntityModel {
   }
 
   /**
-   * Itera recursivamente hacia arriba por la jerarquía de rutas del componente en busca del parámetro solicitado.
+   * Itera recursivamente la jerarquía de rutas del componente en busca del parámetro solicitado.
    * @param route Instancia de la clase ActivatedRoute de la que extraer el valor del parámetro.
    * @param param Nombre del parámetro de la routa del que se quiere obtener el valor.
    * @param isRooted Indica si el snapshot ha empezado la búsqueda desde la raíz. Este parámetro no debe establecerse a menos que se pase la ráiz de snapshot.
    * @category Resolvers
    */
-  static resolveParam(snapshot: ActivatedRouteSnapshot, param: string, isRooted = false): string {
+  static resolveParam(snapshot: ActivatedRouteSnapshot, param: string, options?: { isRooted?: boolean, throwError?: boolean }): string {
+    if (!options) { options = {}; }
+    if (options.isRooted === undefined) { options.isRooted = false; }
+    if (options.throwError === undefined) { options.throwError = true; }
+
     if (snapshot.params[param]) { return snapshot.params[param]; }
     if (snapshot.queryParams[param]) { return snapshot.queryParams[param]; }
-    if (!isRooted) {
-      return EntityModel.resolveParam(snapshot.root, param, true);
+    if (!options.isRooted) {
+      return EntityModel.resolveParam(snapshot.root, param, { isRooted: true, throwError: options.throwError });
     } else {
-      if (snapshot.firstChild) { return EntityModel.resolveParam(snapshot.firstChild, param, isRooted); }
+      if (snapshot.firstChild) { return EntityModel.resolveParam(snapshot.firstChild, param, options); }
     }
-    throw new Error(`No se ha encontrado el parámetro '${param}' en el host suministrado para poder resolver la ruta.`);
+    if (options.throwError) { throw new Error(`No se ha encontrado el parámetro '${param}' en el host suministrado para poder resolver la ruta.`); }
   }
 
   // ---------------------------------------------------------------------------------------------------
@@ -692,30 +768,35 @@ export class EntityModel {
     });
   }
 
-  /**
-   * Resuelve la url para la entidad actual.
-   *
-   *  ```typescript
-   * // Formulas
-   * main/related/search?fields=fields&sort=sort
-   * main/id/related?fields=fields&sort=sort
-   *
-   * // Examples
-   * const url = 'festivos/tarifa?fields=tarifa(descripcion->tarifa)&sort=tarifa(descripcion),mes,dia'
-   * const url = 'precios_tarifa/poblacion->origen(idorigen)?fields=precio,origen(nombre)&sort=origen(nombre),-precio'
-   * ```
+  /** Resuelve la url para una llamada a la API Rest.
    * @category Resolvers
    */
-  resolveUrl(options?: { host?: any, entityName?: string, id?: number | 'new', customFields?: string }): Promise<string> {
+  resolveUrl(options?: { host?: any, entityName?: string, id?: number | 'new', customFields?: string, search?: EntityListSchema['search'] }): Promise<string> {
 
     if (!options) { options = {}; }
 
-    const entityName = options.entityName || EntityName.resolve(this.backend).plural;
     const id: any = options.id  || undefined;
+    const entityName = options.entityName || EntityName.resolve(this.backend)[id ? 'singular' : 'plural'];
     const fields = options.customFields || this.schema.list.fields;
-    const { foreign, orderBy, search, searchOR, params } = this.schema.list;
+    const search = options.search || this.schema.list.search;
+    const { foreign, orderBy, searchOR, params } = this.schema.list;
 
     return EntityModel.resolveUrl({ entityName, id, fields, foreign, orderBy, search, searchOR, params, host: options.host });
+  }
+
+  /** Resuelve los componentes para una consulta a la API Rest.
+   * @category Resolvers
+   */
+  resolveQuery(options?: { host?: any, entityName?: string, id?: number | 'new', customFields?: string }): Promise<EntityQueryType> {
+
+    if (!options) { options = {}; }
+
+    const id: any = options.id  || undefined;
+    const entityName = options.entityName || EntityName.resolve(this.backend)[id ? 'singular' : 'plural'];
+    const fields = options.customFields || this.schema.list.fields;
+    const { foreign, orderBy, params } = this.schema.list;
+
+    return EntityModel.resolveQuery({ entityName, id, fields, foreign, orderBy, params, host: options.host });
   }
 }
 

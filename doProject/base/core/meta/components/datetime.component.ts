@@ -1,6 +1,6 @@
 import { Component, Injector } from '@angular/core';
 
-import { DatetimeControlType, FieldType } from '../model/meta-types';
+import { DatetimeComponentType, DatetimeControlType, FieldType } from '../model/meta-types';
 import { DynamicFieldComponent } from './dynamic-field.component';
 
 
@@ -76,7 +76,7 @@ export class DatetimeComponent extends DynamicFieldComponent {
   constructor(protected injector: Injector) { super(injector); }
 
   get control(): DatetimeControlType {
-    return (this.field.component as any).datetime;
+    return (this.field.component as DatetimeComponentType).datetime;
   }
 
 }

@@ -53,7 +53,8 @@ export class SaveAsService {
       const fileType = data.fileType || 'pdf';
       const fileName = data.fileName || 'Document.' + fileType;
       const contentType = data.contentType || this.getMimeType(fileType);
-      saveAs(this.base64toBlob(data.blob || data.base64, contentType), fileName); // FileSaver.js
+      const base64 = this.base64toBlob(data.blob || data.base64, contentType);
+      saveAs(base64, fileName); // FileSaver.js
     }
   }
 

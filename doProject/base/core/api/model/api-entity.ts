@@ -7,17 +7,23 @@ export class ApiEntity {
   columns: AliasName[] = [];
   relation?: string;
 
-  static parseFields(entityName: string, fields?: ApiFieldsType): ApiEntity[] {
-    if (!fields) { return []; }
+  static parseFields(entityName: string, fields?: ApiFieldsType, options?: { reduceNestedFields?: boolean }): ApiEntity[] {
+    // if (!fields) { return []; }
+    if (!options) { options = {}; }
+    if (options.reduceNestedFields === undefined) { options.reduceNestedFields = false; }
     const entities: ApiEntity[] = [];
 
-    if (typeof fields === 'string') {
+    if (!fields) {
+      // Ej: 'detallesFactura->detalles()'
+      entities.push(new ApiEntity(entityName));
+
+    } else if (typeof fields === 'string') {
       // Ej: 'nombre,apellidos->cognoms'
       const segments = ApiEntity.splitFields(fields);
       for (const segment of segments) {
         if (segment.includes('(')) {
           // Ej: 'tarifas(descripcion)'
-          const { table, columns, direction } = ApiEntity.splitTableAndFields(segment);
+          const { table, columns, direction } = ApiEntity.splitTableAndFields(segment, options);
           entities.push(new ApiEntity(table, direction + columns.join(',')));
           // const [tableProp, columns] = segment.replace(')', '').split('(');
           // const optional = tableProp.endsWith('?');
@@ -26,7 +32,7 @@ export class ApiEntity {
 
         } else if (segment.includes('.')) {
           // Ej: 'tarifas.descripcion'
-          const { table, columns, direction } = ApiEntity.splitTableAndFields(segment);
+          const { table, columns, direction } = ApiEntity.splitTableAndFields(segment, options);
           entities.push(new ApiEntity(table, direction + columns.join('.')));
           // const [tableProp, ...columns] = segment.split('.');
           // const optional = tableProp.endsWith('?');
@@ -74,7 +80,9 @@ export class ApiEntity {
     return entities;
   }
 
-  static splitTableAndFields(prop: string): { table: string, columns: string[], direction: '-' | '', optional: boolean } {
+  static splitTableAndFields(prop: string, options?: { reduceNestedFields?: boolean }): { table: string, columns: string[], direction: '-' | '', optional: boolean } {
+    if (!options) { options = {}; }
+    if (options.reduceNestedFields === undefined) { options.reduceNestedFields = false; }
 
     if (prop.includes('(')) {
       // Ej: 'user(nombre,apellidos)'
@@ -90,13 +98,13 @@ export class ApiEntity {
 
     } else if (prop.includes('.')) {
       // Ej: 'cliente?.user?.nombre'
-      const [tableProp, ...columns] = prop.split('.');
+      const [tableProp, ...columns] = options.reduceNestedFields ? ApiEntity.reduceNestedField(prop).split('.') : prop.split('.');
       const optional = tableProp.endsWith('?');
       const table = optional ? tableProp.slice(0, -1) : tableProp;
       const direction = table.startsWith('-') || table.endsWith('-') ? '-' : '';
       return {
         table: table.startsWith('-') ? table.substring(1) : (table.endsWith('-') ? table.slice(0, -1) : table),
-        columns: columns.map(s => s.trim()).filter(s => !!s),
+        columns: [columns.join('.')],
         direction, optional
       };
 
@@ -108,6 +116,28 @@ export class ApiEntity {
         direction: '', optional
       };
     }
+  }
+
+  /** Reduce el datapath a su expresión final formada por el último campo de la expresión precedido de su entidad.
+   * ```typescript
+   * const prop = 'cliente?.user?.nombre';
+   * const reduced = reduceNestedField(prop);
+   * console.log(reduced); // => 'user?.nombre'
+   * ```
+   */
+  static reduceNestedField(prop: string): string {
+    if (!prop) { return ''; }
+    if (!prop.includes('.')) { return prop; }
+    const parts = prop.split('.');
+    if (parts.length === 1) { return prop; }
+    // Ej: 'cliente?.user?.nombre'
+    const res = [];
+    // 'nombre'
+    res.push(parts.pop());
+    // 'user?'
+    res.push(parts.pop());
+    // 'user?.nombre'
+    return res.reverse().join('.');
   }
 
   /** Separa los campos por entidades.  */

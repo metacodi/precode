@@ -1,11 +1,12 @@
-import { Injector } from '@angular/core';
+import { Component, Injector, OnDestroy } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, Subscriber, Subscription } from 'rxjs';
 
 import { environment } from 'src/environments/environment';
 
 import { AppConfig } from 'src/core/app-config';
+
 
 export interface ToastButton {
     text?: string;
@@ -264,6 +265,7 @@ export abstract class AbstractBaseClass {
     if (options.message === undefined) { options.message = 'common.unexpectedError'; }
     if (options.emitError === undefined) { options.emitError = !!options.error; }
     if (options.synchronously === undefined) { options.synchronously = !!options.error; }
+    console.log('alertError -> environment =>', environment.production ? 'production' : 'develop');
     return new Observable<any>(observer => {
 
       this.alertCtrl.create({
@@ -306,7 +308,7 @@ export abstract class AbstractBaseClass {
       return value;
     }
     if (Array.isArray(value)) {
-      return value.map(v => this.clone(v));
+      return (value as any[]).map(v => this.clone(v));
 
     } else {
       const result = {};

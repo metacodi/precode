@@ -1,57 +1,39 @@
-import { OnInit, OnDestroy, Injector, ViewChild, Component } from '@angular/core';
+import { OnInit, OnDestroy, Injector, ViewChild, Component, AfterViewInit, ElementRef, Renderer2, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute, NavigationExtras } from '@angular/router';
 import { FormGroup } from '@angular/forms';
 import { SafeHtml } from '@angular/platform-browser';
-import { ModalController, NavController, AlertController, IonContent, MenuController, IonItemSliding, IonList, PopoverController } from '@ionic/angular';
-import { BehaviorSubject, Observable, of, Subject, Subscription, timer } from 'rxjs';
+import { ModalController, NavController, AlertController, IonContent, MenuController, IonList, PopoverController, IonHeader } from '@ionic/angular';
+import { BehaviorSubject, Subject, Subscription, timer } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
 
 import { AppConfig } from 'src/core/app-config';
-import { ApiEntity, ApiForeignFieldsType, ApiSearchAndClauses, ApiSearchClause, ApiSearchClauses, ConcatOperatorType, findRowIndex, OrderByTypeComplex } from 'src/core/api';
+import { ApiEntity, ApiForeignFieldsType, ApiSearchClause, ApiSearchClauses, ConcatOperatorType, findRowIndex, OrderByTypeComplex, OrderByDirectionType, ApiFieldsType, UserSettingsService, combineClauses } from 'src/core/api';
 import { patterns, matchWords, deepAssign, ConsoleService, ThemeService } from 'src/core/util';
 
 import { FilterPipe } from '../pipes/filter.pipe';
 import { GroupByPipe } from '../pipes/group-by.pipe';
-import { EntityDetailSchema, EntitySchema, MultiSelectType, FilterTypeComplex, GroupByTypeComplex, EntityListSchema, FilterType } from '../model/entity-schema';
+import { EntityDetailSchema, EntitySchema, MultiSelectType, FilterTypeComplex, GroupByTypeComplex, EntityListSchema, FilterType, PickRowOptions } from '../model/entity-schema';
 import { EntityName, EntityModel } from '../model/entity-model';
 import { EntityQuery } from '../model/entity-query';
 import { RowModelType } from '../model/entity-schema';
 import { AbstractModelService } from '../abstract-model.service';
 import { AbstractComponent } from './abstract.component';
+import { AbstractListSettings, ListSettingsActionEvent } from './abstract-list-settings';
 
 
-/**
- * Clase para manejar un componente de lista, como una página para acceder a las fichas o como un modal que permite su selección.
- *
- * **Usage**
- * ```typescript
- * import { AbstractListComponent, EntitySchema } from 'src/core';
- *
- * import { ClientesSchema } from 'src/app/model';
- * import { ClientesService } from './clientes.service';
- *
- * @Component({
- *   selector: 'app-clientes-list',
- *   templateUrl: 'clientes-list.component.html',
- *   styleUrls: ['clientes-list.component.scss'],
- * })
- * export class ClientesListComponent extends AbstractListComponent {
- *   constructor(
- *     public injector: Injector,
- *   ) {
- *     super(injector, ClientesSchema, ClientesService);
- *   }
- * }
- * ```
- */
+/** Definición de las opciones para refrescar la consulta. */
+export interface AbstractListRequestOptions { host?: any; search?: ApiSearchClauses; event?: any; clearBefore?: boolean; }
+
+/** Clase para manejar un componente de lista, como una página para acceder a las fichas o como un modal que permite su selección. */
 @Component({
   selector: 'app-abstract-list-component',
   template: '',
 })
-export abstract class AbstractListComponent extends AbstractComponent implements OnInit, OnDestroy {
+export abstract class AbstractListComponent extends AbstractComponent implements OnInit, OnDestroy, AfterViewInit {
   /** @hidden */ protected debug = true && AppConfig.debugEnabled;
 
   /** @hidden */
+  @ViewChild(IonHeader, { read: ElementRef, static: false }) header: ElementRef;
   @ViewChild(IonContent, { static: false }) content: IonContent;
   @ViewChild(IonList, { static: false }) ionList: IonList;
 
@@ -115,23 +97,28 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    *
    * Capturamos el texto escrito por el usuario en el componente de búsqueda.
    * ```html
-   * <ion-searchbar [(ngModel)]="search"></ion-searchbar>
+   * <ion-searchbar [(ngModel)]="match"></ion-searchbar>
    * ```
    * Usamos el texto de búsqueda para filtrar las filas a través del pipe en el componente de lista.
    * ```html
-   * <ion-list *ngFor="let row of list.rows | filter:search:list.filter">
+   * <ion-list *ngFor="let row of list.rows | filter:match:list.filter">
    * ```
    * @category Filter
    */
-  search = undefined;
+  match = undefined;
+  /** @hidden Recordamos el último texto escrito por el usuario en el buscador. */
+  protected lastMatch: string = undefined;
+
+  /** Recuerda las cláusulas utilizadas durante la última búsqueda. */
+  lastSearch: ApiSearchClauses = undefined;
 
   /**
-   * Estado actual del filtro. Se recuerda de la última llamada y se establece en la siguiente.
+   * Estado actual del filtro para la búsqueda avanzada. Se recuerda de la última llamada y se establece en la siguiente.
    *
    * Se puede definir el comportamiento del {@link FilterTypeComplex filtro} a través del modelo.
    * @category Filter
    */
-  filter: any = undefined;
+  advancedSearch: any = undefined;
 
   /** Indica cuando, a pesar de añadir nuevos caracteres al texto de búsqueda y que el pipe a backend no sea requerido, si que debe filtrase el pipe localmente. */
   isLocalFilterStillRequired = undefined;
@@ -139,26 +126,16 @@ export abstract class AbstractListComponent extends AbstractComponent implements
   /** @hidden Usada para filtrar propiedades en el template. */
   protected filterPipe = new FilterPipe();
 
-  /** Filtro inicial que se establece directamente en la propiedad `search` del esquema durante la inicialización. */
-  initialFilter: any = undefined;
+  /** Filtro obtenido por inicialización del componente (via queryParams o bien via initilizePickRow) que se combina con el del esquema para formar el filtro base. */
+  initialFilter: ApiSearchClauses = undefined;
 
-  /** @hidden Permite notificar las nuevas búsquedas del usuario al componente. */
+  /** @hidden Permite que `FilterPipe` notifique las nuevas búsquedas del usuario al componente. */
   pipeFilterChanged = new Subject<string>();
 
-  /** @hidden */
-  private pipeFilterChangedSubscription: Subscription;
-
-  /**
-   * Esta propiedad retiene el valor original de la propiedad `search` del modelo y la restablece al terminar.
-   *
-   * Tanto el filtro de _backend_ del _pipe_ (cuando `pipeToBackend` está en `true`) como el del componente de búsqueda accionado a través de una llamada a `showFilter()`
-   * se combinan con el filtro original para establecer en el modelo unas condiciones para `search` que permitan realizar la consulta con los criterios seleccionados por el usuario durante la próxima llamada a `refresh()`.
-   * @category Filter
-   */
-  protected originalSearch = undefined;
-
-  /** @hidden Recordamos el último texto escrito por el usuario en el buscador. */
-  private currentMatch: string = undefined;
+  /** Current list order direction. */
+  protected orderByDirection: OrderByDirectionType = undefined;
+  /** Original list order. */
+  protected originalOrderBy: ApiFieldsType;
 
   /** @hidden Colecciona los grupos colapsados. Los grupos se obtienen del uso del pipe GroupByPipe. */
   protected collapsed: any[] = [];
@@ -218,9 +195,6 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    */
   multiSelect: MultiSelectType = undefined;
 
-  /** @hidden */
-  private multiSelectModeChangedSubscription: Subscription;
-
   /**
    * Notifica el número de elementos seleccionados durante un proceso de selección múltiple.
    *
@@ -239,14 +213,8 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    */
   checkedChanged: BehaviorSubject<number> = new BehaviorSubject<number>(0);
 
-
-  /** @hidden Recibimos notificaciones desde componentes de otros módulos a través del servicio. */
-  createdSubscription: Subscription;
-  /** @hidden Recibimos notificaciones desde componentes de otros módulos a través del servicio. */
-  modifiedSubscription: Subscription;
-  /** @hidden Recibimos notificaciones desde componentes de otros módulos a través del servicio. */
-  deletedSubscription: Subscription;
-
+  /** Configuración del componente de lista. @category ListSettings */
+  settings: AbstractListSettings;
 
   // Dependencies
   /** @category Dependencies */ router: Router;
@@ -258,11 +226,12 @@ export abstract class AbstractListComponent extends AbstractComponent implements
   /** @category Dependencies */ menu: MenuController;
   /** @category Dependencies */ console: ConsoleService;
   /** @category Dependencies */ theme: ThemeService;
+  /** @category Dependencies */ render: Renderer2;
+  /** @category Dependencies */ changeDetector: ChangeDetectorRef;
+  /** @category Dependencies */ userSettings: UserSettingsService;
 
-  // ---------------------------------------------------------------------------------------------------
   //  Expose model for template
   // ---------------------------------------------------------------------------------------------------
-
   /** @category Model */ get entity(): EntityName { return this.model.name; }
   /** @category Model */ get primaryKey(): string { return this.model.primaryKey; }
   /** @category Model */ get detail(): EntityDetailSchema { return this.model.detail; }
@@ -271,9 +240,16 @@ export abstract class AbstractListComponent extends AbstractComponent implements
   /** @category Model */ get addNewText(): string { return this.model.list.addNewText; }
   /** @category Model */ get loadingText(): string { return this.model.list.loadingText; }
 
+  /** Indica si el scroll del contenido del componente está arriba del todo. */
+  canScrollToTop = false;
   /** @hidden */
   scrolled = false;
+  /** @hidden */
+  scrollToTopFabButton: HTMLElement = undefined;
+  /** @hidden */
+  scrollToTopFabButtonClickListener: (this: HTMLElement, ev: MouseEvent) => any = undefined;
 
+  /** Referencia al servicio abstracto. Esta propiedad se debe sobrescribir en el constructor de la clase heredada para una correcta inferencia de tipos. */
   service: AbstractModelService;
 
   constructor(
@@ -293,14 +269,17 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     this.menu = this.injector.get<MenuController>(MenuController);
     this.console = this.injector.get<ConsoleService>(ConsoleService);
     this.theme = this.injector.get<ThemeService>(ThemeService);
+    this.render = this.injector.get<Renderer2>(Renderer2);
+    this.changeDetector = this.injector.get<ChangeDetectorRef>(ChangeDetectorRef);
+    this.userSettings = this.injector.get<UserSettingsService>(UserSettingsService);
 
     // Si se ha indicado un esquema en la ruta, prevalece al suministrado por el constructor de la clase heredada.
     if (this.route.snapshot.data.schema) {
       this.schema = this.route.snapshot.data.schema;
       this.model = new EntityModel(this.schema, this.translate);
     }
-    // Establecemos el filtro para una consulta inicial.
-    this.initialFilter = JSON.parse(this.route.snapshot.queryParams.filter || 'false');
+    // NOTA: Recogemos el filtro de los argumentos ahora, antes de que ocurra `initializePickRow` (que tb. ocurre antes de `ngOnInit`).
+    if (this.route.snapshot.queryParams.filter) { this.initialFilter = JSON.parse(this.route.snapshot.queryParams.filter || 'null'); }
   }
 
 
@@ -336,6 +315,8 @@ export abstract class AbstractListComponent extends AbstractComponent implements
       if (typeof orderBy.callback !== 'function') { orderBy.callback = this.defaultOrderByCallback; }
       // Establecemos el host para la llamada al callback.
       orderBy.host = this;
+      // Recordamos la ordenación original.
+      this.originalOrderBy = orderBy.pipe;
     }
 
     // Creamos una consulta para este componente.
@@ -343,24 +324,26 @@ export abstract class AbstractListComponent extends AbstractComponent implements
 
     if (this.model.list.notifyCacheRow) {
       // Recibimos notificaciones desde otros componentes (incluso desde otros módulos) a través del servicio.
-      this.createdSubscription = this.service.created.subscribe((data: RowModelType) => this.notifyCacheRow(data, 'insert'));
-      this.modifiedSubscription = this.service.modified.subscribe((data: RowModelType) => this.notifyCacheRow(data, 'update'));
-      this.deletedSubscription = this.service.deleted.subscribe((data: RowModelType) => this.notifyCacheRow(data, 'delete'));
+      this.subscriptions.push(...[
+        // Recibimos notificaciones desde otros componentes (incluso desde otros módulos) a través del servicio.
+        this.service.created.subscribe((data: RowModelType) => this.notifyCacheRow(data, 'insert')),
+        this.service.modified.subscribe((data: RowModelType) => this.notifyCacheRow(data, 'update')),
+        this.service.deleted.subscribe((data: RowModelType) => this.notifyCacheRow(data, 'delete')),
+      ]);
     }
 
-    // Al iniciar, recordamos el filtro original del modelo.
-    this.originalSearch = this.list.search;
-    if (this.debug) { console.log(this.constructor.name + '.ngOnInit() -> orginalSearch', JSON.stringify(typeof this.model.list.search === 'function' ? this.model.list.search(this) : this.model.list.search)); }
-    // Antes de refrescar, miramos si hay un filtro definidio para backend...
-    this.initializeFilter();
-    // Establecemos la propiedad search del esquema para una consulta inicial.
-    if (this.initialFilter) { this.list.search = this.combineOriginalClauses(this.initialFilter); }
-    // Monitorizamos las nuevas búsquedas realizadas por el usuario (desde FilterPipe).
-    this.pipeFilterChangedSubscription = this.pipeFilterChanged.subscribe((match: string) => this.pipeFilterToBackend(match));
+    this.subscriptions.push(...[
+      // El componente recibe la orden de FilterPipe de realizar una llamada requerida a backend.
+      this.pipeFilterChanged.subscribe((match: string) => this.pipeFilterToBackend(match)),
+      // Recibimos notificaciones de la página contenedor a través del servicio.
+      this.service.multiSelectModeChanged.subscribe((data: any) => this.updateMultiSelectMode(data)),
+    ]);
+
+    this.initializeListSettings();
 
     // Comprobamos la parametrización de la ruta.
     this.route.queryParams.pipe(first()).subscribe(params => {
-      // Comprobamos si requiere notificación respetando una posible activación previa desde initializePickRow.
+      // Respetamos el valor si se ha establecido previamente desde initializePickRow.
       this.isPickRowMode = params.pickRowNotify === undefined ? this.isPickRowMode : params.pickRowNotify === 'true';
       // Comprobamos si se pueden crear filas nuevas.
       this.canCreate = params.canCreate === undefined ? this.canCreate : params.canCreate === 'true';
@@ -368,25 +351,18 @@ export abstract class AbstractListComponent extends AbstractComponent implements
       this.selected = params.selected === undefined ? this.selected : +params.selected;
     });
 
-    // Recibimos notificaciones de la página contenedor a través del servicio.
-    this.multiSelectModeChangedSubscription = this.service.multiSelectModeChanged.subscribe((data: any) => this.updateMultiSelectMode(data));
-
     // Mientras la paginación no se haya completado, cargaremos la siguiente.
-    if (!this.query.paginationComplete) { this.beforeRefresh(); this.refresh(); }
+    if (!this.query.completed) { this.request(); }
+  }
 
+  ngAfterViewInit() {
+    // Scroll to top.
+    if (this.model?.list?.scrollToTop?.allow) { this.scrollingInitialize(); }
   }
 
   /** @category Lifecycle */
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.ngOnDestroy()'); }
-
-    // Cancelamos las suscripciones a notificaciones.
-    if (this.createdSubscription) { this.createdSubscription.unsubscribe(); }
-    if (this.modifiedSubscription) { this.modifiedSubscription.unsubscribe(); }
-    if (this.deletedSubscription) { this.deletedSubscription.unsubscribe(); }
-    if (this.pipeFilterChangedSubscription) { this.pipeFilterChangedSubscription.unsubscribe(); }
-    if (this.multiSelectModeChangedSubscription) { this.multiSelectModeChangedSubscription.unsubscribe(); }
 
     // Cancelamos la selección.
     if (this.isPickRowMode) { this.isPickRowMode = false; AbstractModelService.pickRowNotify.next(); }
@@ -394,148 +370,64 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     if (this.multiSelect) { this.closeMultiSelectMode(); }
 
     // Eliminamos las filas de la lista al salir.
-    this.query.clear();
+    if (this.list.clearQueryOnDestroy) { this.query.clear(); }
 
-    // Al terminar, restablecemos el filtro original.
-    this.list.search = this.originalSearch;
-    if (this.debug) { console.log(this.constructor.name + '.ngOnDestroy() -> orginalSearch = ', JSON.stringify(typeof this.originalSearch === 'function' ? this.originalSearch(this) : this.originalSearch)); }
+    // Al terminar, restablecemos la ordenación original.
+    if (this.list.orderBy) { (this.list.orderBy as OrderByTypeComplex).pipe = this.originalOrderBy; }
+
+    // Cancelamos el listener para el 'click' sobre el 'ion-fab-button' para hacer scroll to top.
+    if (this.scrollToTopFabButton) { this.scrollToTopFabButton.removeEventListener('click', this.scrollToTopFabButtonClickListener); }
+
+    // Actualizamos el modelo y guardamos la configuración en el storage.
+    this.saveListSettings();
+
+    super.ngOnDestroy();
   }
 
 
   // ---------------------------------------------------------------------------------------------------
-  //  Scroll to selected item
+  //  request
   // ---------------------------------------------------------------------------------------------------
 
-  /** @hidden */
-  defaultOrderByCallback(host?: any): void {
-    if (!!host && host.isPickRowMode && host.selected && !host.scrolled) {
-      // console.log('callback order !!!!!');
-      host.scrolled = true;
-      host.scrollToSelectedItem();
-    }
-  }
-
-  scrollToSelectedItem(count?: number) {
-    timer(500).pipe(first()).subscribe(observer => {
-      if (this.isPickRowMode && this.selected) {
-        let list = document.querySelector('div.modal-wrapper ion-list');
-        if (!list) {
-          const factory = this.resolver.resolveComponentFactory(this.constructor as any);
-          const selector = factory.selector;
-          list = document.querySelector(`${selector} ion-list`);
-        }
-        const elements: HTMLCollectionOf<Element> = list ? list.getElementsByClassName('selected') : undefined;
-        if (elements && elements.length > 0) {
-          const selected = elements[0];
-          selected.scrollIntoView();
-
-        } else {
-          // Comprobamos el número de intentos.
-          if (count < 5) {
-            // Incrementamos el contador.
-            count += 1;
-            // Lo intentamos de nuevo.
-            return this.scrollToSelectedItem(count);
-          }
-        }
-      }
-    });
-
-  }
-
-
-  // ---------------------------------------------------------------------------------------------------
-  //  find & refresh
-  // ---------------------------------------------------------------------------------------------------
 
   /**
-   * Establece las cláusulas de búsqueda en el modelo e inicia una operación de búsqueda.
-   * @param combineOriginalClauses: Indica si las cláusulas se combinarán con las del filtro original.
-   * @param combineSearchClauses: Indica si las cláusulas se combinarán con las del cuadro de texto escritas por el usuario.
-   */
-  protected find(clauses: any, options?: { combineOriginalClauses?: boolean, combineSearchClauses?: boolean }): Promise<any[]> {
-    if (!options) { options = {}; }
-    if (options.combineOriginalClauses === undefined) { options = { combineOriginalClauses: true }; }
-    if (options.combineSearchClauses === undefined) { options = { combineSearchClauses: true }; }
-
-    this.beforeRefresh();
-
-    if (options.combineSearchClauses) { clauses = this.combineSearchClauses(clauses); }
-    if (options.combineOriginalClauses) { clauses = this.combineOriginalClauses(clauses); }
-
-    this.list.search = clauses;
-    if (this.debug) { console.log(this.constructor.name + '.find()', this.list.search); }
-    return this.refresh();
-  }
-
-  /** @hidden Combina las cláusulas con la búsqueda original. */
-  protected combineOriginalClauses(clauses: ApiSearchClauses): ApiSearchClauses {
-    // Obtenemos las cláusulas de la consulta original.
-    const original = (typeof this.originalSearch === 'function' ? this.originalSearch(this) : this.originalSearch) || null;
-    const searchOp = this.list.searchOR ? 'OR' : 'AND';
-    // Combinamos el filtro original con el construido a partir de la búsqueda del usuario.
-    const final: ApiSearchClauses = this.combineClauses(clauses, original, searchOp);
-    if (this.debug) { console.log(this.constructor.name + '.combineOriginalClauses()', { original, final }); }
-    return final;
-  }
-
-  /** @hidden Combina las cláusulas con la búsqueda del cuadro de texto escrita por el usuario. */
-  protected combineSearchClauses(clauses: ApiSearchClauses): ApiSearchClauses {
-    // Obtenemos las cláusulas de la consulta original.
-    const search = this.buildPipeClauses(this.search);
-    const searchOp = this.list.searchOR ? 'OR' : 'AND';
-    // Combinamos el filtro original con el construido a partir de la búsqueda del usuario.
-    const final: ApiSearchClauses = this.combineClauses(clauses, search, searchOp);
-    if (this.debug) { console.log(this.constructor.name + '.combineOriginalClauses()', { search, final }); }
-    return final;
-  }
-
-  /** Combina dos grupos de cláusulas con el operador indicado. */
-  protected combineClauses(clausesA: ApiSearchClauses, clausesB: ApiSearchClauses, concatOp?: ConcatOperatorType): ApiSearchClauses {
-    if (!concatOp) { concatOp = 'AND'; }
-    if (Array.isArray(clausesA) && !clausesA.length) { clausesA = null; }
-    if (Array.isArray(clausesB) && !clausesB.length) { clausesB = null; }
-    if (!clausesA || !clausesB) { return clausesA || clausesB; }
-    return concatOp === 'OR' ? { OR: [clausesA, clausesB] } : { AND: [clausesA, clausesB] };
-  }
-
-  /**
-   * Función pensada para sobrescribir en la clase heredada que permite intervenir de forma
-   * previa a todas las acciones de obtención de filas que acaban llamando a `refresh`.
-   * Esto sucede desde las funciones: `find`, `nextPage`, `previousPage`, `pipeFilterToBackend`.
-   */
-  protected beforeRefresh(): void { return; }
-
-  /**
-   * Llamada a la función refresh() del servicio asociado.
-   * @param $event: evento disparado por el componente `ion-infinite-scroll`.
+   * Llamada a la función request() del servicio asociado.
+   * ```typescript
+   * interface AbstractListRequestOptions { host?: any; search?: EntityListSchema['search']; event?: any; clearBefore?: boolean; }
+   * ```
+   * @param event: evento disparado por el componente `ion-infinite-scroll`.
    *
    * **Usage**
    * ```html
-   * <ion-infinite-scroll (ionInfinite)="refresh($event)">
+   * <ion-infinite-scroll (ionInfinite)="request({ event: $event })">
    * ```
    * <small>Es necesario pasar el evento como argumento para que el componente pueda diferenciar con las llamadas programáticas en las que borraría las filas primero.</small>
    * @category Query
    */
-  refresh($event?: any, clearBefore?: boolean): Promise<any[]> {
-    if (clearBefore === undefined) { clearBefore = false; }
-    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.refresh($event)  => ', { event: $event, clearBefore }); }
+  request(options?: AbstractListRequestOptions): Promise<any[]> {
+    if (!options) { options = {}; }
+    if (options.host === undefined) { options.host = this; }
+    if (options.search === undefined) { options.search = this.combineBaseClauses(null); }
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.request(event)  => ', options); }
     return new Promise<any[]>((resolve: any, reject: any) => {
+      // Antes de refrescar establecemos siempre los settings en el modelo para que se utilicen durante la construcción de la consulta.
+      this.updateListSchema();
       // Establecemos el indicador de estado.
       this.loading = true;
       // Recordamos las filas seleccionadas.
       const cache: any[] = this.cachingSelectedRows ? this.rows.filter(row => row.checked) : null;
       if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + ' -> cache => ', cache); }
       // Refrescamos las filas de la entidad actual a través del servicio.
-      this.service.refresh(this.query, { host: this, event: $event, clearBefore }).then(rows => {
-        if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + ' -> this.service.refresh() => ', rows); }
-
+      this.service.request(this.query, options).then(rows => {
+        if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + ' -> this.service.request() => ', rows); }
         // Actualizamos las filas con la caché de filas seleccionadas.
         if (this.cachingSelectedRows) { this.refreshRowsWithCache(cache); }
         // Establecemos el indicador de estado.
         this.loading = false;
         // Nos situamos al principio de los resultados.
-        if (!$event && !!this.content) { this.content.scrollToTop(); }
+        if (!options.event && !!this.content) { this.content.scrollToTop(); }
+        // Recordamos la última consulta.
+        this.lastSearch = options.search;
         // Devolvemos las filas creadas.
         resolve(rows);
 
@@ -543,111 +435,312 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     });
   }
 
+
+  //  nextPage . previousPage
+  // ---------------------------------------------------------------------------------------------------
+
   nextPage(): Promise<any[]> {
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.nextPage()'); }
     const clearBefore = true;
-    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.nextPage()  => ', { event: {}, clearBefore }); }
-    this.beforeRefresh();
-    return this.refresh({ mock: true }, clearBefore);
+    const search = this.lastSearch;
+    // Pasamos un objeto vacío para simular que viene provocado por un evento.
+    return this.request({ search, event: {}, clearBefore });
   }
 
   previousPage(): Promise<any[]> {
     this.query.page -= 2;
-    this.query.paginationComplete = false;
+    this.query.completed = false;
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.previousPage()'); }
     const clearBefore = true;
-    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.previousPage()  => ', { event: {}, clearBefore }); }
-    this.beforeRefresh();
-    return this.refresh({ mock: true }, clearBefore);
+    const search = this.lastSearch;
+    // Pasamos un objeto vacío para simular que viene provocado por un evento.
+    return this.request({ search, event: {}, clearBefore });
   }
 
 
+  //  find
   // ---------------------------------------------------------------------------------------------------
+
+  /**
+   * Inicia una operación de búsqueda.
+   * @param combineBaseClauses: Indica si las cláusulas se combinarán con las del filtro original.
+   * @param combineSearchbarClauses: Indica si las cláusulas se combinarán con las del cuadro de texto escritas por el usuario.
+   */
+  protected find(clauses: any, options?: { combineBaseClauses?: boolean, combineSearchbarClauses?: boolean }): Promise<any[]> {
+    if (!options) { options = {}; }
+    if (options.combineBaseClauses === undefined) { options = { combineBaseClauses: true }; }
+    if (options.combineSearchbarClauses === undefined) { options = { combineSearchbarClauses: true }; }
+
+    if (options.combineBaseClauses) { clauses = this.combineBaseClauses(clauses); }
+    if (options.combineSearchbarClauses) { clauses = this.combineSearchbarClauses(clauses); }
+
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.find()', this.list.search); }
+    return this.request({ search: clauses });
+  }
+
+
   //  pipe to backend
   // ---------------------------------------------------------------------------------------------------
 
-  /** @hidden Evalua cuando es necesario interrumpir el filtrado local para aplicarlo contra el _backend_. Se llama desde la clase `PipeFilter` antes de aplicar el filtro. */
-  pipeToBackendRequired(match: string): boolean | 'local' {
-    const filter: FilterTypeComplex = this.list.filter as FilterTypeComplex;
-    if (!filter.pipeToBackend) { return false; }
-
-    const current = this.currentMatch;
-
-    if (this.loading) {
-      this.isLocalFilterStillRequired = false;
-      // console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired => this.loading ', { match, current });
-      return false;
-    }
-    if (match && current === undefined) {
-      this.isLocalFilterStillRequired = false;
-      // console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired => current === undefined ', { match, current });
-      return true;
-    }
-    if (match === current) {
-      // console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired => match === current ', { match, current });
-      return this.isLocalFilterStillRequired ? 'local' : false;
-      return false;
-    }
-
-    // Delay entre
-    const buffer = match.substring(current.length);
-    const words = matchWords(buffer);
-    const startWithSpace = !!buffer && !!buffer[0].match(patterns.punctuation);
-    // No actualizamos el valor actual hasta que el buffer no contenga almenos una palabra, de esta manera ignoramos los espacios y signos de puntuación.
-    if (words.length > 0) { this.currentMatch = match; }
-    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired(match)', { current, match, buffer, words }); }
-    // Si el buffer contiene palabras nuevas (es decir, empieza por un espacio o signos de puntuación y a continuación hay almenos una letra)
-    if (startWithSpace && words.length === 1 || words.length > 1) { this.isLocalFilterStillRequired = false; return true; }
-    // Si hay un valor actual y es una continuación de la escritura... y además no estamos en una consulta paginada... evitamos ir al backend.
-    if (current && match.startsWith(current) && this.query.paginationComplete) { this.isLocalFilterStillRequired = true; return 'local'; }
-    // Se requiere una llamada al backend.
-    this.isLocalFilterStillRequired = false;
-    return true;
-  }
-
   /** @hidden Ejecuta la consulta contra el _backend_. */
-  protected pipeFilterToBackend(match: string, options?: { extra?: any }): boolean {
+  protected pipeFilterToBackend(match: string, options?: { extra?: any }): void {
     const filter: FilterTypeComplex = this.list.filter as FilterTypeComplex;
-    if (!filter.pipeToBackend) { return; }
     // if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.pipeFilterToBackend() -> filter = ', filter); }
     // Comprobamos que se han definido campos para la propiedad pipe.
     if (!filter || !filter.pipe) { throw new Error(`No se ha definido ningún campo en la propiedad 'pipe' para el filtro de backend del modelo '${this.model.name.plural}'.`); }
     if (!options) { options = {}; }
     if (options.extra === undefined) { options.extra = null; }
 
-    this.beforeRefresh();
-    // Combinamos las cláusulas extra.
-    const clauses = this.combineSearchClauses(options.extra);
-    // Combinamos el filtro original con el construido a partir de la búsqueda del usuario.
-    this.list.search = this.combineOriginalClauses(clauses);
     // Recordamos el último texto introducido.
-    this.currentMatch = match;
+    this.lastMatch = match;
+    // Combinamos las cláusulas.
+    const clauses = this.combineSearchbarClauses(options.extra);
+    const search = this.combineBaseClauses(clauses);
     // Realizamos la llamada al backend a través de la función del componente.
-    this.refresh();
+    this.request({ search });
+  }
+
+  /** @hidden Evalua cuando es necesario interrumpir el filtrado local para aplicarlo contra el _backend_. Se llama desde la clase `PipeFilter` antes de aplicar el filtro. */
+  pipeToBackendRequired(match: string): boolean | 'local' {
+    const filter: FilterTypeComplex = this.list.filter as FilterTypeComplex;
+    if (!filter.pipeToBackend) { return false; }
+
+    const last = this.lastMatch;
+
+    if (this.loading) {
+      this.isLocalFilterStillRequired = false;
+      // console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired => this.loading ', { match, last });
+      return false;
+    }
+    if (match && last === undefined) {
+      this.isLocalFilterStillRequired = false;
+      // console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired => last === undefined ', { match, last });
+      return true;
+    }
+    if (match === last) {
+      // console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired => match === last ', { match, last });
+      return this.isLocalFilterStillRequired ? 'local' : false;
+      return false;
+    }
+
+    // Delay entre
+    const buffer = match.substring(last.length);
+    const words = matchWords(buffer);
+    const startWithSpace = !!buffer && !!buffer[0].match(patterns.punctuation);
+    // No actualizamos el valor actual hasta que el buffer no contenga almenos una palabra, de esta manera ignoramos los espacios y signos de puntuación.
+    if (words.length > 0) { this.lastMatch = match; }
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.pipeToBackendRequired(match)', { last, match, buffer, words }); }
+    // Si el buffer contiene palabras nuevas (es decir, empieza por un espacio o signos de puntuación y a continuación hay almenos una letra)
+    if (startWithSpace && words.length === 1 || words.length > 1) { this.isLocalFilterStillRequired = false; return true; }
+    // Si hay un valor actual y es una continuación de la escritura... y además no estamos en una consulta paginada... evitamos ir al backend.
+    if (last && match.startsWith(last) && this.query.completed) { this.isLocalFilterStillRequired = true; return 'local'; }
+    // Se requiere una llamada al backend.
+    this.isLocalFilterStillRequired = false;
+    return true;
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  filter
+  // ---------------------------------------------------------------------------------------------------
+
+  /**
+   * Lanzamos un modal para presentar el componente de filtro para backend.
+   *
+   * **Usage**
+   * ```html
+   * <ion-icon (click)="showAdvancedSearch()" name="search"></ion-icon>
+   * ```
+   *
+   * Podemos usar la función `hook` como alternativa a `onDismiss` (sobrescritura completa) si lo que queremos es
+   * únicamente añadir unas acciones antes de la llamada a `request`.
+   * ```typescript
+   * showAdvancedSearch(): void {
+   *   super.showAdvancedSearch({
+   *     component: FacturasSearchComponent, beforeRequest: (host: FacturasListComponent): void => {
+   *       host.usingCache = false;
+   *       if (host.settings?.search) { host.settings.search.current = 'avanzada'; }
+   *       host.searchInfo = 'usando búsqueda avanzada';
+   *     }
+   *   });
+   * }
+   * ```
+   * @category Filter
+   */
+  showAdvancedSearch(options?: { component?: any, onDismiss?: (host: AbstractListComponent, detail: any) => void, beforeRequest?: (host: AbstractListComponent) => void }): void {
+    // Obtenemos la configuración del modelo.
+    const filter: any = this.model.list.filter;
+    // Comprobamos las opciones.
+    if (!options) { options = {}; }
+    // La primera vez, inicializamos el componente con el valor del modelo.
+    if (!this.advancedSearch && this.model.list?.filter?.hasOwnProperty('frm')) {
+      const frm = (this.model.list.filter as FilterTypeComplex).frm;
+      if (frm instanceof FormGroup) { this.advancedSearch = frm.value; }
+    }
+
+    // Referenciamos el callback.
+    let onDismiss = options.onDismiss || filter.onDismiss;
+    // Comprobamos si se ha suministrado una función para el callback del modal.
+    if (!onDismiss) {
+      // Si no se ha suministrado ninguna la declaramos ahora.
+      onDismiss = (host: AbstractListComponent, detail: any): void => {
+        // Recordamos el filtro actual para la próxima vez.
+        host.advancedSearch = detail.data;
+        // Parseamos el filtro.
+        const clauses = host.parseAdvancedSearch(detail.data);
+        // Combinamos las cláusulas.
+        const search = this.combineBaseClauses(clauses);
+        // Limpiamos la caché.
+        host.query.clear();
+        // Limpiamos la búsqueda del cuadro de texto.
+        host.lastMatch = undefined; host.match = undefined;
+        // Ejecutamos la función de hook.
+        if (typeof options.beforeRequest === 'function') { options.beforeRequest(host); }
+        // Realizamos la llamada al backend a través de la función del componente.
+        host.request({ search });
+      };
+    }
+    // Realizamos una carga dinámica del componente.
+    this.resolveFactory(options.component || filter.component).then(component => {
+      // Mostramos el modal.
+      this.modal.create({
+        component,
+        componentProps: { filter: this.advancedSearch },
+      }).then(modal => {
+        modal.onDidDismiss().then((detail: any): void => onDismiss(this, detail));
+        modal.present();
+
+      }).catch(error => console.error(error));
+    }).catch(error => console.error(error));
+  }
+
+  /**
+   * Transforma el valor de la propiedad `filter` en cláusulas válidas para la API Rest.
+   *
+   * Filtro original obtenido del formulario:
+   * ```typescript
+   * { campo1: 'valor1', campo2: 'valor2', campo3: null }
+   * ```
+   *
+   * Filtro transformado compatible con la API Rest:
+   * ```typescript
+   * { AND: [
+   *   ['campo1', '=', 'valor1'],
+   *   ['campo2', '=', 'valor2'],
+   * ]}
+   * ```
+   *
+   * Si se desea implementar un filtro con valores complejos como rangos de fechas que deban ser tratados
+   * de forma específica o asignar operadores diferentes a las cláusulas, se deberá sobrescribir la función en
+   * la clase heredada.
+   * ```typescript
+   * parseAdvancedSearch(filter?: any): ApiSearchClauses {
+   *   const clauses: ApiSearchClause[] = [];
+   *   // Construimos las cláusulas a partir del valor del formulario SearchComponent.
+   *   if (filter.recogida) {
+   *     clauses.push(['DATE(servicio.recogida)', '>=', moment(filter.recogidaDesde).format('YYYY-MM-DD')]);
+   *     clauses.push(['DATE(servicio.recogida)', '<=', moment(filter.recogidaHasta).format('YYYY-MM-DD')]);
+   *   }
+   *   if (filter.estado) {
+   *     const estados: ApiSearchClause[] = (filter.estados as any[]).filter(e => e.selected).map(e => ['servicio.estado', '=', e.value]);
+   *     if (estados.length) { clauses.push({ OR: estados } as any); }
+   *   }
+   *   // Combinamos el filtro base con el construido a partir de la búsqueda del usuario.
+   *   return clauses.length ? { AND: clauses } : null;
+   * }
+   * ```
+   * @category Filter
+   */
+  parseAdvancedSearch(filter?: any): ApiSearchClauses {
+    const concatOp = this.list.searchOR ? 'OR' : 'AND';
+    const clauses: ApiSearchClause[] = [];
+
+    // Construimos las cláusulas a partir del valor del formulario SearchComponent.
+    if (filter) {
+      for (const field of Object.keys(filter)) {
+        const value = filter[field];
+        // Ignoramos los valores nulos.
+        if (value !== null) { clauses.push([field, '=', value]); }
+      }
+    }
+
+    // Combinamos el filtro original con el construido a partir de la búsqueda del usuario.
+    return this.combineBaseClauses(clauses.length ? (concatOp === 'OR' ? { OR: clauses } : { AND: clauses }) : null);
+  }
+
+  /**
+   * Indica cuando se está aplicando un filtro local sobre los resultados obtenidos del backend.
+   * Para ello debe haber un texto escrito en el cuadro de búsqueda y el filtro debe tener la propiedad `pipeToBackend` establecida en `false`.
+   *
+   * **Usage**
+   *
+   * Construimos el texto que se muestra al usuario informándole a cerca de los resultados.
+   * ```html
+   * <p>{{isLocalFiltered ? 'Filtrados' : 'Resultados:'}} <b>{{isLocalFiltered ? filtered.length : ''}}</b> {{isLocalFiltered ? 'de' : ''}} <b>{{rows.length}}</b></p>
+   * ```
+   * @category Filter
+   */
+  get isLocalFiltered(): boolean {
+    return this.match && !(this.list.filter as FilterTypeComplex).pipeToBackend;
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  api search clauses
+  // ---------------------------------------------------------------------------------------------------
+
+  /** Combina dos grupos de cláusulas con el operador indicado. */
+  protected combineClauses(clausesA: ApiSearchClauses, clausesB: ApiSearchClauses, concatOp?: ConcatOperatorType): ApiSearchClauses { return combineClauses(clausesA, clausesB, concatOp); }
+
+  /** @hidden Combina las cláusulas con la búsqueda base: filtro del modelo + filtro inicial (queryParams o initializePickRow). */
+  protected combineBaseClauses(clauses: ApiSearchClauses): ApiSearchClauses {
+    // Obtenemos las cláusulas de la consulta original.
+    const search = this.model.list?.search;
+    const base = search ? ((typeof search === 'function' ? search(this) : search) || null) as ApiSearchClauses : null;
+    const concatOp = this.list.searchOR ? 'OR' : 'AND';
+    // Obtenemos las cláusulas del filtro inicial (via pickRow o queryParams).
+    const initial = this.combineClauses(base, this.initialFilter || null, concatOp);
+    // Combinamos el filtro base con el construido a partir de la búsqueda del usuario.
+    const final: ApiSearchClauses = this.combineClauses(clauses, initial, concatOp);
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.combineBaseClauses()', { base, final }); }
+    return final;
+  }
+
+  /** @hidden Combina las cláusulas con la búsqueda escrita por el usuario en el cuadro de texto. */
+  protected combineSearchbarClauses(clauses: ApiSearchClauses): ApiSearchClauses {
+    // Obtenemos las cláusulas a partir del texto escrito por el usuario en el cuadro de búsqueda.
+    const searchbar = this.buildSearchbarClauses(this.match);
+    const concatOp = this.list.searchOR ? 'OR' : 'AND';
+    // Combinamos el filtro base con el construido a partir de la búsqueda del usuario.
+    const final: ApiSearchClauses = this.combineClauses(clauses, searchbar, concatOp);
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.combineSearchbarClauses()', { searchbar, final }); }
+    return final;
   }
 
   /** @hidden Construye las cláusulas search a partir del texto de búsqueda indicado. */
-  protected buildPipeClauses(match: string): any {
+  protected buildSearchbarClauses(match: string): any {
     const filter: FilterTypeComplex = this.list.filter as FilterTypeComplex;
-    if (!filter.pipeToBackend) { return null; }
     // Comprobamos que se han definido campos para la propiedad pipe.
-    if (!filter || !filter.pipe) { throw new Error(`No se ha definido ningún campo en la propiedad 'pipe' para el filtro de backend del modelo '${this.model.name.plural}'.`); }
+    if (!filter?.pipe) { throw new Error(`No se ha definido ningún campo en la propiedad 'pipe' para el filtro de backend del modelo '${this.model.name.plural}'.`); }
     // Nos aseguramos que se trata de un array.
     const fields = typeof filter.pipe === 'string' ? ApiEntity.splitFields(filter.pipe) : filter.pipe;
     // Obtenemos los campos agrupados por entidad.
     const entities: ApiEntity[] = ApiEntity.joinFields(ApiEntity.parseFields(this.model.backend.plural, fields.map(f => f.replace(/\?/g, ''))));
     // Obtenemos las cláusulas con la búsqueda del usuario.
     const clauses = [];
+    const binary = filter.ignoreCase ? '' : 'BINARY ';
 
     if (match) {
       // Iteramos las entidades para crear las cláusulas.
       !filter.splitPipeWords
-        ? entities.map(entity => entity.columns.map(c => clauses.push([`${entity.table.name}.${c.name}`, 'LIKE', `%${match}%`])))
+        ? entities.map(entity => entity.columns.map(c => clauses.push([`${entity.table.name}.${c.name}`, 'LIKE', `${binary}%${match}%`])))
         : filter.concatPipeWords === 'OR'
-          ? entities.map(entity => entity.columns.map(c => matchWords(match).map(w => clauses.push([`${entity.table.name}.${c.name}`, 'LIKE', `%${w}%`]))))
-          // : entities.map(entity => entity.columns.map(c => clauses.push({ AND: [...matchWords(match).map(w => [`${entity.table.name}.${c.name}`, 'LIKE', `%${w}%`])]})))
-          : matchWords(match).map(w => clauses.push({ OR: [].concat.apply([], entities.map(entity => entity.columns.map(c => `${entity.table.name}.${c.name}`))).map(field => [field, 'LIKE', `%${w}%`]) }) )
+          ? entities.map(entity => entity.columns.map(c => matchWords(match).map(w => clauses.push([`${entity.table.name}.${c.name}`, 'LIKE', `${binary}%${w}%`]))))
+          // : entities.map(entity => entity.columns.map(c => clauses.push({ AND: [...matchWords(match).map(w => [`${entity.table.name}.${c.name}`, 'LIKE', `${binary}%${w}%`])]})))
+          : matchWords(match).map(w => clauses.push({ OR: [].concat.apply([], entities.map(entity => entity.columns.map(c => `${entity.table.name}.${c.name}`))).map(field => [field, 'LIKE', `${binary}%${w}%`]) }) )
       ;
     }
-    if (this.debug) { console.log(this.constructor.name + '.buildPipeClauses()', { splitPipeWords: filter.splitPipeWords, concatPipeWords: filter.concatPipeWords, clauses }); }
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.buildSearchbarClauses()', { splitPipeWords: filter.splitPipeWords, concatPipeWords: filter.concatPipeWords, clauses }); }
     return clauses.length ? { [!filter.splitPipeWords ? 'OR' : filter.concatPipeWords]: clauses } : null;
   }
 
@@ -657,7 +750,7 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    * **Usage**
    *
    * ```html
-   * <span *ngIf="search" [innerHTML]="searchWords()"></span>
+   * <span *ngIf="match" [innerHTML]="searchWords()"></span>
    * ```
    * Para la búsqueda `Amsterdam Paris London` devuelve la siguiente expresión:
    * ```html
@@ -667,14 +760,14 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    * @category Filter
    */
   searchWords(replace?: string): SafeHtml {
-    if (!this.search) { return ''; }
+    if (!this.match) { return ''; }
     if (!replace) { replace = '<span class="filtered">$1</span>'; }
     const filter: FilterTypeComplex = this.list.filter as FilterTypeComplex;
     const concat = this.translate.instant(`search.${filter.concatPipeWords}`);
     // Remplazamos las palabras por tags coloreados.
     return !filter.splitPipeWords
-      ? this.sanitizer.bypassSecurityTrustHtml(this.search.replace(/(.*)/, replace))
-      : this.sanitizer.bypassSecurityTrustHtml(matchWords(this.search).map(w => w.replace(/(.*)/, replace)).join(',').replace(/,([^,]*)$/, ` ${concat} $1`).split(',').join(', '));
+      ? this.sanitizer.bypassSecurityTrustHtml(this.match.replace(/(.*)/, replace))
+      : this.sanitizer.bypassSecurityTrustHtml(matchWords(this.match).map(w => w.replace(/(.*)/, replace)).join(',').replace(/,([^,]*)$/, ` ${concat} $1`).split(',').join(', '));
   }
 
   /**
@@ -682,31 +775,31 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    *
    * **Usage**
    * ```html
-   * <text-colorized [value]="row.nombre" [search]="search"></text-colorized>
+   * <text-colorized [value]="row.nombre" [match]="match"></text-colorized>
    * ```
    */
   colorMatch(text: string, match: string): SafeHtml {
     const filter: FilterTypeComplex = this.list.filter as FilterTypeComplex;
     // const pipe = new FilterPipe();
     if (!!match && this.filterPipe.filterProperty(text, match, { splitWords: filter.splitPipeWords })) {
-      const { distinguishWords, maxDistinctions, ignoreAccents } = filter;
-      return super.colorMatch(text, match, { splitWords: filter.splitPipeWords, distinguishWords, maxDistinctions, ignoreAccents });
+      const { ignoreCase, ignoreAccents, distinguishWords, maxDistinctions } = filter;
+      return super.colorMatch(text, match, { splitWords: filter.splitPipeWords, ignoreCase, ignoreAccents, distinguishWords, maxDistinctions });
     } else {
       return this.sanitizer.bypassSecurityTrustHtml(text);
     }
   }
 
   filterProperty(value: any): boolean {
-    if (!this.search) { return false; }
+    if (!this.match) { return false; }
     const filter: FilterTypeComplex = this.list.filter as FilterTypeComplex;
     const { ignoreAccents, ignoreCase, splitPipeWords } = filter;
     // const pipe = new FilterPipe();
-    return this.filterPipe.filterProperty(value, this.search, { ignoreCase,  ignoreAccents, splitWords: splitPipeWords });
+    return this.filterPipe.filterProperty(value, this.match, { ignoreCase,  ignoreAccents, splitWords: splitPipeWords });
   }
 
 
   // ---------------------------------------------------------------------------------------------------
-  //  save
+  //  saveRow . deleteRow . spliceRow
   // ---------------------------------------------------------------------------------------------------
 
   saveRow(data?: any): Promise<any> {
@@ -727,11 +820,15 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     });
   }
 
-
-
-  // ---------------------------------------------------------------------------------------------------
-  //  spliceRow . deleteRow
-  // ---------------------------------------------------------------------------------------------------
+  /**
+   * Elimina la fila del backend y de la caché de la consulta administrada.
+   * @category Row Action
+   */
+  async deleteRow(row: any): Promise<any> {
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.deleteRow(row) => ', { row, model: this.model }); }
+    if (this.ionList) { await this.ionList.closeSlidingItems(); }
+    return this.service.deleteRow(this.query, row, { host: this }).toPromise();
+  }
 
   /**
    * Elimina la fila de la caché de la consulta administrada por el componente.
@@ -746,16 +843,6 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     } else {
       this.rows.splice(this.rows.findIndex(findRowIndex(indexOrRow)), 1);
     }
-  }
-
-  /**
-   * Elimina la fila del backend y de la caché de la consulta administrada.
-   * @category Row Action
-   */
-  async deleteRow(row: any): Promise<any> {
-    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.deleteRow(row) => ', { row, model: this.model }); }
-    if (this.ionList) { await this.ionList.closeSlidingItems(); }
-    return this.service.deleteRow(this.query, row, { host: this }).toPromise();
   }
 
 
@@ -773,7 +860,7 @@ export abstract class AbstractListComponent extends AbstractComponent implements
 
 
   // ---------------------------------------------------------------------------------------------------
-  //  select row mode
+  //  pick row
   // ---------------------------------------------------------------------------------------------------
 
   /**
@@ -789,22 +876,22 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    *   modal.present();
    * });
    * ```
+   * @see {@link PickRowOptions}
    * @category Select
    */
-  set initializePickRow(data: any) {
-    // console.log('initializePickRow => ', data);
+  set initializePickRow(options: PickRowOptions) {
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.initializePickRow(options) => ', options); }
     // Establecemos el indicador de estado.
     this.isPickRowMode = true;
-    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.initializePickRow(data) => ', data); }
-    // if (this.debug) { console.log('typeof selected => ', typeof data.selected); }
-    const { canCreate, isModal, isPopover, filter, ...extra } = data;
-    // Establecemos el valor seleccionado actualmente (selected) y las propiedades extra.
-    deepAssign(this, extra);
-    // Establecemos el indicador de estado.
+    // Transferimos las opciones de inicialización al componente.
+    const { selected, filter, canCreate, isModal, isPopover } = options;
+    if (selected !== undefined) { this.selected = selected; }
+    if (filter !== undefined) { this.initialFilter = filter; }
     if (canCreate !== undefined) { this.canCreate = !!canCreate; }
     if (isModal !== undefined) { this.isModal = !!isModal; }
     if (isPopover !== undefined) { this.isPopover = !!isPopover; }
-    if (filter !== undefined) { this.initialFilter = filter; }
+    // Transferimos las propiedades adicionales.
+    Object.keys(options.initialize).map(prop => this[prop] = options.initialize[prop]);
   }
 
   /**
@@ -890,7 +977,7 @@ export abstract class AbstractListComponent extends AbstractComponent implements
       // Permutamos el estado de selección de la fila.
       row.checked = !row.checked;
       // Actualizamos el contador de filas seleccionadas.
-      this.checkedChanged.next(this.search ? this.countChecked() : this.checkedChanged.getValue() + (row.checked ? 1 : -1));
+      this.checkedChanged.next(this.match ? this.countChecked() : this.checkedChanged.getValue() + (row.checked ? 1 : -1));
 
     } else {
       // Cargamos y/o navegamos hacia el componente de detalle para la fila seleccionada.
@@ -951,8 +1038,81 @@ export abstract class AbstractListComponent extends AbstractComponent implements
 
 
   // ---------------------------------------------------------------------------------------------------
-  //  group
+  //  order rows (by column)
   // ---------------------------------------------------------------------------------------------------
+
+  /** Devuelve el icono que indica la dirección de ordenación: `caret-down` o `caret-up`
+   * ```html
+   * <ion-item (click)="orderRows('cliente')">
+   *   <ion-label>Cliente</ion-label>
+   *   <ion-icon *ngIf="isOrderedBy('cliente')" [name]="orderByIcon"></ion-icon>
+   * </ion-item>
+   * ```
+   */
+  get orderByIcon(): string {
+    return this.orderByDirection === 'asc' || this.orderByDirection === 1 ? 'caret-down'
+      : (this.orderByDirection === 'desc' || this.orderByDirection === -1 ? 'caret-up' : '')
+    ;
+  }
+
+  /** Establece el nuevo orden en el esquema con la columna indicada. Si se ejecuta consecutivamente argumentando la misma columna
+   * la dirección se permuta entre `'asc'`, `'desc'` y `undefined` (restaura la ordenación original).
+   * ```html
+   * <ion-item (click)="orderRows('cliente')">
+   *   <ion-label>Cliente</ion-label>
+   *   <ion-icon *ngIf="isOrderedBy('cliente')" [name]="orderByIcon"></ion-icon>
+   * </ion-item>
+   * ```
+   */
+  orderRows(column: string) {
+    const orderBy = this.list.orderBy as OrderByTypeComplex;
+    // Si repite columna...
+    if (this.isOrderedBy(column)) {
+      // Si está en descendente...
+      if (this.orderByDirection === 'desc' || this.orderByDirection === -1) {
+        // Restauramos el orden original.
+        orderBy.pipe = this.originalOrderBy;
+        this.orderByDirection = undefined;
+      } else {
+        // Invertimos el orden.
+        orderBy.pipe = `-${column}`;
+        this.orderByDirection = 'desc';
+      }
+    } else {
+      // Establecemos la nueva columna.
+      orderBy.pipe = column;
+      this.orderByDirection = 'asc';
+    }
+  }
+
+  /** Indica si la ordenación actual se basa en la columna indicada.
+   * ```html
+   * <ion-item (click)="orderRows('cliente')">
+   *   <ion-label>Cliente</ion-label>
+   *   <ion-icon *ngIf="isOrderedBy('cliente')" [name]="orderByIcon"></ion-icon>
+   * </ion-item>
+   * ```
+   */
+  isOrderedBy(column: string): boolean {
+    const orderBy = this.list?.orderBy as OrderByTypeComplex;
+    if (!orderBy) { return false; }
+    return orderBy.pipe === column || orderBy.pipe === `-${column}`;
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  groups
+  // ---------------------------------------------------------------------------------------------------
+
+  /** Establece el estado de agrupación de las filas de la consulta. */
+  groupBy(data: any) {
+    if (data === 'collapse') {
+      this.collapseAllGroups();
+    } else {
+      this.collapsed = [];
+    }
+    this.changeDetector.markForCheck();
+  }
 
   /**
    * Devuelve la clave del grupo que angular necesita para identificar a los elementos de una colección que
@@ -983,7 +1143,7 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    * **Usage**
    *
    * ```html
-   * <ion-col *ngFor="let row of group.rows; trackBy: rowId">
+   * <ion-col size="12" *ngFor="let row of group.rows; trackBy: rowId">
    * ```
    * @category Group
    */
@@ -1046,7 +1206,7 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     const groupBy = new GroupByPipe();
     const groups = groupBy.transform(this.rows, this.list.groupBy as GroupByTypeComplex);
     if (groups && groups.length) {
-      (groups as any).map(g => collapsed.push({ key: g.key, value: true }));
+      (groups as any[]).map(g => collapsed.push({ key: g.key, value: true }));
     }
     this.collapsed = collapsed;
   }
@@ -1063,161 +1223,6 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    */
   expandAllGroups(): void {
     this.collapsed = [];
-  }
-
-
-  // ---------------------------------------------------------------------------------------------------
-  //  filter
-  // ---------------------------------------------------------------------------------------------------
-
-  /** @hidden Inicializa el filtro con los valores del formulario del filtro definido en el modelo. */
-  protected initializeFilter(): void {
-    // Obtenemos la configuración del modelo.
-    const filter: FilterType = this.model.list.filter;
-    // Si existe un filtro para backend.
-    if (typeof filter === 'object' && filter.hasOwnProperty('frm')) {
-      // Comprobamos si se ha definido un formulario válido...
-      const frm = (filter as FilterTypeComplex).frm; if (frm instanceof FormGroup) {
-        // Obtenemos el valor para el filtro.
-        this.filter = frm.value;
-      }
-    }
-  }
-
-  /**
-   * Lanzamos un modal para presentar el componente de filtro para backend.
-   *
-   * **Usage**
-   * ```html
-   * <ion-icon (click)="showFilter()" name="search"></ion-icon>
-   * ```
-   * @category Filter
-   */
-  showFilter(options?: { component?: any, onInit?: (host: any) => any, onDismiss?: (host: any, data: any) => void }): void {
-    // Obtenemos la configuración del modelo.
-    const filter: any = this.model.list.filter;
-    // Comprobamos las opciones.
-    if (!options) { options = {}; }
-
-    // Referenciamos la función de inicialización del filtro.
-    let onInit = options.onInit || filter.onInit;
-    // Comprobamos si se ha suministrado una función para la inicialización del modal.
-    if (!onInit) {
-      // Si no se ha suministrado ninguna la declaramos ahora.
-      onInit = (host: any): any => {
-        // Se requiere un host válido.
-        if (!host || !host.hasOwnProperty('filter')) { throw new Error('Se requiere un host válido de la clase "AbstractListComponent".'); }
-        // Establecemos el valor inicial para el filtro.
-        return { filter: host.filter };
-      };
-    }
-
-    // Referenciamos el callback.
-    let onDismiss = options.onDismiss || filter.onDismiss;
-    // Comprobamos si se ha suministrado una función para el callback del modal.
-    if (!onDismiss) {
-      // Si no se ha suministrado ninguna la declaramos ahora.
-      onDismiss = (host: any, data: any): void => {
-        // Recordamos el filtro actual para la próxima vez.
-        host.filter = data;
-        // Declaramos una función search para transferir el filtro a la consulta.
-        host.model.list.search = (h: any): ApiSearchClauses => h.parseFilter();
-        // Limpiamos la caché.
-        host.query.restart();
-        // Limpiamos la búsqueda del cuadro de texto.
-        host.currentMatch = undefined; host.search = undefined;
-        // Realizamos la llamada al backend a través de la función del componente.
-        host.refresh();
-      };
-    }
-    // Realizamos una carga dinámica del componente.
-    this.resolveFactory(options.component || filter.component).then(component => {
-      // Mostramos el modal.
-      this.modal.create({
-        component,
-        componentProps: onInit(this),
-      }).then(modal => {
-        modal.onDidDismiss().then((detail: any): void => {
-          if (detail && detail.data) { onDismiss(this, detail.data); }
-        });
-        modal.present();
-
-      }).catch(error => console.error(error));
-    }).catch(error => console.error(error));
-  }
-
-  /**
-   * Transforma el valor de la propiedad `filter` en cláusulas válidas para la API Rest.
-   *
-   * Filtro original obtenido del formulario:
-   * ```typescript
-   * { campo1: 'valor1', campo2: 'valor2', campo3: null }
-   * ```
-   *
-   * Filtro transformado compatible con la API Rest:
-   * ```typescript
-   * { AND: [
-   *   ['campo1', '=', 'valor1'],
-   *   ['campo2', '=', 'valor2'],
-   * ]}
-   * ```
-   *
-   * Si se desea implementar un filtro con valores complejos como rangos de fechas que deban ser tratados
-   * de forma específica o asignar operadores diferentes a las cláusulas, se deberá sobrescribir la función en
-   * la clase heredada.
-   * ```typescript
-   * parseFilter(): ApiSearchClauses {
-   *   // Obtenemos las cláusulas de la consulta original.
-   *   const original = (typeof this.originalSearch === 'function' ? this.originalSearch(this) : this.originalSearch) || null;
-   *   const clauses = { AND: [] };
-   *   const list = this.query.model.list;
-   *
-   *   // Construimos las cláusulas a partir del valor del formulario SearchComponent.
-   *   if (this.filter) {
-   *     if (this.filter.hasOwnProperty('year')) {
-   *       clauses.AND.push(['YEAR(pedidos.date_add)', '=', +this.filter.year]);
-   *     }
-   *     if (this.filter.hasOwnProperty('month') && this.filter.month > 0) {
-   *       clauses.AND.push(['MONTH(pedidos.date_add)', '=', +this.filter.month]);
-   *     }
-   *   }
-   *   // Combinamos el filtro original con el construido a partir de la búsqueda del usuario.
-   *   return !clauses.AND.length ? original : original ? { AND: [original, clauses] } : clauses;
-   * }
-   * ```
-   * @category Filter
-   */
-  parseFilter(): ApiSearchClauses {
-    const searchOp = this.list.searchOR ? 'OR' : 'AND';
-    const clauses: ApiSearchClause[] = [];
-
-    // Construimos las cláusulas a partir del valor del formulario SearchComponent.
-    if (this.filter) {
-      for (const field of Object.keys(this.filter)) {
-        const value = this.filter[field];
-        // Ignoramos los valores nulos.
-        if (value !== null) { clauses.push([field, '=', value]); }
-      }
-    }
-
-    // Combinamos el filtro original con el construido a partir de la búsqueda del usuario.
-    return this.combineOriginalClauses(clauses.length ? (searchOp === 'OR' ? { OR: clauses } : { AND: clauses }) : null);
-  }
-
-  /**
-   * Indica cuando se está aplicando un filtro local sobre los resultados obtenidos del backend.
-   * Para ello debe haber un texto escrito en el cuadro de búsqueda y el filtro debe tener la propiedad `pipeToBackend` establecida en `false`.
-   *
-   * **Usage**
-   *
-   * Construimos el texto que se muestra al usuario informéndole a cerca de los resultados.
-   * ```html
-   * <p>{{isLocalFiltered ? 'Filtrados' : 'Resultados:'}} <b>{{isLocalFiltered ? filtered.length : ''}}</b> {{isLocalFiltered ? 'de' : ''}} <b>{{rows.length}}</b></p>
-   * ```
-   * @category Filter
-   */
-  get isLocalFiltered(): boolean {
-    return this.search && !(this.list.filter as FilterTypeComplex).pipeToBackend;
   }
 
 
@@ -1295,7 +1300,7 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     // Filtramos las filas que son susceptibles de ser seleccionadas (chequeables).
     const checkeable = this.rows.filter(row => this.isCheckable(row));
     // Obtenemos las filas que superan el filtro.
-    const filtered = checkeable.filter(row => pipe.applyFilter(row, this.currentMatch, this.model.list.filter, { ignoreChecked: false }));
+    const filtered = checkeable.filter(row => pipe.applyFilter(row, this.lastMatch, this.model.list.filter, { ignoreChecked: false }));
     // Actualizamos el estado de selección de las filas filtradas.
     filtered.map(row => row.checked = value);
     // Actualizamos el contador de filas seleccionadas.
@@ -1307,12 +1312,12 @@ export abstract class AbstractListComponent extends AbstractComponent implements
    * Si no lo es se ocultará hasta que se desactive el modo de selección actual.
    */
   protected isCheckable(row: any): boolean {
-    return this.multiSelect && typeof this.multiSelect.checkable === 'function' ? this.multiSelect.checkable(row, this) : true;
+    return typeof this.multiSelect?.checkable === 'function' ? this.multiSelect.checkable(row, this) : true;
   }
 
   /** @hidden Devuelve el número de filas actualmente seleccionadas. */
   protected countChecked(): number {
-    return this.rows && this.rows.length ? this.rows.filter(row => this.isCheckable(row) && !!row.checked).length : 0;
+    return this.rows?.length ? this.rows.filter(row => this.isCheckable(row) && !!row.checked).length : 0;
   }
 
   /** @hidden
@@ -1325,7 +1330,7 @@ export abstract class AbstractListComponent extends AbstractComponent implements
 
   /** @hidden Refresca la colección de filas con las filas de la caché. */
   protected refreshRowsWithCache(cache: any[]): void {
-    if (this.debug) { console.log(this.constructor.name + '.refreshRowsWithCache()', cache); }
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.refreshRowsWithCache()', cache); }
     // Iteramos las filas de la caché.
     cache.forEach(row => {
       // Buscamos la fila en la lista actual.
@@ -1333,12 +1338,12 @@ export abstract class AbstractListComponent extends AbstractComponent implements
       if (idx > -1) {
         // Si ya existe, la marcamos como seleccionada.
         this.rows[idx].checked = true;
-        if (this.debug) { console.log(this.constructor.name + '.refreshRowsWithCache() -> mark row as checked', this.rows[idx]); }
+        if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.refreshRowsWithCache() -> mark row as checked', this.rows[idx]); }
 
       } else {
         // Si no existe, la añadimos ahora.
         this.rows.push(row);
-        if (this.debug) { console.log(this.constructor.name + '.refreshRowsWithCache() -> add row to collection', row); }
+        if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.refreshRowsWithCache() -> add row to collection', row); }
       }
     });
   }
@@ -1350,6 +1355,255 @@ export abstract class AbstractListComponent extends AbstractComponent implements
     }
     return -1;
   }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  scroll to selected item
+  // ---------------------------------------------------------------------------------------------------
+
+  scrollToSelectedItem(count?: number) {
+    timer(500).pipe(first()).subscribe(observer => {
+      if (this.isPickRowMode && this.selected) {
+        let list = document.querySelector('div.modal-wrapper ion-list');
+        if (!list) { list = document.querySelector(`${this.selector} ion-list`); }
+        const elements: HTMLCollectionOf<Element> = list ? list.getElementsByClassName('selected') : undefined;
+        if (elements && elements.length > 0) {
+          const selected = elements[0];
+          selected.scrollIntoView();
+
+        } else {
+          // Comprobamos el número de intentos.
+          if (count < 5) {
+            // Incrementamos el contador.
+            count += 1;
+            // Lo intentamos de nuevo.
+            return this.scrollToSelectedItem(count);
+          }
+        }
+      }
+    });
+
+  }
+
+  /** @hidden Después de terminar de ordenar los items de la lista, seleccionamos el elemento en modo pickRow. */
+  defaultOrderByCallback(host?: any): void {
+    if (!!host && host.isPickRowMode && host.selected && !host.scrolled) {
+      // console.log('callback order !!!!!');
+      host.scrolled = true;
+      host.scrollToSelectedItem();
+    }
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  scroll to top: fab-button
+  // ---------------------------------------------------------------------------------------------------
+
+  /**
+   * Resolvemos programáticamente todo lo que se implementa en el siguiente template:
+   * ```html
+   * <ion-header [ngClass]="{ shadow: canScrollToTop }">
+   *   ...
+   * </ion-header>
+   * <ion-content [scrollEvents]="true" (ionScroll)="scrolling($event)">
+   *   ...
+   *   <ion-fab  vertical="bottom" horizontal="center" slot="fixed" style="left: 50%;">
+   *     <ion-fab-button *ngIf="canScrollToTop" (click)="this.content.scrollToPoint(null, 0, 500)" color="dark">
+   *       <ion-icon name="arrow-up" style="font-size: 20px;"></ion-icon>
+   *     </ion-fab-button>
+   *   </ion-fab>
+   * </ion-content>
+   * ```
+   */
+  protected scrollingInitialize() {
+    if (this.content) {
+      // Activamos la escuha de eventos de scroll (viene desactivado por defecto por motivos de rendimiento).
+      this.content.scrollEvents = true;
+      // Monitorizamos el scroll del `IonContent`.
+      this.subscriptions.push(this.content.ionScroll.subscribe((ev: CustomEvent<any>) => this.scrolling(ev)));
+      // Referenciamos el elemento HTML subyacente.
+      const content = (this.content as any).el as HTMLElement;
+      // Insertamos al final del contenido el `ion-fab-button` para hacer scroll to top.
+      const allowFabButton = !!this.model.list?.scrollToTop?.allowFabButton;
+      if (allowFabButton && !this.scrollToTopFabButton) {
+        this.scrollToTopFabButtonClickListener = (ev: MouseEvent): any => this.content.scrollToPoint(null, 0, 500);
+        const button = this.render.createElement('ion-fab-button');
+        this.render.setAttribute(button, 'color', 'dark');
+        button.addEventListener('click', this.scrollToTopFabButtonClickListener);
+        button.innerHTML = `<ion-icon name="arrow-up" style="font-size: 20px;"></ion-icon>`;
+        this.scrollToTopFabButton = button;
+        const fab = this.render.createElement('ion-fab');
+        this.render.setAttribute(fab, 'vertical', 'bottom');
+        this.render.setAttribute(fab, 'horizontal', 'center');
+        this.render.setAttribute(fab, 'slot', 'fixed');
+        this.render.setStyle(fab, 'left', '50%');
+        this.render.setStyle(fab, 'opacity', '0.9');
+        this.render.appendChild(fab, button);
+        this.render.appendChild(content, fab);
+        // this.scrollToTopFabButtonClickListener = (ev: MouseEvent): any => this.content.scrollToPoint(null, 0, 500);
+        // const button = document.createElement('ion-fab-button');
+        // button.setAttribute('color', 'dark');
+        // button.addEventListener('click', this.scrollToTopFabButtonClickListener);
+        // button.innerHTML = `<ion-icon name="arrow-up" style="font-size: 20px;"></ion-icon>`;
+        // this.scrollToTopFabButton = button;
+        // const fab = document.createElement('ion-fab');
+        // fab.setAttribute('vertical', 'bottom');
+        // fab.setAttribute('horizontal', 'center');
+        // fab.setAttribute('slot', 'fixed');
+        // fab.style.setProperty('left', '50%');
+        // fab.style.setProperty('opacity', '0.9');
+        // fab.appendChild(button);
+        // content.appendChild(fab);
+        // Añadimos un padding al final de la lista para que el fab-button no oculte las últimas filas.
+        const list = content.parentElement.querySelector('ion-content > ion-list:last-of-type') as HTMLElement;
+        if (list) { list.style.paddingBottom = '100px'; }
+      }
+      // Actualizamos la interfaz según el la posición actual del scroll.
+      this.toogleShadowCssClassToHeader();
+    }
+  }
+
+  /** Responde al scroll del `IonContent`. */
+  protected scrolling(ev: CustomEvent<any>) {
+    // if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.scrolling()', ev); }
+    // Recordamos el estado anterior.
+    const oldValue = this.canScrollToTop;
+    // Establecemos el nuevo estado en función de la posición del scroll.
+    this.canScrollToTop = ev?.detail?.scrollTop > 0 || false;
+    // Si el estado ha cambiado, permutamos la clase css en el header.
+    if (oldValue !== this.canScrollToTop) { this.toogleShadowCssClassToHeader(); }
+  }
+
+  /** Comprueba si hay que añadir o quitar la clase `shadow` del `ion-header` en función de la posición del scroll. */
+  protected toogleShadowCssClassToHeader(ev?: CustomEvent<any>) {
+    // if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.toogleShadowCssClassToHeader()', ev); }
+    const header = this.header?.nativeElement;
+    if (header) {
+      const cssClass = this.model?.list?.scrollToTop?.headerCssClass || 'shadow';
+      const contains = header.classList.contains(cssClass);
+      if (this.canScrollToTop) {
+        if (!contains) { header.classList.add(cssClass); }
+      } else {
+        if (contains) { header.classList.remove(cssClass); }
+      }
+    }
+    const fab = this.scrollToTopFabButton;
+    if (fab) { fab.style.setProperty('display', this.canScrollToTop ? 'block' : 'none'); }
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  print
+  // ---------------------------------------------------------------------------------------------------
+
+  print(item: any): void {
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.print()', item); }
+
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  list settings
+  // ---------------------------------------------------------------------------------------------------
+
+  /** Sobrescribir en la clase heredada para cmabiar la clave del storage. @category ListSettings */
+  get settingsStorageKey(): string { return `${this.model.name.plural}ListSettings`; }
+
+  /** Inicializa la configuración del componente, */
+  initializeListSettings(): void {
+    const key = this.settingsStorageKey;
+
+    // A través de `get` dispondremos de una versión continuamente actualizada.
+    this.userSettings.get(key).then(behavior => this.subscriptions.push(behavior.subscribe(settings => {
+      if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.initializeListSettings() -> userSettings.get() => ', settings); }
+      // storage -> settings
+      this.settings = settings || this.service.defaultListSettings(key);
+      // settings -> schema
+      this.updateListSchema();
+    })));
+    // menu -> action
+    this.subscriptions.push(this.service.listSettingsAction.subscribe(event => this.listSettingsAction(event)));
+  }
+
+  /** Actualizamos el modelo y guardamos la configuración en el storage. @category ListSettings */
+  saveListSettings(): void {
+    if (this.settings) {
+      if (this.settings.search) { this.settings.search.current = 'cache'; }
+      // settings -> schema
+      this.updateListSchema();
+      // settings -> storage
+      this.userSettings.set(this.settingsStorageKey, this.settings);
+    }
+  }
+
+  /** Restaura la configuración a su valor por defecto. */
+  restartSettings(): void {
+    const key = this.settingsStorageKey;
+    this.settings = this.service.defaultListSettings(key);
+  }
+
+  /** Actualiza el modelo con la configuración del componente de listado. @category ListSettings */
+  updateListSchema(): void {
+    if (this.settings) {
+      const list = this.model.list;
+      // Establecemos las settings actuales en el modelo.
+      if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.updateListSchema() -> settings => ', this.settings); }
+      if (this.settings.search?.filter) {
+        const { pipe, itemsPerPage, ...filter } = this.settings.search?.filter;
+        const fields = pipe.filter(f => f.value).map(f => f.fields).join(',');
+        if (list.filter) {
+          const complex = list.filter as FilterTypeComplex;
+          deepAssign(complex, filter);
+          complex.pipe = fields;
+        }
+        list.itemsPerPage = itemsPerPage;
+      }
+      if (this.settings.group) {
+        const group = this.settings.group.current ? this.settings.group.values.find(g => g.name === this.settings.group.current) : undefined;
+        if (list.groupBy) {
+          const complex = list.groupBy as GroupByTypeComplex;
+          complex.property = group ? group.fields : undefined;
+        }
+      }
+      if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.updateListSchema() -> this.list => ', list); }
+    }
+  }
+
+  /** Atendemos las acciones ordenadas desde el menu. */
+  listSettingsAction(event: { action: ListSettingsActionEvent, data?: any }): void {
+    if (this.debug) { console.log('AbstractListComponent:' + this.constructor.name + '.listSettingsAction(event) => ', event); }
+    switch (event.action) {
+      case 'find': this.find(event.data); break;
+      case 'advancedSearch': this.showAdvancedSearch(); break;
+      case 'groupBy': this.groupBy(event.data); break;
+      case 'restartSettings': this.restartSettings(); break;
+      case 'print': this.print(event.data); break;
+      default: if (this.debug) { console.warn(this.constructor.name + `.listSettingsAction() -> not implemented action '${event.action}'.`, event); }
+    }
+  }
+
+  /** Template short for current view list settings. */
+  get viewSettings(): any { return this.settings?.view.values.find(v => v.name === this.settings.view.current); }
+  /** Template short for current group list settings. */
+  get groupSettings(): any { return this.settings?.group.values.find(v => v.name === this.settings.group.current); }
+  /** Template short for current search list settings. */
+  get searchSettings(): any { return this.settings?.search.values.find(v => v.name === this.settings.search.current); }
+
+  /** Transmite la configuración actual del componente de lista a los text-colorized del template.
+   * ```html
+   * <text-colorized [options]="textColorizedOptions">
+   * ```
+   * @category ListSettings
+   */
+  get textColorizedOptions(): { ignoreCase?: boolean, splitWords?: boolean; } {
+    const filter = this.settings?.search?.filter;
+    if (!filter) { return {}; }
+    return {
+      ignoreCase: filter?.ignoreCase,
+      splitWords: filter?.splitPipeWords,
+    };
+  }
+
 
 
   // ---------------------------------------------------------------------------------------------------

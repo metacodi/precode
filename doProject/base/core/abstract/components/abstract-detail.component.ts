@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import { AppConfig } from 'src/core/app-config';
-import { ApiEntity } from 'src/core/api';
+import { ApiEntity, ApiSearchClauses } from 'src/core/api';
 import { ThemeService, deepAssign } from 'src/core/util';
 
 import { EntityDetailSchema, EntitySchema, RowHookFunction } from '../model/entity-schema';
@@ -72,9 +72,6 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
   /** Suscriptor para monitorizar los cambios en el formulario y transmitirlos a la fila. */
   formChangesSubscription: Subscription = undefined;
 
-  /** Informa a la ficha de detalle que debe recargarse. Lo hace de forma nerviosa sin atender a posibles cambios. */
-  refreshDetailSubscription: Subscription = undefined;
-
 
   // ---------------------------------------------------------------------------------------------------
   //  Exposing model for template
@@ -107,6 +104,11 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
     this.nav = this.injector.get<NavController>(NavController);
     this.modal = this.injector.get<ModalController>(ModalController);
     this.theme = this.injector.get<ThemeService>(ThemeService);
+
+    if (this.route.snapshot.data.schema) {
+      this.schema = this.route.snapshot.data.schema;
+      this.model = new EntityModel(this.schema, this.translate);
+    }
   }
 
 
@@ -127,26 +129,23 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
     if (this.frm instanceof FormGroup) { this.createFormControlGetters(this.frm); }
     // Establecemos una clave por defecto.
     if (!this.queryKey) { this.queryKey = this.model.name.plural; }
+    // Nos suscribimos para recibir órdenes externas.
+    this.subscriptions.push(this.service.refreshDetail.subscribe(idreg => this.refreshRow(idreg)));
     // Nos aseguramos de que existe una consulta administrada en el servicio para la entidad del modelo.
     this.query = this.service.registerQuery(this.model, this.queryKey);
-    // Nos suscribimos para recibir órdenes externas.
-    this.refreshDetailSubscription = this.service.refreshDetail.subscribe(idreg => this.refreshRow(idreg));
 
     // Cargamos la fila.
-    this.getRow();
-
+    this.getRow().catch(error => this.showAlert({ message: error.message }).finally(() => this.nav.pop()));
   }
 
   /** @category Lifecycle */
   ngOnDestroy(): void {
-    super.ngOnDestroy();
     if (this.debug) { console.log('AbstractDetailComponent:' + this.constructor.name + '.ngOnDestroy()'); }
     // Eliminamos las suscripciones.
     if (this.formChangesSubscription) { this.formChangesSubscription.unsubscribe(); }
-    // Eliminamos las suscripciones.
-    if (this.refreshDetailSubscription) { this.refreshDetailSubscription.unsubscribe(); }
     // Desactivamos el modo y notificamos que no se ha creado la fila.
     if (this.isPickRowMode) { this.isPickRowMode = false; AbstractModelService.pickRowNotify.next(); }
+    super.ngOnDestroy();
   }
 
 
@@ -193,7 +192,7 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
     if (!this.row || !idreg) { return; }
     // Comprobamos que la orden de refresco es para esta fila.
     if (this.row[this.primaryKey] === idreg) {
-      this.getRow();
+      this.getRow().catch(error => this.showAlert({ message: error.message }));
     }
   }
 
@@ -366,9 +365,11 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
         this.service.saveRow(this.query, row, { host: this }).pipe(first()).subscribe(savedRow => {
           if (this.debug) { console.log('AbstractDetailComponent:' + this.constructor.name + ' -> resolve(savedRow)', savedRow); }
           if (typeof savedRow === 'number') {
+            /** @deprecated No se espera que se devuelva el identificador sino la fila entera. */
             // Establecemos el identificador de registro.
             this.row[this.primaryKey] = savedRow;
             if (this.frm instanceof FormGroup) { this.frm.patchValue({ [this.primaryKey]: this.row[this.primaryKey] }, { emitEvent: false }); }
+            if (this.frm instanceof FormGroup) { this.frm.markAsPristine(); }
             // Devolvemos la fila y navegamos, si procede.
             resolve(savedRow);
             if (this.isPickRowMode) { this.isPickRowMode = false; AbstractModelService.pickRowNotify.next({ model: this.model, row: savedRow }); }
@@ -380,6 +381,7 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
               // Establecemos la fila entera.
               this.row = mapped;
               if (this.frm instanceof FormGroup) { this.frm.patchValue(this.detail.flatRow ? this.groupRowByForm(this.row, this.frm) : this.row, { emitEvent: false }); }
+              if (this.frm instanceof FormGroup) { this.frm.markAsPristine(); }
               // Devolvemos la fila y navegamos, si procede.
               resolve(mapped);
               if (this.isPickRowMode) { this.isPickRowMode = false; AbstractModelService.pickRowNotify.next({ model: this.model, row: mapped }); }
@@ -395,7 +397,7 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
   deleteRow(): Promise<boolean> {
     return new Promise<any>((resolve, reject) => {
       if (this.isNew) {
-        resolve();
+        resolve(true);
         this.nav.pop();
 
       } else {
@@ -451,16 +453,22 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
     foreignProp?: string,
     parentKey?: string,
     parentDisplay?: string | RowHookFunction,
-    onDismiss?: (host: any, data: any) => {},
+    onDismiss?: (host: AbstractDetailComponent, data: any) => {},
+    /** Transmite un filtro a la consulta realizada por el componente. */
+    filter?: ApiSearchClauses,
+    /** Parámetros adicionales. Si posteriomente hay que navegar se transmiten a queryParams. */
+    params?: { [key: string]: any };
+    /** Indica si se podrán crear nuevas filas durante el modo picRow. Por defecto es `false`. */
+    canCreate?: boolean;
   }): void {
     if (this.debug) { console.log('AbstractDetailComponent:' + this.constructor.name + '.selectForeign(schema, listComponent, options) => ', { schema, options }); }
     // Comprobamos las opciones.
     if (!options) { options = {}; }
     // Obtenemos el modelo.
-    const parent: EntitySchema | EntityModel = schema;
+    const parent: EntityModel = schema instanceof EntityModel ? schema : new EntityModel(schema, this.translate);
 
     // Obtenemos la info foránea.
-    const foreign = this.resolveForeignInfo(parent, options.foreignKey);
+    const foreign = EntityModel.resolveForeignKey(this.model.detail.foreign , parent, options.foreignKey);
     if (!foreign) { throw new Error(`No se ha podido obtener la información foránea para la entidad '${parent}'.`); }
     if (this.debug) { console.log('this.resolveForeignInfo(parent) => ', foreign); }
 
@@ -475,18 +483,19 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
     const selected: any = this.frm.value[foreignKey];
     if (this.debug) { console.log('AbstractDetailComponent:' + this.constructor.name + ' -> ', { selected, schema, parent }); }
 
+    const component = listComponent || parent.list.componentUrl;
+    const filter = options.filter;
+    const params = options.params;
+    const canCreate = options.canCreate;
     // Abrimos el componente de lista como un modal para seleccionar la fila padre.
-    this.service.pickRow({
-      component: listComponent || parent.list.componentUrl,
-      initialize: { selected },
-    }).then(row => {
+    this.service.pickRow({ component, selected, filter, canCreate, params }).then(row => {
       // Comprobamos si se ha suministrado una función para el callback del modal.
       let onDismiss = options.onDismiss;
       if (!onDismiss) {
         // Se requiere el modelo para suministrar una función propia.
         if (!parent) { throw new Error('Se requiere el modelo de la entidad para crear una función propia (onDismiss) que se usará como callback durante la finalización del modal.'); }
         // Si no se ha suministrado ninguna la declaramos ahora.
-        onDismiss = (host: any, data: any): any => {
+        onDismiss = (host: AbstractDetailComponent, data: any): any => {
           if (this.debug) { console.log('onDismiss() => ', data); }
           if (!data) { return; }
           // Obtenemos el valor de la descripción para la clave foránea.
@@ -522,40 +531,6 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
     });
   }
 
-  /** Resuelve la información para la clave foránea */
-  protected resolveForeignInfo(schema: EntitySchema | EntityModel, foreignKey?: any): null | { foreignKey: string, foreignProp: string, entity: ApiEntity, model: EntityModel, parentKey: string, parentDisplay: string | RowHookFunction } {
-    // Extraemos la info del esquema.
-    if (this.model.detail.foreign) {
-      // Ej: foreign: { idorigen: { 'poblacion->origen': 'nombre,amb' }, ... }
-      const foreigns = this.model.detail.foreign;
-      // Ej: foreignKey = 'idorigen'
-      for (const key of Object.keys(foreigns)) {
-        // Ej: foreign = { 'poblacion->origen': 'nombre,amb' }
-        const foreignInfo = foreigns[key];
-        const foreignEntity = new ApiEntity(Object.keys(foreignInfo)[0]);
-        // Comprobamos si es la entidad foránea que buscamos.
-        // if (EntityName.equals(schema, foreignEntity.table.name) || EntityName.equals(schema, foreignEntity.table.aliasOrName)) {
-        if ((!!foreignKey && key === foreignKey) || (!foreignKey && (EntityName.equals(schema, foreignEntity.table.name) || EntityName.equals(schema, foreignEntity.table.aliasOrName)))) {
-          // Obtenemos el esquema de la entidad padre.
-          const parent = new EntityModel(schema, this.translate);
-          // Obtenemos la descripción de la entidad foránea.
-          let parentDisplay: string | RowHookFunction = Object.values(foreignInfo)[0] as string | RowHookFunction;
-          // Si se han indicado varias propiedades...
-          if (typeof parentDisplay === 'string' && parentDisplay.includes(',')) {
-            // Creamos un array con las propiedades
-            const props = parentDisplay.split(',').map(s => s.trim());
-            // Creamos una función que itere las propiedades de la fila foránea para obtener el resultado como un objeto.
-            parentDisplay = (row: any) => { const obj = {}; props.map(prop => obj[prop] = row[prop]); return obj; };
-          }
-          // Obtenemos el nombre de la propiedad para los datos foráneos.
-          const foreignProp = foreignEntity.table.aliasOrName;
-          // Devolvemos la info obtenida del modelo.
-          return { foreignKey: key, foreignProp, entity: foreignEntity, model: parent, parentKey: parent.primaryKey, parentDisplay };
-        }
-      }
-    }
-    return null;
-  }
 
   // ---------------------------------------------------------------------------------------------------
   //  Ionic lifecycle
@@ -582,10 +557,7 @@ export abstract class AbstractDetailComponent extends AbstractComponent implemen
     // NOTA: Este evento sucede varias veces a lo largo de la vida del componente. Para comprobar si es la primera vez que se abre el componente usamos la variable initialized.
     if (!this.initialized) {
       // Actualizamos el estado.
-      if (this.frm instanceof FormGroup) {
-        this.frm.markAsPristine();
-        if (this.debug) { console.log('AbstractDetailComponent:' + this.constructor.name + '.ionViewDidEnter() -> this.frm.markAsPristine();'); }
-      }
+      if (this.frm instanceof FormGroup) { this.frm.markAsPristine(); }
       // Comprobamos si requiere notificación.
       this.route.queryParams.pipe(first()).subscribe(params => this.isPickRowMode = params.pickRowNotify === 'true');
 

@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { LocalizationService } from 'src/core/localization';
 import { ThemeService } from 'src/core/util';
 
-import { UserService } from 'src/app/auth';
+import { UserService } from 'src/app/user';
 
 import { InfoVuelosService } from './info-vuelos.service';
 
@@ -55,7 +55,7 @@ export class InfoVuelosPage implements OnDestroy {
     public theme: ThemeService,
     public translate: TranslateService,
     public user: UserService,
-    public locale: LocalizationService,
+    public localize: LocalizationService,
   ) {
 
     if (this.service.preloadedRow) {

@@ -1,53 +1,52 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, Injector } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
+import { ModalController, PopoverController } from '@ionic/angular';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import { Subscription, Subscriber } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { Ionic4DatepickerModalComponent } from '@logisticinfotech/ionic4-datepicker';
 import * as moment from 'moment';
 
 import { AppConfig } from 'src/core/app-config';
 import { ApiService, ApiUserService, BlobService } from 'src/core/api';
 import { AuthService, AuthenticationState } from 'src/core/auth';
+import { deepAssign } from 'src/core/util';
 
-
-export interface LanguageType {
-  idreg: number;
-  active: boolean;
-  isoCode: string;
-  isoName: string;
-  langCode: string;
-  nativeName: string;
-  phpDateFormat: string;
-  phpDateTimeFormat: string;
-}
+import { AbstractBaseClass } from '../abstract/abstract-base.class';
+import { Ionic4DatepickerOptions, LanguageType, CurrencyOptions } from './localization.types';
 
 
 @Injectable({
   providedIn: 'root'
 })
-export class LocalizationService implements OnDestroy {
-
-  static currency = AppConfig.currency;
-
+export class LocalizationService extends AbstractBaseClass {
   protected debug = true && AppConfig.debugEnabled;
 
-  /** @hidden */
-  onDefaultLangChangeSubscription: Subscription;
-  /** @hidden */
-  onLangChangeSubscription: Subscription;
-  /** @hidden */
-  authenticationChangedSubscription: Subscription;
-  /** @hidden */
-  blobSubscription: Subscription;
+  /** Configuración de la moneda por defecto.
+   * ```typescript
+   * currency: {
+   *   code: 'EUR',
+   *   display: 'symbol',
+   *   digitsInfo: '1.0-2',
+   * }
+   * ```
+   */
+  currencySettings = AppConfig.currency;
+
+  /** Almacena los carácteres decimal y separador de millares para los números. */
+  protected numberSeparators: { decimal: string, group: string } = undefined;
 
   constructor(
+    public injector: Injector,
     public api: ApiService,
     public auth: AuthService,
     public user: ApiUserService,
-    public translate: TranslateService,
     public currencyPipe: CurrencyPipe,
     public blob: BlobService,
+    public modal: ModalController,
+    public popover: PopoverController,
   ) {
+    super(injector);
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
 
     // Comprobamos si existe la propiedad.
@@ -55,11 +54,13 @@ export class LocalizationService implements OnDestroy {
       throw Error(`No existe la propiedad 'i18n' en la configuración de la aplicación.`);
     }
 
-    this.onDefaultLangChangeSubscription = this.translate.onDefaultLangChange.subscribe((data: any) => {
+    // Cargamos la configuración por defecto. Cuando el usuario se haya validado el configuración se obtendrá del blob `paymentsSettings`.
+    this.currencySettings = AppConfig.currency;
+
+    this.translate.onDefaultLangChange.subscribe((data: any) => {
       if (this.debug) { console.log('translate.onDefaultLangChange', data); }
     });
-
-    this.onLangChangeSubscription = this.translate.onLangChange.subscribe((data: any) => {
+    this.translate.onLangChange.subscribe((data: any) => {
       if (this.debug) { console.log('translate.onLangChange', data); }
     });
 
@@ -68,33 +69,21 @@ export class LocalizationService implements OnDestroy {
       this.api.post('search/lang', ['active', '=', 1]).pipe(first()).subscribe(data => { AppConfig.language.available = data; });
 
       // Monitorizamos la autenticación para detectar el login.
-      this.authenticationChangedSubscription = this.auth.authenticationChanged.subscribe((state: AuthenticationState) => {
+      this.auth.authenticationChanged.subscribe((state: AuthenticationState) => {
         if (this.debug) { console.log(this.constructor.name + '.constructor() -> authenticationChanged.subscribe(AuthenticationState)', state); }
         if (state.isAuthenticated) {
-          // ---------------------------------------------------------------------------------------------------
-          // NOTA: El hecho de no obtener las traducciones del backend hasta que el usuario se haya validado
-          // implica que las cadenas de traducción para las pantallas iniciales que no requieren autenticación,
-          // como por ejemplo la página de login, deberán estar en los archivos json de traducción de la app.
-          // ---------------------------------------------------------------------------------------------------
 
           // Obtenemos las traducciones completas del backend para el idioma indicado.
           this.setTranslation(state.user.idLang);
 
           // Obtenemos la moneda.
-          this.blobSubscription = this.blob.get('paymentsSettings').subscribe(value => LocalizationService.currency = value.currency);
+          this.blob.get('paymentsSettings').then(behavior => behavior.subscribe(settings => this.currencySettings = settings?.currency));
         }
       });
     }
 
     // Establecemos el idioma por defecto al iniciar.
     this.setDefaultLanguage();
-  }
-
-  ngOnDestroy() {
-    if (this.onLangChangeSubscription) { this.onLangChangeSubscription.unsubscribe(); }
-    if (this.onDefaultLangChangeSubscription) { this.onDefaultLangChangeSubscription.unsubscribe(); }
-    if (this.authenticationChangedSubscription) { this.authenticationChangedSubscription.unsubscribe(); }
-    if (this.blobSubscription) { this.blobSubscription.unsubscribe(); }
   }
 
 
@@ -133,15 +122,63 @@ export class LocalizationService implements OnDestroy {
 
   /** Obtiene la definición del idioma indicado. */
   getLanguage(value: number | string): LanguageType {
+    const available = AppConfig.language.available as LanguageType[];
     if (typeof value === 'number') {
-      const language = AppConfig.language.available.find(l => +l.idreg === +value);
+      const language = available.find(l => +l.idreg === +value);
       if (language) { return language; }
     }
     if (typeof value === 'string') {
-      const language = AppConfig.language.available.find(l => l.isoCode === value);
+      const language = available.find(l => l.isoCode === value);
       if (language) { return language; }
     }
     throw new Error(`No se ha podido obtener la definición del idioma indicado: ${value}`);
+  }
+
+  // ---------------------------------------------------------------------------------------------------
+  //  dateTimePicker
+  // ---------------------------------------------------------------------------------------------------
+
+  /** Muestra un Datepicker modal para la selección de una fecha y devuelve el resultado.
+   * - Repo: <https://github.com/logisticinfotech/ionic4-datepicker>
+   * - Web: <https://www.logisticinfotech.com/blog/ionic4-datepicker-component/>
+   */
+  async openDatePicker(ev: any, options?: Ionic4DatepickerOptions): Promise<any> {
+    if (!options) { options = {}; }
+    const selectedDate = options.selectedDate; delete options.selectedDate;
+    const componentType = options.componentType || 'modal'; delete options.componentType;
+    return new Promise<any>((resolve: any, reject: any) => {
+      this.user.get().subscribe(async user => {
+        const lang = this.getLanguage(user.idLang);
+        // Obtenemos una configuración localizada para el usuario actual.
+        const objConfig = deepAssign(this.defaultDatepickerOptions(lang), options);
+        // const picker = await this.modal.create({
+        const picker = await this[componentType].create({
+          event: ev,
+          component: Ionic4DatepickerModalComponent,
+          // cssClass: 'li-ionic4-datePicker',
+          componentProps: { objConfig, selectedDate },
+        });
+        picker.onDidDismiss().then((response) => {
+          if (this.debug) { console.log(this.constructor.name + '.openDatePicker().onDismiss()', response.data.date); }
+          resolve(response.data.date);
+        }).catch(error => reject(error));
+        await picker.present();
+      });
+    });
+  }
+
+  /** Obtiene la configuración por defecto localizada del componente Datepicker. */
+  defaultDatepickerOptions(lang: LanguageType): Ionic4DatepickerOptions {
+    return {
+      momentLocale: lang.langCode,
+      clearButton: false,
+      monthsList: this.translate.instant('localization.datepicker.monthShortNames').split(','),
+      weeksList: this.translate.instant('localization.datepicker.weeksList').split(','),
+      dateFormat: this.translate.instant('localization.datepicker.dateFormat'),
+      btnProperties: {
+        expand: 'block',
+      },
+    };
   }
 
 
@@ -292,7 +329,14 @@ export class LocalizationService implements OnDestroy {
   /**
    * Presenta una cantidad en formato moneda utilizando el pip `CurrencyPipe` de `@angular/common`.
    *
+   * ```html
+   * <p>{{ row.total | localize:'currency':{digitsInfo: '1.0-2'} }}</p>
+   * ```
+   *
    * @param value The number to be formatted as currency.
+   * ```typescript
+   * CurrencyOptions: { currencyCode?: string, display?: string | boolean, digitsInfo?: string, locale?: string }
+   * ```
    * @param currencyCode The {@link https://en.wikipedia.org/wiki/ISO_4217 ISO 4217} currency code,
    * such as `EUR` for the euro and `USD` for the US dollar. The default currency code can be
    * configured using the `DEFAULT_CURRENCY_CODE` injection token.
@@ -319,15 +363,45 @@ export class LocalizationService implements OnDestroy {
    * When not supplied, uses the value of `LOCALE_ID`, which is `en-US` by default.
    * @see {@link guide/i18n#setting-up-the-locale-of-your-app Setting your app locale}.
    */
-  currency(value: any, options?: { currencyCode?: string, display?: string | boolean, digitsInfo?: string, locale?: string }): string {
-    if (value === undefined || value === null) { return ''; }
-    const currency = LocalizationService.currency;
+  currency(value: any, options?: CurrencyOptions): string {
+    const currency = this.currencySettings;
+    if (value === undefined || value === null || !currency) { return ''; }
     if (!options) { options = {}; }
     if (options.currencyCode === undefined) { options.currencyCode = currency.code; }
     if (options.display === undefined) { options.display = currency.display; }
     if (options.digitsInfo === undefined) { options.digitsInfo = currency.digitsInfo; }
     if (options.locale === undefined) { options.locale = this.getLanguage(this.user.instant?.idLang || AppConfig.language.default.idreg).isoCode; }
     return this.currencyPipe.transform(value, options.currencyCode, options.display, options.digitsInfo, options.locale);
+  }
+
+  /** Devuelve el separador decimal para los números. */
+  get decimalSep(): string { return this.numberSeparators ? this.numberSeparators.decimal : this.discoverNumberSeparators().decimal; }
+  /** Devuelve el separador millares para los números. */
+  get groupSep(): string { return this.numberSeparators ? this.numberSeparators.group : this.discoverNumberSeparators().group; }
+  /** Indica si el separador decimal corresponde al sistema anglosajón. */
+  get isAngloSaxonNumericSystem(): boolean { return this.decimalSep === '.'; }
+  /** Obtiene los carácteres decimal y separador de millares para los números. */
+  protected discoverNumberSeparators() {
+    const decimalSep = (0.5).toLocaleString().replace('0', '').replace('5', '');
+    this.numberSeparators = { decimal: decimalSep, group: decimalSep === ',' ? '.' : ',' };
+    return this.numberSeparators;
+  }
+
+  /** Controlamos la escritura de números por parte del usuario para localizar el separador decimal correctamente según el idioma. */
+  numberInput(event: KeyboardEvent) {
+    // NOTA: en este evento, obtenemos el caracter escrito cuando el valor ya está en el control nativo (view), pero no se ha enviado todavía al modelo.
+    if (this.debug) { console.log(this.constructor.name + '.onIonInput()', event); }
+    // Si estamos usando el sistema anglosajón...
+    if (this.isAngloSaxonNumericSystem) { return; }
+    // Obtenemos la tecla pulsada.
+    const char = (event as any).detail.data;
+    // Remplazamos el separador de millares por el decimal.
+    if (char === ',') {
+      // Referenciamos el elemento para obtener su valor.
+      const el: any = event.target;
+      // Si ya existía el separadaor decimal, lo remplazamos por un caracter en blanco.
+      el.value = el.value.toString().split(',').join('.');
+    }
   }
 
 }

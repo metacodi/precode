@@ -154,5 +154,7 @@ export class DevicePlugin {
   get isRealPhone(): boolean { return !this.isVirtual && (this.info?.platform === 'ios' || this.info?.platform === 'android'); }
   /** Devuelve la versión de la aplicación. */
   get appBuild(): string { return this.info?.appBuild; }
+  /** Devuelve la Id de la aplicación. */
+  get appId(): string { return this.info?.appId; }
 
 }

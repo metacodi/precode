@@ -20,7 +20,7 @@
   <ion-item>
     <ion-icon name="people-circle" slot="start"></ion-icon>
     <ion-label>{{role?.name}}</ion-label>
-    <ion-icon (click)="toggleExpandedAll(!expandedAll)" [name]="expandedAll ? 'chevron-up' : 'chevron-down'" size="small" slot="end"></ion-icon>
+    <chevron-up-down (click)="toggleExpandedAll(!expandedAll)" [expanded]="expandedAll" slot="end"></chevron-up-down>
   </ion-item>
   
   <ion-progress-bar *ngIf="loading" type="indeterminate"></ion-progress-bar>
@@ -30,16 +30,17 @@
 
   <ng-template #permissionNode let-permission>
     
-    <ion-item button [ngStyle]="{ 'padding-left': (permission.level * 22) + 'px'}" detail="false">
-      <ion-icon slot="start"
+    <ion-item button [ngStyle]="{ 'padding-left': (permission.level * 22) + 'px'}" detail="false" [expanded]="allParentsExpanded(permission)" [expandedHeight]="50">
+      <chevron-forward-down slot="start" size="large"
         (click)="toggleExpanded(permission)"
-        [name]="permission.children?.length ? (permission.expanded ? 'chevron-down' : 'chevron-forward') : ''" 
-      ></ion-icon>
+        [ngStyle]="{'visibility': permission.children?.length ? 'visible' : 'hidden'}"
+        [expanded]="permission.expanded"
+      ></chevron-forward-down>
       <ion-icon *ngIf="!permission.isFolder" slot="start"
         (click)="toggleSelected(permission)"
         [src]="selectedIcon(permission)"
       ></ion-icon>
-      <ion-label (click)="toggleSelected(permission)" class="ion-text-wrap">
+      <ion-label (click)="!permission.isFolder ? toggleSelected(permission) : (!permission.expanded ? toggleExpanded(permission) : toggleSelected(permission))" class="ion-text-wrap">
         <ion-icon *ngIf="permission.icon" slot="start"
           [name]="permission.icon"
           [src]="permission.icon"
@@ -49,7 +50,8 @@
       <!-- <ion-note>{{permission.expandedHeight}}</ion-note> -->
     </ion-item>
   
-    <ion-list *ngIf="permission?.children?.length && permission.expanded">
+    <!-- <ion-list *ngIf="permission?.children?.length && permission.expanded"> -->
+    <ion-list>
       <ng-container *ngFor="let child of permission.children">
         <ng-container *ngTemplateOutlet="permissionNode; context:{ $implicit: child }"></ng-container>
       </ng-container>

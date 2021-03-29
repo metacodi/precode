@@ -1,30 +1,123 @@
-import { Injectable } from '@angular/core';
-import { forkJoin } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { Injectable, OnDestroy, Injector } from '@angular/core';
+import { Observable, Subject, Subscriber, Subscription, using, BehaviorSubject, of } from 'rxjs';
 
 import { AppConfig } from 'src/core/app-config';
 import { StoragePlugin } from 'src/core/native';
+import { deepAssign } from 'src/core/util';
+
+import { BlobService } from './blob.service';
 
 
 export interface UserSettings {
-  idreg: number;
+  idreg?: number;
   key: string;
-  blobVersion: number;
-  userVersion: number;
+  blobVersion?: number;
+  userVersion?: number;
   value?: any;
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class UserSettingsService {
+export class UserSettingsService implements OnDestroy {
   protected debug = true && AppConfig.debugEnabled;
+
+  /**
+   * Notifica los settings recibidos desde ApiService.
+   *
+   * Esta opción se complementa con el uso de la función `get()` para mantener actualizados los settings en todo momento.
+   */
+  updated = new Subject<UserSettings>();
+
+  /** Coleccionamos los subjects para destinar uno para cada instancia diferente de settings. */
+  subjects: { [key: string]: { subject: BehaviorSubject<any>, sub: Subscription } } = {};
 
   constructor(
     public storage: StoragePlugin,
+    public blob: BlobService,
   ) {
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
   }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  get
+  // ---------------------------------------------------------------------------------------------------
+
+  /**
+   * Obtiene el valor de una configuración de usuario del storage y posteriormente de las actualizaciones notificadas a través de update.
+   *
+   * ```typescript
+   * this.userSettings.get('facturasListSettings').then(behavior => behavior.subscribe(settings => this.facturasListSettings = settings));
+   * ```
+   */
+  async get(key: string): Promise<BehaviorSubject<any>> {
+    // Buscamos si existe un observable para la clave indicada.
+    if (this.subjects[key]) {
+      if (this.debug) { console.log(this.constructor.name + `.get('${key}') existing => `, this.subjects[key]); }
+      return of(this.subjects[key].subject).toPromise();
+
+    } else {
+      // Obtenemos el valor actual del storage.
+      return this.read(key).then(value => {
+        const subject = new BehaviorSubject<any>(value);
+        (subject as any).key = key;
+        // Nos suscribimos al notificador de actualizaciones para su renvío.
+        const sub = this.updated.subscribe(blob => { if (blob.key === key) { subject.next(blob.value); } });
+        // Almacenamos el subject.
+        this.subjects[key] = { subject, sub };
+        if (this.debug) { console.log(this.constructor.name + `.get('${key}') NEW! => `, this.subjects[key]); }
+        return subject;
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.updated) { this.updated.complete(); }
+    Object.keys(this.subjects).map(key => {
+      this.subjects[key].sub.unsubscribe();
+      this.subjects[key].subject.complete();
+    });
+  }
+
+
+  // ---------------------------------------------------------------------------------------------------
+  //  set
+  // ---------------------------------------------------------------------------------------------------
+
+  /** Almacena un ajuste de usuario en el sotrage. */
+  async set(key: string, value: any): Promise<void> {
+    // Obtenemos las versiones del storage.
+    return this.versions().then(versions => {
+      if (!versions) {
+        // NOTA: Esta opción es temporal, hasta que se haya implementado una gestión de los blobs
+        // de usuario desde backend no dispondremos de los versiones de userSettings.
+        this.blob.versions().then(blobVersions => {
+          const blob = blobVersions?.find(v => v.key === key);
+          if (blob) {
+            const us: UserSettings = {
+              idreg: blob.idreg,
+              blobVersion: blob.version,
+              userVersion: 1,
+              key,
+              value,
+            };
+            return this.store([us]);
+          } else {
+            throw new Error(`No se ha encontrado la versión del blob '${key}' para userSettings.`);
+          }
+        });
+      } else {
+        const version = versions.find(v => v.key === key);
+        if (version) {
+          version.value = value;
+          version.userVersion += 1;
+          return this.store([version]);
+        }
+      }
+    });
+  }
+
 
   // ---------------------------------------------------------------------------------------------------
   //  request
@@ -74,16 +167,16 @@ export class UserSettingsService {
     return versions.map(v => (v.idreg ? `${v.idreg}` : encodeURIComponent(v.key)) + (v.blobVersion ? `:${v.blobVersion}` : '') + (v.userVersion ? `:${v.userVersion}` : '')).join(',');
   }
 
-  /** Actualiza en el storage las versiones y los ajustes de usuario recuperados. */
-  store(settings: UserSettings[]): Promise<any> {
-    return new Promise<any>((resolve: any, reject: any) => {
-      if (settings && settings.length) {
-        this.versions().then((versions: UserSettings[]) => {
+  /** Actualiza en el storage las versiones y los ajustes de usuario. */
+  store(settings: UserSettings[]): Promise<void> {
+    return new Promise<void>((resolve: any, reject: any) => {
+      if (settings?.length) {
+        this.versions().then(versions => {
           if (!versions) { versions = []; }
           const promises: Promise<any>[] = [];
-          settings.map((us: UserSettings) => {
-            const version = versions.find((v: UserSettings) => +v.idreg === +us.idreg);
+          settings.map(us => {
             // Actualizamos o añadimos la versión.
+            const version = versions.find(v => +v.idreg === +us.idreg);
             if (version) {
               version.blobVersion = us.blobVersion;
               version.userVersion = us.userVersion;
@@ -91,12 +184,12 @@ export class UserSettingsService {
               versions.push({ idreg: us.idreg, key: us.key, blobVersion: us.blobVersion, userVersion: us.userVersion } );
             }
             // Actualizamos el ajuste de usuario en el storage.
-            promises.push(this.set(us));
+            promises.push(this.write(us));
           });
           // Actualizamos las versiones en el storage.
           promises.push(this.versions(versions));
           // Resolvemos todas las promesas pendientes.
-          forkJoin(promises).pipe(first()).subscribe(() => resolve(), error => reject(error));
+          Promise.all(promises).then(() => resolve(), error => reject(error));
 
         }).catch(error => reject(error));
       }
@@ -121,11 +214,11 @@ export class UserSettingsService {
         this.versions().then((versions: UserSettings[]) => {
           if (!versions) { versions = []; }
           settings.map((us: UserSettings) => {
-            const version = versions.find((v: UserSettings) => v.idreg === us.idreg);
-            if (version) {
+            const found = versions.find((v: UserSettings) => v.idreg === us.idreg);
+            if (found) {
               // update
-              version.blobVersion = us.blobVersion;
-              version.userVersion = us.userVersion;
+              found.blobVersion = us.blobVersion;
+              found.userVersion = us.userVersion;
 
             } else {
               // add
@@ -138,32 +231,32 @@ export class UserSettingsService {
     });
   }
 
-  /** Obtiene un ajuste de usuario del sotrage a partir de su clave o su identificador. */
-  get(keyOrId: string | number): Promise<UserSettings> {
+  /** Obtiene el valor de un blob del sotrage a partir de su clave o su identificador. */
+  protected read(keyOrId: string | number): Promise<UserSettings> {
     return new Promise<UserSettings>((resolve: any, reject: any) => {
       this.resolveKey(keyOrId).then((key: string) => {
-        if (!key) { resolve(undefined); }
-        this.storage.get(this.prefix(key)).then((us: UserSettings) => resolve(us || undefined)).catch(error => reject(error));
+        if (!key) { resolve(); }
+        this.storage.get(this.prefix(key)).then((us: UserSettings) => resolve(us)).catch(error => reject(error));
 
       }).catch(error => reject(error));
     });
   }
 
-  /** Almacena un ajuste de usuario en el sotrage. */
-  set(us: UserSettings): Promise<any> {
+  /** Almacena un blob en el sotrage. */
+  protected write(us: UserSettings): Promise<any> {
     return this.storage.set(this.prefix(us.key), us.value);
   }
 
   /** Elimina las versiones del storage. */
-  clear(): Promise<any> {
+  protected clear(): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
       this.versions().then((versions: UserSettings[]) => {
         const promises: Promise<any>[] = [];
         if (versions && versions.length) {
-          versions.map((v: UserSettings) => promises.push(this.storage.remove(this.prefix(v.key))));
+          versions.map((us: UserSettings) => promises.push(this.storage.remove(this.prefix(us.key))));
         }
         promises.push(this.storage.remove(this.prefix('versions')));
-        forkJoin(promises).pipe(first()).subscribe(() => resolve(), error => reject(error));
+        Promise.all(promises).then(() => resolve(), error => reject(error));
       });
     });
   }

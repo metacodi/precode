@@ -1,0 +1,69 @@
+<ion-header>
+
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button [text]="'buttons.back' | translate"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ 'Google Maps' | translate }}</ion-title>
+  </ion-toolbar>
+
+</ion-header>
+<ion-content>
+
+  <form [formGroup]="frm" (ngSubmit)="saveRow()">
+
+    <ion-card class="detail no-shadow">
+
+      <ion-grid>
+        <ion-row>
+          <ion-col size="12"><h3>{{'usuario.opciones_maps_txt' | translate}}</h3></ion-col>
+          <ion-col size="12">
+            
+            <ion-item>
+              <ion-range min="8" max="20" formControlName="maps_zoom">
+                <ion-icon slot="start" name="search"></ion-icon>
+                <ion-icon size="small" slot="end" name="search"></ion-icon>
+              </ion-range>
+            </ion-item>
+
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12"><h3>{{'usuario.mostar_maps_txt' | translate}}</h3></ion-col>
+          <ion-col size="12">
+
+            <ion-item>
+              <ion-icon name="car-sport" slot="start"></ion-icon>
+              <ion-label>{{'usuario.maps_trafic' | translate}}</ion-label>
+              <ion-toggle formControlName="maps_trafic" slot="end"></ion-toggle>
+            </ion-item>
+      
+          </ion-col>
+          <ion-col size="12">
+            
+            <ion-item>
+              <ion-icon name="pin" slot="start"></ion-icon>
+              <ion-label>{{'usuario.maps_point' | translate}}</ion-label>
+              <ion-toggle formControlName="maps_point" slot="end"></ion-toggle>
+            </ion-item>
+
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <ion-grid class="buttons">
+        <ion-row>
+          <ion-col>
+
+           <ion-button (click)="saveRow()" [disabled]="!initialized || frm.invalid || frm.pristine" [color]="frm.valid ? 'primary' : 'secondary'" expand="block">
+              {{ 'buttons.modify' | translate | uppercase }}
+            </ion-button>
+          
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+    </ion-card>
+  </form>
+    
+</ion-content>

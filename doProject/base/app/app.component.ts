@@ -1,11 +1,11 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Platform, MenuController, AlertController, LoadingController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { KeyboardStyle } from '@capacitor/core';
 
-import { Platform, MenuController, AlertController } from '@ionic/angular';
-
-
-// Registramos los locales. Necesarios, por ejemplo, para el pipe 'currency'.
+// // Registramos los locales. Necesarios, por ejemplo, para el pipe 'currency'.
 import { registerLocaleData } from '@angular/common';
 import localeEn from '@angular/common/locales/en';
 import localeEs from '@angular/common/locales/es';
@@ -15,16 +15,19 @@ registerLocaleData(localeEs, 'es');
 registerLocaleData(localeCa, 'ca');
 
 import { AppConfig } from 'src/config';
-import { AuthenticationState, AuthService } from 'src/core/auth';
+import { AuthService } from 'src/core/auth';
 import { ApiService, BlobService } from 'src/core/api';
-import { DevicePlugin, KeyboardPlugin, StatusBarPlugin, LocalNotificationPlugin } from 'src/core/native';
+import { DevicePlugin, KeyboardPlugin, StatusBarPlugin, LocalNotificationPlugin, ElectronPlugin } from 'src/core/native';
 import { LocalizationService } from 'src/core/localization';
 import { ThemeService, ThemeScheme } from 'src/core/util';
 
-import { meta } from 'src/app/model';
+import { ALERTA_SERVICIO_CANCELADO, ALERTA_SERVICIO_RECHAZADO, ACCION_UPDATE_BLOBS } from 'src/app/model';
+
 
 import { VersionControlService } from 'src/modules/version-control';
-import { UserService } from 'src/app/auth';
+
+import { UserService } from 'src/app/user';
+import { NotificationsService, NotifiedUser } from 'src/core/notifications';
 
 
 @Component({
@@ -43,12 +46,11 @@ export class AppComponent implements OnDestroy {
 
   /** @hidden */
   blobSubscription: Subscription;
-
   /** @hidden */
-  unattendedNotificationsSubscription: Subscription;
-  unattendedNotifications = 0;
+  executeNotificationSubscription: Subscription;
 
   constructor(
+    public api: ApiService,
     public user: UserService,
     public platform: Platform,
     public statusBar: StatusBarPlugin,
@@ -60,36 +62,21 @@ export class AppComponent implements OnDestroy {
     public menu: MenuController,
     public device: DevicePlugin,
     public lang: LocalizationService,
+
     public blob: BlobService,
+
     public localNotification: LocalNotificationPlugin,
     public versionControl: VersionControlService,
+    public electron: ElectronPlugin,
+    public loadingCtrl: LoadingController,
+    public translate: TranslateService,
+    public push: NotificationsService,
   ) {
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
     this.initializeApp();
 
-    // const p = paradas.map(p => ({
-    //   id: +p._source.codi_parada.keyword,
-    //   poblacion: p._source.municipi.ca_ES,
-    //   codi_postal: p._source.codi_postal && p._source.codi_postal.keyword ? p._source.codi_postal.keyword : '',
-    //   servicio: p._source.servei && p._source.servei.ca_ES ? p._source.servei.ca_ES : '',
-    //   direccion: p._source.adreca.ca_ES,
-    //   lat: p._source.on.geo_localitzacio[0].split(',')[0],
-    //   lng: p._source.on.geo_localitzacio[0].split(',')[1]
-    // }));
-    // console.log(JSON.stringify(p));
-
-    // // Monitorizamos la autenticación.
-    // this.authenticationChangedSubscription = this.auth.authenticationChanged.subscribe((value: AuthenticationState) => {
-    //   if (value.isAuthenticated) {
-
-    //     // Si se ha autorizado se habrán recibido los blobs. Los refenciamos ahora.
-    //     this.blobSubscription = this.blob.get('metaMiPerfil').subscribe((m: any) => {
-    //       meta.miPerfil = {};
-    //       Object.assign(meta.miPerfil, m);
-    //       if (this.debug) { console.log(this.constructor.name + '.constructor -> blob.get("meta") -> meta => ', meta); }
-    //     });
-    //   }
-    // });
+    // Escuchamos las notificaciones push.
+    this.executeNotificationSubscription = this.push.executeNotificationSubject.subscribe(nu => this.executeNotification(nu));
   }
 
   initializeApp() {
@@ -99,19 +86,34 @@ export class AppComponent implements OnDestroy {
     // Inicializamos los temas de la aplicación.
     this.theme.initialize(AppConfig.themes as ThemeScheme[]);
 
+    // Inicializamos el color de fondo del teclado segun el tema.
+    if (this.theme.current?.mode === 'dark') { this.keyboard.setStyle({ style: KeyboardStyle.Dark }); }
+
 
     // Add Google Maps script to <head>
     const script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = `${AppConfig.google.maps.url}?language=${AppConfig.google.maps.lang}&key=${AppConfig.google.maps.key}`;
+    script.src = `${AppConfig.google.maps.url}?language=${AppConfig.google.maps.lang}&key=${AppConfig.google.maps.key}&libraries=geometry`;
+    script.defer = true;
     document.head.appendChild(script);
+    if (this.debug) { console.log(this.constructor.name + '.initializeApp() -> google maps script created!'); }
+
   }
 
   ngOnDestroy() {
     // if (this.authenticationChangedSubscription) { this.authenticationChangedSubscription.unsubscribe(); }
-    if (this.unattendedNotificationsSubscription) { this.unattendedNotificationsSubscription.unsubscribe(); }
     if (this.blobSubscription) { this.blobSubscription.unsubscribe(); }
+    if (this.executeNotificationSubscription) { this.executeNotificationSubscription.unsubscribe(); }
   }
+
+  // ---------------------------------------------------------------------------------------------------
+  //  notifications
+  // ---------------------------------------------------------------------------------------------------
+
+  executeNotification(nu: NotifiedUser): void {
+    if (nu.notified.action === ACCION_UPDATE_BLOBS) { this.api.forceRequestBlobs(); }
+  }
+
 
   // ---------------------------------------------------------------------------------------------------
   //  menu

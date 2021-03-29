@@ -7,6 +7,6 @@ export {
   Localize,
   NotificationType,
   Notification,
-  NotificationAction,
   Notified,
+  NotifiedUser,
 } from './notifications.types';

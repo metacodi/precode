@@ -12,7 +12,7 @@
   <ion-grid fixed>
     <ion-row>
       <ion-col>
-        <ion-searchbar #searchInput [(ngModel)]="search" debounce="500" placeholder="{{'buttons.search' | translate}}..."></ion-searchbar>
+        <ion-searchbar #searchbar [(ngModel)]="match" debounce="500" placeholder="{{'buttons.search' | translate}}..."></ion-searchbar>
       </ion-col>
     </ion-row>
   </ion-grid>
@@ -22,7 +22,7 @@
       <ion-col>
 
         <ion-toolbar class="marcar-todos">
-          <ion-buttons *ngIf="!search">
+          <ion-buttons *ngIf="!match">
             <ion-button (click)="toggleCheckAll(true)">
               <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> {{'Marcar todos' | translate}}
             </ion-button>
@@ -30,7 +30,7 @@
               <ion-icon name="radio-button-off" slot="start"></ion-icon> {{'Desmarcar todos' | translate}}
             </ion-button>
           </ion-buttons>
-          <ion-buttons *ngIf="!!search">
+          <ion-buttons *ngIf="!!match">
             <ion-button (click)="toggleCheckFiltered(true)">
               <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon> {{'Marcar filtrados' | translate}}
             </ion-button>
@@ -52,17 +52,17 @@
   <ion-list class="disable-user-behavior" [ngClass]="{ 'disable-pointer-events': multiSelect, 'list-left-editing': multiSelect }">
     <ion-grid fixed>
       <ion-row>
-        <ion-col size="12" *ngFor="let row of rows | filter:search:list.filter | orderBy:list.orderBy">
+        <ion-col size="12" *ngFor="let row of rows | filter:match:list.filter | orderBy:list.orderBy">
 
           <ion-item-sliding>
-            <ion-item button (click)="selectRow(row)" [detail]="!isPickRowMode && !row.abstract" [ngClass]="{ selected: isSelected(row)}" class="item-color">
+            <ion-item button (click)="selectRow(row)" [detail]="!isPickRowMode && !row.abstract" [ngClass]="{ selected: isSelected(row)}">
 
               <ion-icon *ngIf="preloading !== row.idreg" name="person-circle" slot="start"></ion-icon>
               <ion-spinner *ngIf="preloading === row.idreg" name="lines-small" slot="start"></ion-spinner>
               <ion-label class="ion-text-wrap">
-                <text-colorized [value]="row.name" [search]="search"></text-colorized>
+                <text-colorized [value]="row.name" [match]="match"></text-colorized>
                 <p *ngIf="row.abstract">{{'role.principal' | translate}}</p>
-                <p *ngIf="row.idParent"><text-colorized [value]="row.parents" [search]="search"></text-colorized></p>
+                <p *ngIf="row.idParent"><text-colorized [value]="row.parents" [match]="match"></text-colorized></p>
               </ion-label>
               <ion-icon *ngIf="row.abstract" name="lock-closed" slot="end" size="small"></ion-icon>
 
@@ -70,7 +70,7 @@
             </ion-item>
 
             <ion-item-options side="start">
-              <ion-item-option (click)="newRow(row.idreg)" color="success">
+              <ion-item-option (click)="selectRow('new')" color="success">
                 <ion-icon slot="icon-only" name="person-add"></ion-icon>
               </ion-item-option>
             </ion-item-options>
@@ -86,7 +86,7 @@
     </ion-grid>
   </ion-list>
 
-  <ion-infinite-scroll (ionInfinite)="refresh($event)" threshold="100px">
+  <ion-infinite-scroll (ionInfinite)="request({ event: $event })" threshold="100px">
     <ion-infinite-scroll-content loadingSpinner="circles" loadingText="{{loadingText}}"></ion-infinite-scroll-content>
   </ion-infinite-scroll>
 

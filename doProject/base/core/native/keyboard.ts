@@ -52,38 +52,38 @@ export class KeyboardPlugin implements OnDestroy  {
 
     this.device.ready().then(() => {
       // Actualizamos los teclados de los dispositivos móviles.
-      if (this.device.isRealPhone) { Keyboard.setAccessoryBarVisible({ isVisible: true }); }
+      if (this.device.isRealPhone) { Keyboard.setAccessoryBarVisible({ isVisible: false }); }
     });
   }
 
   ngOnDestroy(): void {
     this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { Keyboard.removeAllListeners(); }
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { Keyboard.removeAllListeners(); }
     });
   }
 
 
-  addListenerWillShow(callback: (info: KeyboardInfo) => void): PluginListenerHandle | Promise<void> {
+  async addListenerWillShow(callback: (info: KeyboardInfo) => void): Promise<PluginListenerHandle> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.addListener('keyboardWillShow', callback); }
+      if (!this.device.isRealPhone) { return { remove: () => {} }; } else { return Keyboard.addListener('keyboardWillShow', callback); }
     });
   }
 
-  addListenerDidShow(callback: (info: KeyboardInfo) => void): PluginListenerHandle | Promise<void> {
+  async addListenerDidShow(callback: (info: KeyboardInfo) => void): Promise<PluginListenerHandle> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.addListener('keyboardDidShow', callback); }
+      if (!this.device.isRealPhone) { return { remove: () => {} }; } else { return Keyboard.addListener('keyboardDidShow', callback); }
     });
   }
 
-  addListenerWillHide(callback: () => void): PluginListenerHandle | Promise<void> {
+  async addListenerWillHide(callback: () => void): Promise<PluginListenerHandle> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.addListener('keyboardWillHide', callback); }
+      if (!this.device.isRealPhone) { return { remove: () => {} }; } else { return Keyboard.addListener('keyboardWillHide', callback); }
     });
   }
 
-  addListenerDidHide(callback: () => void): PluginListenerHandle | Promise<void> {
+  async addListenerDidHide(callback: () => void): Promise<PluginListenerHandle> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.addListener('keyboardDidHide', callback); }
+      if (!this.device.isRealPhone) { return { remove: () => {} }; } else { return Keyboard.addListener('keyboardDidHide', callback); }
     });
   }
 
@@ -91,42 +91,42 @@ export class KeyboardPlugin implements OnDestroy  {
   /** Set whether the accessory bar should be visible on the keyboard. We recommend disabling the accessory bar for short forms (login, signup, etc.) to provide a cleaner UI */
   async setAccessoryBarVisible(options: { isVisible: boolean }): Promise<void> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.setAccessoryBarVisible(options); }
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return Keyboard.setAccessoryBarVisible(options); }
     });
   }
 
   /** Programmatically set the keyboard style. */
   async setStyle(options: KeyboardStyleOptions): Promise<void> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.setStyle(options); }
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return Keyboard.setStyle(options); }
     });
   }
 
   /** Programmatically set the resize mode. */
   async setResizeMode(options: KeyboardResizeOptions): Promise<void> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.setResizeMode(options); }
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return Keyboard.setResizeMode(options); }
     });
   }
 
   /** Programmatically enable or disable the WebView scroll. */
   async setScroll(options: { isDisabled: boolean }): Promise<void> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.setScroll(options); }
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return Keyboard.setScroll(options); }
     });
   }
 
   /** Show the keyboard. */
   async show(): Promise<void> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.show(); }
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return Keyboard.show(); }
     });
   }
 
   /** Hide the keyboard. */
   async hide(): Promise<void> {
     return this.device.getInfo().then(value => {
-      if (value.platform === 'web') { return of(undefined).toPromise(); } else { return Keyboard.hide(); }
+      if (!this.device.isRealPhone) { return of(undefined).toPromise(); } else { return Keyboard.hide(); }
     });
   }
 

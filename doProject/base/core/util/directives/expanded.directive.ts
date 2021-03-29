@@ -6,7 +6,7 @@ import { isBreakpoint } from '../functions';
 /** Add or remove 'expanded' and 'collapsed' classes to element. */
 @Directive({
   // tslint:disable-next-line: directive-selector
-  selector: '[expanded], [expandedSm], [expandedMd], [expandedLg], [expandedXl], [expandedHeight]'
+  selector: ':not(chevron-up-down):not(chevron-forward-down):not(expand-button)[expanded], :not(expand-button)[expandedSm], :not(expand-button)[expandedMd], :not(expand-button)[expandedLg], :not(expand-button)[expandedXl], :not(expand-button)[expandedHeight]'
 })
 export class ExpandedDirective implements AfterViewChecked {
   private condition: boolean;
@@ -23,8 +23,15 @@ export class ExpandedDirective implements AfterViewChecked {
   }
 
   @Input() set expandedHeight(height: number) {
-    this.height = height;
+    // Eliminamos la clase anterior.
+    if (this.height) { this.el.nativeElement.classList.remove(`expanded-${this.height}`); }
+    // Normalizamos la altura para que coincida con el de alguna clase `expanded-n`
+    this.height = this.normalizeHeight(height);
     this.checkBreakpoint();
+  }
+
+  protected normalizeHeight(height: number): number {
+    return Math.min(1000, Math.ceil(height / 100) * 100);
   }
 
   @Input() set expandedSm(condition: boolean) {
@@ -67,6 +74,7 @@ export class ExpandedDirective implements AfterViewChecked {
         list.remove('collapsed');
       } else {
         list.add('collapsed');
+        list.remove(`expanded`);
         list.remove(`${expanded}`);
       }
     }

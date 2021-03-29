@@ -29,7 +29,7 @@ export type RowHookFunction = RowHookSyncFunction | RowHookAsyncFunction;
  *
  * **Usage**
  * ```html
- * <ion-item button *ngFor="let row of rows | filter:search:list.filter">
+ * <ion-item button *ngFor="let row of rows | filter:match:list.filter">
  * ```
  *
  * ```typescript
@@ -53,7 +53,7 @@ export type FilterType = string | string[] | FilterTypeComplex;
 
 /**
  * Estructura de datos para definir un filtro que se aplica sobre los resultados del front-end y que es compatible con la clase _FilterPipe_ al mismo tiempo que
- * también permite definir un filtro para el _backend_ usado en combinación con el componente _AbstractSearchComponent_.
+ * permite definir un filtro para el _backend_. También permite definir el modelo del formulario para el componente _AbstractSearchComponent_.
  *
  * #### PreFiltro para el _front-end_
  *
@@ -87,7 +87,7 @@ export type FilterType = string | string[] | FilterTypeComplex;
  *    ```
  *    Aplicando el filtro a través de la clase `FilterPipe`.
  *    ```html
- *    <ion-item button *ngFor="let row of rows | filter:search:list.filter">
+ *    <ion-item button *ngFor="let row of rows | filter:match:list.filter">
  *    ```
  *    Estableciendo la propiedad `pipeToBackend` a `true` las búsquedas del usuario se transforman en consultas hacia el backend.
  *    ```typescript
@@ -96,7 +96,7 @@ export type FilterType = string | string[] | FilterTypeComplex;
  *      pipe: 'numero, emision, cliente(nombre, nif)',
  *    },
  *    ```
- *    El componente combina las cláusulas con el filtro original de la propiedad `search` del modelo y llama a `refresh()` automáticamente.
+ *    El componente combina las cláusulas con el filtro original de la propiedad `search` del modelo y llama a `request()` automáticamente.
  *    ```typescript
  *    { OR: [
  *      ['numero', 'LIKE', '%Joe%'],
@@ -110,10 +110,10 @@ export type FilterType = string | string[] | FilterTypeComplex;
  * 2. Consultar al usuario a través de un formulario.
  *
  *    ```html
- *    <ion-button (click)="showFilter()">
+ *    <ion-button (click)="showAdvancedSearch()">
  *    ```
- *    El componente utiliza la función {@link AbstractListComponent.parseFilter parseFilter}() que combina las cláusulas del formulario de búsqueda con las del filtro original del modelo y llama a `refresh()` automáticamente.
- *    Para manejar formularios complejos se puede sobrescribir la función `parseFilter()` en la clase heredada de {@link AbstractListComponent}.
+ *    El componente utiliza la función {@link AbstractListComponent.parseAdvancedSearch parseAdvancedSearch}() que combina las cláusulas del formulario de búsqueda con las del filtro original del modelo y llama a `request()` automáticamente.
+ *    Para manejar formularios complejos se puede sobrescribir la función `parseAdvancedSearch()` en la clase heredada de {@link AbstractListComponent}.
  *    ```typescript
  *    filter: {
  *      component: 'ServiciosSearchComponent',
@@ -276,7 +276,7 @@ export interface FilterTypeComplex {
    * ```typescript
    * onInit = (host: any): any => {
    *   // Se inicializa la propiedad 'filter' del componente de búsqueda con la del host.
-   *   return { filter: host.filter };
+   *   return { advancedSearch: host.advancedSearch };
    * };
    * ```
    * @category Filter
@@ -291,22 +291,22 @@ export interface FilterTypeComplex {
    * ```typescript
    * onDismiss = (host: any, data: any): void => {
    *   // Recordamos el filtro actual para la próxima vez.
-   *   host.filter = data;
+   *   host.advancedSearch = data;
    *   // Declaramos una función search para transferir el filtro a la consulta.
-   *   host.model.list.search = (h: any): ApiSearchClauses => h.parseFilter();
+   *   host.model.list.search = (h: any): ApiSearchClauses => h.parseAdvancedSearch();
    *   // Limpiamos la caché.
    *   host.query.restart();
    *   // Realizamos la llamada al backend a través de la función del componente.
-   *   host.refresh();
+   *   host.request();
    * };
    * ```
    *
    * Si se utiliza la función `onDismiss` por defecto, entonces se sobrescribe la propiedad
    * {@link EntityListSchema.search search} para poder transferir el filtro a la consulta a través de la función
-   * {@link AbstractListComponent.parseFilter parseFilter}():
+   * {@link AbstractListComponent.parseAdvancedSearch parseAdvancedSearch}():
    *
    * ```typescript
-   * search: (host: any): ApiSearchClauses => host.parseFilter()
+   * search: (host: any): ApiSearchClauses => host.parseAdvancedSearch()
    * ```
    * @category Filter
    */
@@ -386,16 +386,26 @@ export interface GroupByTypeComplex {
 export type PickRowOptions = {
   /** Indica la forma como se muestra el componente de lista AbstractListMode. */
   mode?: 'modal' | 'action-sheet' | 'picker' | 'popover' | 'popover-picker' | 'navigation';
+  isModal?: boolean,
+  isPopover?: boolean,
   /** Referencia a la importación del componente cuando el modo es `modal` */
   component?: any;
   /** Indica una ruta de navegación para el componente de lista cuando el modo es `navigation`. */
   route?: string;
   /** Establece el valor inicialmente seleccionado en el componente de lista. */
-  initialize?: any;
+  selected?: any,
+  /** Transmite un filtro a la consulta realizada por el componente. */
+  filter?: ApiSearchClauses,
+  /** Parámetros adicionales. Si posteriomente hay que navegar se transmiten a queryParams. */
+  params?: { [key: string]: any };
+  /** Define las propiedades que se inicializarán del componente de listado. */
+  initialize?: { [key: string]: any };
   /** Indica si se podrán crear nuevas filas durante el modo picRow. Por defecto es `false`. */
   canCreate?: boolean;
   /** Establece el título de la página o del componente de lista. */
   title?: string;
+  /** Estilos del componente. */
+  cssClass?: string | string[];
 };
 
 /** Estructura de datos para las notificaciones del modo pickRow. */
@@ -409,8 +419,8 @@ export interface PickRowNotificationType {
 // ---------------------------------------------------------------------------------------------------
 
 export interface RowModelType {
-  row: any;
   entity: string | EntityType;
+  row: any;
 }
 
 
@@ -514,6 +524,12 @@ export abstract class TabsPageSchema {
 //  EntitySchema . EntityDetailSchema . EntityListSchema
 // ---------------------------------------------------------------------------------------------------
 
+export interface ConfirmMessage {
+  confirm: boolean;
+  header: string;
+  message: string;
+}
+
 /**
  * Representa una entidad del modelo de datos.
  *
@@ -540,7 +556,7 @@ export abstract class TabsPageSchema {
  *       ['idUser', '=', host.user.idreg],
  *       { OR: [
  *         ['estado', '<=', SERVICIO_ACEPTADO],
- *         ['estado', '=', SERVICIO_INICIADO],
+ *         ['estado', '=', SERVICIO_EN_CURSO],
  *         ['estado', '=', 8],
  *       ]}
  *     ]}),
@@ -576,6 +592,12 @@ export class EntitySchema {
    * @Default `idreg`
    */
   primaryKey?: string;
+
+  /** Indica los campos de auditoria.
+   *
+   * @default { updated: 'updated', deleted: 'deleted' }
+   */
+  auditFields?: { updated?: string, deleted?: string };
 
   /**
    * Indicates whether the loader should be displayed during backend calls.
@@ -661,10 +683,14 @@ export interface EntityDetailSchema {
   navigateBackOnDelete?: boolean;
 
   /** Shows an alert requesting confirmation from the user.
+   * ```typescript
+   * interface ConfirmMessage { confirm: boolean; header: string; message: string; }
+   * ```
+   *
    * @Default true
    * @category Row Action
    */
-  confirmDelete?: boolean | { confirm: boolean, header: string, message: string };
+  confirmDelete?: boolean | ConfirmMessage;
 
   /** Indica si la fila se tomará de la caché o del backend.
    * @Default true
@@ -1047,6 +1073,12 @@ export interface EntityListSchema {
    */
   cache?: boolean;
 
+  /** Indica si la consulta se vaciará, `query.clear()`, cuando el componente se destruya, `ngOnDestroy`.
+   * @Default `true`
+   * @category Cache
+   */
+  clearQueryOnDestroy?: boolean;
+
   /** Indica si los resultados se obtendrán paginados o todos de una vez.
    * @Default `true`
    * @category Cache
@@ -1147,7 +1179,7 @@ export interface EntityListSchema {
    * **Usage**
    *
    * ```html
-   * <ion-item button *ngFor="let row of rows | filter:search:list.filter">
+   * <ion-item button *ngFor="let row of rows | filter:match:list.filter">
    * ```
    *
    * ```typescript
@@ -1217,7 +1249,9 @@ export interface EntityListSchema {
    * **Usage**
    *
    * ```html
-   * <ion-list *ngFor="let row of rows | groupBy:list.groupBy">
+   * <ng-container *ngFor="let group of rows | groupBy:list.groupBy">
+   *   <ion-item-divider>{{group.key}}</ion-item-divider>
+   *   <ion-list *ngFor="let row of group.rows">
    * ```
    *
    * Posibles valores:
@@ -1297,11 +1331,11 @@ export interface EntityListSchema {
    * Cuando se define un filtro para _backend_ a través de la propiedad `filter` del modelo,
    * la función {@link FilterTypeComplex.onDismiss onDismiss}
    * suministrada por defecto establece una función en `search` para poder transferir el filtro a la consulta.
-   * La función {@link AbstractListComponent.parseFilter parseFilter}()
+   * La función {@link AbstractListComponent.parseAdvancedSearch parseAdvancedSearch}()
    * puede ser sobrescrita en la clase heredada para implementar conversiones de filtros complejos.
    *
    * ```typescript
-   * search: (host: any): ApiSearchClauses => host.parseFilter()
+   * search: (host: any): ApiSearchClauses => host.parseAdvancedSearch()
    * ```
    * @category Query
    */
@@ -1403,6 +1437,35 @@ export interface EntityListSchema {
 
   /** Indica la ruta del componente relativa a `src` para realizar una importación dinámica. */
   componentUrl?: string;
+
+  /**
+   * Si la propiedad `allow` se establece en `true`, entonces el componente abstracto
+   * monitoriza el scroll para aplicar estilos al header cuando se desplace hacia abajo
+   * y mostrar un ion-fab-button para poder hacer scroll hacia arriba.
+   * @see {@link AbstractListComponent.scrollingInitialize}
+   */
+  scrollToTop?: {
+    /**
+     * Habilita la monitorización del scroll. Si se establece en `false` se ignoranrán el resto de propiedades de `scrollToTop`.
+     * @Default `true`
+     * @see {@link AbstractListComponent.scrollingInitialize}
+     */
+    allow?: boolean;
+    /**
+     * Indica si el componente abstracto añade un ion-fab-button al contenido para poder hacer scroll hacia arriba.
+     *
+     * El componente se encarga automáticamente de mostrarlo u ocultarlo en función de la posición del scroll.
+     * @Default `true`
+     * @see {@link AbstractListComponent.scrollingInitialize}
+     */
+    allowFabButton?: boolean;
+    /**
+     * Indica la clase css que se aplicará al `ion-header` cuando la propiedad `canScrollToTop` sea `true`.
+     * @Default `shadow`
+     */
+    headerCssClass?: string;
+  };
+
 }
 
 

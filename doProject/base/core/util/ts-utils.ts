@@ -17,8 +17,22 @@ export const patterns = {
 //  Format
 // ---------------------------------------------------------------------------------------------------
 
+
+export function round(value: number, decimals?: number): number {
+  if (+decimals === 0) { return Math.round(value); }
+  if (decimals === undefined) { decimals = 2; }
+
+  value = +value;
+  const exp = +decimals;
+
+  if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) { return NaN; }
+
+  const shift = Math.pow(10, exp);
+  return Math.round(value * shift) / shift;
+}
+
 export function NumberRound(value: number, decimals: number): number {
-  if (typeof decimals === 'undefined' || +decimals === 0) { return Math.round(value); }
+  if (decimals === undefined || +decimals === 0) { return Math.round(value); }
 
   value = +value;
   const exp = +decimals;
@@ -48,10 +62,10 @@ export function NumberFormat(value: number, d ?: any, c ?: any, s ?: any, x ?: a
    * 123456.789.format(4, ':', ' ', 4); // "12 3456:7890"
    * 12345678.9.format(0, '', '-', 3);  // "12-345-679"
    */
-  if (typeof d === 'undefined') { d = 0; }
-  if (typeof c === 'undefined') { c = (typeof s !== 'undefined' && s === ',' ? '.' : ','); }
-  if (typeof s === 'undefined') { s = (typeof c !== 'undefined' && c === '.' ? ',' : '.'); }
-  if (typeof x === 'undefined' || x < 1) { x = 3; }
+  if (d === undefined) { d = 0; }
+  if (c === undefined) { c = (s !== undefined && s === ',' ? '.' : ','); }
+  if (s === undefined) { s = (c !== undefined && c === '.' ? ',' : '.'); }
+  if (x === undefined || x < 1) { x = 3; }
   let d1 = 0; let d2 = 0; let scope = 'd1';
   if (typeof d === 'string') {
     // for (let i = 0; i < d.length; i++) {
@@ -120,19 +134,19 @@ export function getLocalISOString(): string {
   const tzo = -now.getTimezoneOffset();
   const dif = tzo >= 0 ? '+' : '-';
   const pad = (n: any, width?: number) => {
-      width = width || 2;
-      n = Math.abs(Math.floor(n)) + '';
-      return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
+    width = width || 2;
+    n = Math.abs(Math.floor(n)) + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
   };
   return now.getFullYear()
-      + '-' + pad(now.getMonth() + 1)
-      + '-' + pad(now.getDate())
-      + 'T' + pad(now.getHours())
-      + ':' + pad(now.getMinutes())
-      + ':' + pad(now.getSeconds())
-      + '.' + pad(now.getMilliseconds(), 3)
-      + dif + pad(tzo / 60)
-      + ':' + pad(tzo % 60);
+    + '-' + pad(now.getMonth() + 1)
+    + '-' + pad(now.getDate())
+    + 'T' + pad(now.getHours())
+    + ':' + pad(now.getMinutes())
+    + ':' + pad(now.getSeconds())
+    + '.' + pad(now.getMilliseconds(), 3)
+    + dif + pad(tzo / 60)
+    + ':' + pad(tzo % 60);
 }
 
 export function matchWords(match: string): string[] {
@@ -182,6 +196,7 @@ export function deepAssign(target: object, source: any, options?: { host?: any, 
       }
 
     } else {
+      target = target || {};
       // Obtenemos los descriptores del objeto actual.
       const descriptors = Object.getOwnPropertyNames(source).reduce((descriptor: any, key: any) => {
         // Excluímos el contructor.
@@ -195,7 +210,7 @@ export function deepAssign(target: object, source: any, options?: { host?: any, 
             // Encapsulamos las funciones para poder suministrar una referencia del objecto como contexto.
             if (typeof descriptor[key].value === 'function') { descriptor[key].value = (...args: any[]) => source[key].apply(host, args); }
             // Recursividad en los objetos, solo si es una propiedad del nivel actual cuyo valor sea un objeto no nulo...
-            if (typeof descriptor[key].value === 'object' && target.hasOwnProperty(key) && descriptor[key].value !== null) { descriptor[key].value = deepAssign(target[key], source[key], { host }); }
+            if (typeof descriptor[key].value === 'object' && descriptor[key].value !== null && target.hasOwnProperty(key)) { descriptor[key].value = deepAssign(target[key], source[key], { host }); }
             // Convertimos todas las propiedades en enumerables para poder iterarlas, por ejemplo mediante Object.keys().
             descriptor[key].enumerable = true;
           }
@@ -226,8 +241,19 @@ export function deepAssign(target: object, source: any, options?: { host?: any, 
 //  evalExpr
 // ---------------------------------------------------------------------------------------------------
 
-/** Evalúa una expresión que recibe como argumentos todas las propiedades del host más los argumentos adicionales suministrados mediante `args`. */
-export function evalExpr(expr: string, options: { host?: any, filterProperties?: string[], args?: { [key: string]: any } }): any {
+/** Opciones para la evaluación de código.
+ * @param args: Indica los argumentos que se pasarán a la función de evaluación de código.
+ * @param host: Indica el host del que se obtendran las propiedades adicionales que se pasaran como argumentos a la función de evaluación de código.
+ * @param filterProperties: Filtra las propiedades que serán asignadas del host a los argumentos. Si no se establece se recorren todos los descriptores.
+ */
+export interface EvalExpressionOptions { host?: any; filterProperties?: string[]; args?: { [key: string]: any }; }
+
+/** Evalúa una expresión que recibe como argumentos todas las propiedades del host más los argumentos adicionales suministrados mediante `args`.
+ * ```typescript
+ * interface EvalExpressionOptions { host?: any; filterProperties?: string[]; args?: { [key: string]: any }; }
+ * ```
+ */
+export function evalExpr(expr: string, options?: EvalExpressionOptions): any {
   const host = options ? options.host : undefined;
   const filterProperties = options ? options.filterProperties : undefined;
   // Devolvemos la expresión cuando es: undefined, null, '', false.

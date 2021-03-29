@@ -23,7 +23,7 @@ export class AliasName {
 
       if (entityName.hasOwnProperty('name') && entityName.hasOwnProperty('alias')) {
         // AliasName
-        return (entityName as any).clone();
+        return (entityName as AliasName).clone();
 
       } else {
         throw new Error(`Invalid argument for parse an AliasName`);

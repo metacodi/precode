@@ -8,7 +8,7 @@ import { ApiService } from 'src/core/api';
 import { AuthService } from 'src/core/auth';
 import { ThemeService, focus } from 'src/core/util';
 
-import { UserService } from '../user.service';
+import { UserService } from '../../user/user.service';
 
 
 @Component ({

@@ -1,6 +1,6 @@
 import { Component, Injector } from '@angular/core';
 
-import { CheckboxControlType, FieldType } from '../model/meta-types';
+import { CheckboxComponentType, CheckboxControlType, FieldType } from '../model/meta-types';
 import { DynamicFieldComponent } from './dynamic-field.component';
 
 
@@ -57,6 +57,6 @@ export class CheckboxComponent extends DynamicFieldComponent {
   constructor(protected injector: Injector) { super(injector); }
 
   get control(): CheckboxControlType {
-    return (this.field.component as any).checkbox;
+    return (this.field.component as CheckboxComponentType).checkbox;
   }
 }

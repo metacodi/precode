@@ -10,8 +10,8 @@ import { AuthService } from 'src/core/auth';
 import { ThemeService, ConsoleService } from 'src/core/util';
 import { LocalNotificationPlugin, DevicePlugin, SplashScreenPlugin } from 'src/core/native';
 
-import { UserService } from 'src/app/auth';
-import { TIPO_SERVICIO_SOLICITUD } from 'src/app/model';
+import { UserService } from 'src/app/user';
+
 
 
 
@@ -67,7 +67,7 @@ export class HomePage implements OnDestroy {
 
   ionViewDidEnter() {
     // Ocultamos la pantalla inicial.
-    this.splashScreen.hide();
+    // this.splashScreen.hide();
 
     // Electron globalShortcut
     if (this.device.is('electron')) {

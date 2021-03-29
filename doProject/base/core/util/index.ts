@@ -1,5 +1,7 @@
 
 export {
+  ChevronForwardDownIconComponent,
+  ChevronUpDownIconComponent,
   ExpandButtonComponent,
   TextColorizedComponent,
 } from './components';
@@ -46,5 +48,7 @@ export {
   matchWords,
   deepAssign,
   evalExpr,
+  EvalExpressionOptions,
   evalCode,
+  round,
 } from './ts-utils';

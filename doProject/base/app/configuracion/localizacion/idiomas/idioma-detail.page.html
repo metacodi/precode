@@ -1,0 +1,118 @@
+<ion-header>
+
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button [text]="'buttons.back' | translate"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{headerText}}</ion-title>
+  </ion-toolbar>
+
+</ion-header>
+<ion-content>
+
+  <form [formGroup]="frm" (ngSubmit)="saveRow()">
+
+    <ion-card class="detail no-shadow">
+
+      <ion-grid>
+        <ion-row>
+          <ion-col>
+
+            <ion-item>
+              <ion-label position="floating">{{'lang.isoName' | translate}} <ion-text color="danger">*</ion-text></ion-label>
+              <ion-input #focusRef formControlName="isoName" type="text" placeholder="{{'lang.isoName' | translate}} *" required></ion-input>
+            </ion-item>
+      
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+
+            <ion-item>
+              <ion-label position="floating">{{'lang.nativeName' | translate}} <ion-text color="danger">*</ion-text></ion-label>
+              <ion-input #focusRef formControlName="nativeName" type="text" placeholder="{{'lang.nativeName' | translate}} *" required></ion-input>
+            </ion-item>
+      
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+
+            <ion-item>
+              <ion-label position="floating">{{'lang.isoCode' | translate}} <ion-text color="danger">*</ion-text></ion-label>
+              <ion-input #focusRef formControlName="isoCode" type="text" placeholder="{{'lang.isoCode' | translate}} *" spellcheck="false" required></ion-input>
+            </ion-item>
+                  
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+
+            <ion-item>
+              <ion-label position="floating">{{'lang.langCode' | translate}} <ion-text color="danger">*</ion-text></ion-label>
+              <ion-input #focusRef formControlName="langCode" type="text" placeholder="{{'lang.langCode' | translate}} *" spellcheck="false" required></ion-input>
+            </ion-item>
+            
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+
+            <ion-item>
+              <ion-label position="floating">{{'lang.phpDateFormat' | translate}} <ion-text color="danger">*</ion-text></ion-label>
+              <ion-input #focusRef formControlName="phpDateFormat" type="text" placeholder="{{'lang.phpDateFormat' | translate}} *" spellcheck="false" required></ion-input>
+            </ion-item>
+                  
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+
+            <ion-item>
+              <ion-label position="floating">{{'lang.phpDateTimeFormat' | translate}} <ion-text color="danger">*</ion-text></ion-label>
+              <ion-input #focusRef formControlName="phpDateTimeFormat" type="text" placeholder="{{'lang.phpDateTimeFormat' | translate}} *" spellcheck="false" required></ion-input>
+            </ion-item>
+                  
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+
+            <ion-item>
+              <ion-label>{{'lang.active' | translate}}</ion-label>
+              <ion-toggle formControlName="active" slot="end"></ion-toggle>
+            </ion-item>
+                  
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+
+      <div class="error ion-text-start">
+        <p *ngIf="initialized && (!isNew || isNew && (getter('isoName').touched || getter('isoName').dirty)) && getter('isoName').errors?.required">{{'idiomas.isoName_required' | translate}}</p>
+        <p *ngIf="initialized && (!isNew || isNew && (getter('nativeName').touched || getter('nativeName').dirty)) && getter('nativeName').errors?.required">{{'idiomas.nativeName_required' | translate}}</p>
+        <p *ngIf="initialized && (!isNew || isNew && (getter('isoCode').touched || getter('isoCode').dirty)) && getter('isoCode').errors?.required">{{'idiomas.isoCode_required' | translate}}</p>
+        <p *ngIf="initialized && (!isNew || isNew && (getter('langCode').touched || getter('langCode').dirty)) && getter('langCode').errors?.required">{{'idiomas.langCode_required' | translate}}</p>
+        <p *ngIf="initialized && (!isNew || isNew && (getter('phpDateFormat').touched || getter('phpDateFormat').dirty)) && getter('phpDateFormat').errors?.required">{{'idiomas.phpDateFormat_required' | translate}}</p>
+        <p *ngIf="initialized && (!isNew || isNew && (getter('phpDateTimeFormat').touched || getter('phpDateTimeFormat').dirty)) && getter('phpDateTimeFormat').errors?.required">{{'idiomas.phpDateTimeFormat_required' | translate}}</p>
+      </div>
+
+      <ion-grid class="buttons">
+        <ion-row>
+          <ion-col>
+
+            <ion-button type="button" (click)="deleteRow()" [color]="isNew ? 'secondary' : 'danger'" expand="block"><ion-icon *ngIf="!isNew" slot="start" name="trash"></ion-icon>{{(isNew ? 'buttons.cancel' : 'buttons.delete') | translate | uppercase }}</ion-button>
+    
+          </ion-col>
+          <ion-col>
+
+            <ion-button type="submit" [disabled]="!initialized || frm.invalid || frm.pristine" [color]="frm.valid ? 'primary' : 'secondary'" expand="block">{{'buttons.save' | translate | uppercase }}</ion-button>
+    
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+    </ion-card>
+  </form>
+
+</ion-content>

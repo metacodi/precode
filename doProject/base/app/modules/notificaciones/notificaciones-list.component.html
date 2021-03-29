@@ -1,0 +1,59 @@
+<ion-header>
+
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col>
+        <ion-searchbar #searchbar [(ngModel)]="match" debounce="500" placeholder="{{'buttons.search' | translate}}..."></ion-searchbar>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-progress-bar *ngIf="loading" type="indeterminate"></ion-progress-bar>
+
+</ion-header>
+<ion-content>
+  
+  <ion-list>
+    <ion-grid fixed>
+      <ion-row *ngIf="!loading && !rows.length">
+        <ion-col>
+        
+          <ion-item>
+            <ion-label color="medium">
+              {{(filterUnattended ? 'notificaciones.sin_notificaciones_unattended' : 'notificaciones.sin_notificaciones') | translate}}
+            </ion-label>
+          </ion-item>
+
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col size="12" *ngFor="let row of rows | filter:match:list.filter | orderBy:list.orderBy">
+
+          <ng-container *ngIf="!!row && !row?.notified.silent">
+            <ion-item button (click)="selectRow(row)" [detail]="true" [ngClass]="{ selected: isSelected(row) }" class="hydrated">
+              
+              <ion-spinner *ngIf="preloading === row.idreg" name="lines-small" slot="start"></ion-spinner>
+              <ion-icon
+                *ngIf="preloading !== row.idreg"
+                [color]="row.notified?.attended ? 'success' : (row.notified?.needToSolve ? 'danger' : 'warning')"
+                [name]="row.notified?.attended ? 'checkmark-circle' : (row.notified?.needToSolve ? 'alert-circle' : 'help-circle')" slot="start"
+              ></ion-icon>
+              <ion-label class="ion-text-wrap">
+                <text-colorized [value]="row.notified.alert" [match]="match"></text-colorized>
+                <p [show]="!row.notified.attended">{{row?.notified.notification.created | localize}}</p>
+                <p [show]="row.notified.attended">{{row.notified.attended | localize}}</p>
+              </ion-label>
+        
+            </ion-item>
+          </ng-container> 
+
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-list>
+
+  <ion-infinite-scroll id="infinite-scroll" (ionInfinite)="loadPage($event)" threshold="100px" *ngIf="infiniteVisible">
+    <ion-infinite-scroll-content loadingSpinner="circles" loadingText=""></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+</ion-content>

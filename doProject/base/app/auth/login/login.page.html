@@ -48,7 +48,7 @@
 
     <ion-button (click)="recovery()" fill="clear" expand="block" color="medium">{{'login.forgot_pass' | translate}}</ion-button>
     
-    <ion-button routerLink="/contactar" fill="clear" expand="block" color="light">{{'login.contacte_con_nosotros' | translate}} <ion-icon name="send" slot="end"></ion-icon></ion-button>
+    <ion-button (click)="router.navigate(['/contactar'])" fill="clear" expand="block" color="light">{{'login.contacte_con_nosotros' | translate}} <ion-icon name="send" slot="end"></ion-icon></ion-button>
 
     <!-- <ion-fab  vertical="bottom" horizontal="center" slot="fixed">
       <ion-fab-button color="secondary">

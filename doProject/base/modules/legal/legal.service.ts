@@ -6,7 +6,7 @@ import { AppConfig } from 'src/config';
 import { AbstractBaseClass } from 'src/core/abstract';
 import { ApiService } from 'src/core/api';
 
-import { UserService } from 'src/app/auth';
+import { UserService } from 'src/app/user';
 
 @Injectable({
   providedIn: 'root'

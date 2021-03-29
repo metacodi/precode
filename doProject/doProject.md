@@ -60,3 +60,10 @@ and then inside the init callback
 ```bash
 add(FCMPlugin.class);
 ```
+
+## Cómo crear íconos de apps con Image Asset Studio
+https://developer.android.com/studio/write/image-asset-studio?hl=es-419#access
+
+1. En la ventana Project, selecciona la vista de Android.
+2. Haz clic con el botón derecho en la carpeta res y selecciona New > Image Asset.
+

@@ -1,5 +1,6 @@
 import { Component, Injector, OnInit, OnDestroy, Input, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ModalController } from '@ionic/angular';
 
 import { AppConfig } from 'src/config';
 import { AbstractComponent } from 'src/core/abstract';
@@ -37,6 +38,7 @@ export class PermissionsComponent extends AbstractComponent implements OnInit, O
     public theme: ThemeService,
     public service: RolesService,
     public route: ActivatedRoute,
+    public modal: ModalController,
   ) {
     super(injector, null);
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
@@ -166,6 +168,19 @@ export class PermissionsComponent extends AbstractComponent implements OnInit, O
         permission.children.map((p: PermissionNode) => this.toggleExpandedAll(expanded, p));
       }
     }
+  }
+
+  allParentsExpanded(permission: PermissionNode): boolean {
+    while (permission.parent) {
+     if (!permission.parent.expanded) { return false; }
+     permission = permission.parent;
+    }
+    // let parent = permission.parent;
+    // while (parent) {
+    //  if (!parent.expanded) { return false; }
+    //  parent = parent.parent;
+    // }
+    return true;
   }
 
 

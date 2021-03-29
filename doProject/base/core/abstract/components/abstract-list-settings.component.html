@@ -1,0 +1,166 @@
+<ng-container *ngIf="settings">
+
+  <!-- search -->
+  <ng-container *ngIf="settings.search as search">
+    <ion-list *ngIf="search.visible" [ngClass]="{'settingsOn': settingsOn.search}">
+
+      <ion-item-divider (click)="settingsOn.search = !settingsOn.search">
+        <ion-icon name="search" slot="start"></ion-icon>
+        <ion-label>{{'listSettings.busquedas' | translate}}</ion-label>
+        <ion-icon [name]="settingsOn.search ? 'settings' : 'settings-outline'" slot="end" class="animated" [ngClass]="{rotate90: settingsOn.search}"></ion-icon>
+      </ion-item-divider>
+
+      <ng-container *ngIf="settingsUI.expand as ui">
+
+        <ion-item (click)="ui.search = !ui.search" [expanded]="settingsOn.search" class="ion-margin-top" detail="false" lines="none">
+          <ion-label><ion-text>{{'listSettings.busquedasPredefinidas' | translate}}</ion-text></ion-label>
+          <chevron-forward-down slot="end" [expanded]="ui.search" size="small"></chevron-forward-down>
+        </ion-item>
+    
+        <ng-container *ngFor="let item of search.values">
+          <ion-item button (click)="settingsOn.search ? item.visible = !item.visible : find(item)"
+            [expanded]="(settingsOn.search && ui.search) || (!settingsOn.search && item.visible)" [disabled]="loading"
+            [ngClass]="{selected: search.current === item.name}"
+            detail="false"
+          >
+            <ion-icon [ngClass]="{'hidden': !settingsOn.search}" [name]="item.visible ? 'checkbox-outline' : 'square-outline'" slot="start"></ion-icon>
+            <ion-icon *ngIf="item.icon.tipo === 'estado'" src="assets/icons/ball.svg" size="small" [ngStyle]="{color: estadoColor(item.icon.value)}" slot="start"></ion-icon>
+            <ion-icon *ngIf="item.icon.tipo === 'icono'" [name]="item.icon.value" size="small" [color]="item.icon.color" slot="start"></ion-icon>
+            <ion-icon *ngIf="item.icon.tipo === 'badge'" name="card" [color]="item.icon.color" size="small" slot="start"></ion-icon>
+            <ion-label>{{evalOrExpr(item.label)}}</ion-label>
+            <ion-badge *ngIf="item.icon.tipo === 'badge'" [color]="item.icon.color" slot="end">{{item.icon.value}}</ion-badge>
+          </ion-item>
+        </ng-container>
+        <ion-item button (click)="showAdvancedSearch()" [expanded]="!settingsOn.search" [disabled]="loading" [ngClass]="{selected: search.current === 'avanzada'}" lines="none">
+          <ion-icon slot="start" name="search" size="small"></ion-icon>
+          <ion-label>{{'listSettings.busquedaAvanzada' | translate}}</ion-label>
+        </ion-item>
+    
+        <!-- search.filter-->
+        <ng-container *ngIf="search.filter as filter">
+
+          <ion-item (click)="ui.splitWords = !ui.splitWords" [expanded]="settingsOn.search" class="ion-margin-top" detail="false" lines="none">
+            <ion-label><ion-text>{{'listSettings.buscarCon' | translate}}</ion-text></ion-label>
+            <chevron-forward-down slot="end" [expanded]="ui.splitWords" size="small"></chevron-forward-down>
+          </ion-item>
+          <ion-item button [expanded]="settingsOn.search && ui.splitWords" (click)="toggleFilterOption({ splitPipeWords: false })" detail="false">
+            <ion-icon [name]="!filter.splitPipeWords ? 'radio-button-on' : 'radio-button-off'" slot="start"></ion-icon>
+            <ion-label>{{'listSettings.fraseExacta' | translate}}</ion-label>
+          </ion-item>
+          <ion-item button [expanded]="settingsOn.search && ui.splitWords" (click)="toggleFilterOption({ splitPipeWords: true, concatPipeWords: 'AND' })" detail="false">
+            <ion-icon [name]="filter.splitPipeWords && filter.concatPipeWords === 'AND' ? 'radio-button-on' : 'radio-button-off'" slot="start"></ion-icon>
+            <ion-label>{{'listSettings.todasLasPalabras' | translate}}</ion-label>
+          </ion-item>
+          <ion-item button [expanded]="settingsOn.search && ui.splitWords" (click)="toggleFilterOption({ splitPipeWords: true, concatPipeWords: 'OR' })" detail="false">
+            <ion-icon [name]="filter.splitPipeWords && filter.concatPipeWords === 'OR' ? 'radio-button-on' : 'radio-button-off'" slot="start"></ion-icon>
+            <ion-label>{{'listSettings.algunaPalabra' | translate}}</ion-label>
+          </ion-item>
+          <ion-item button [expanded]="settingsOn.search && ui.splitWords" (click)="toggleFilterOption({ ignoreCase: !filter.ignoreCase })" detail="false">
+            <ion-icon [name]="filter.ignoreCase ? 'checkbox-outline' : 'square-outline'" slot="start"></ion-icon>
+            <ion-label>{{'listSettings.ignoreCase' | translate}}</ion-label>
+          </ion-item>
+
+          <ion-item (click)="ui.fields = !ui.fields" [expanded]="settingsOn.search" class="ion-margin-top" detail="false" lines="none">
+            <ion-label><ion-text>{{'listSettings.matchFields' | translate}}</ion-text></ion-label>
+            <chevron-forward-down slot="end" [expanded]="ui.fields" size="small"></chevron-forward-down>
+          </ion-item>
+          <ng-container *ngFor="let item of filter.pipe">
+            <ion-item button [expanded]="settingsOn.search && ui.fields" (click)="toggleFilterPipe(item)" detail="false">
+              <ion-icon [name]="item.value ? 'checkbox-outline' : 'square-outline'" slot="start"></ion-icon>
+              <ion-label>{{item.label | translate}}</ion-label>
+            </ion-item>
+          </ng-container>
+          
+          <ion-item (click)="ui.itemsPerPage = !ui.itemsPerPage" [expanded]="settingsOn.search" class="ion-margin-top" detail="false" lines="none">
+            <ion-label><ion-text>{{'listSettings.itemsPerPage' | translate}}: {{filter.itemsPerPage}}</ion-text></ion-label>
+            <chevron-forward-down slot="end" [expanded]="ui.itemsPerPage" size="small"></chevron-forward-down>
+          </ion-item>
+          
+          <ion-item button [expanded]="settingsOn.search && ui.itemsPerPage" detail="false">
+            <ion-range min="10" max="200" step="10" [(ngModel)]="filter.itemsPerPage" color="primary">
+              <ion-label slot="start">10</ion-label>
+              <ion-label slot="end">200</ion-label>
+            </ion-range>
+          </ion-item>
+          
+        </ng-container>
+
+        <ion-button [expanded]="settingsOn.search" (click)="restartSettings()" size="small" color="primary" expand="block" style="margin: 24px 24px 12px;">{{'listSettings.restoreSettings' | translate}}</ion-button>
+    
+      </ng-container>
+
+    </ion-list>
+  </ng-container>
+
+
+  <!-- print -->
+  <ng-container *ngIf="settings.print as print">
+    <ion-list *ngIf="print.visible">
+
+      <ion-item-divider>
+        <ion-icon name="print-outline" slot="start"></ion-icon>
+        <ion-label>{{'listSettings.print' | translate}}</ion-label>
+      </ion-item-divider>
+
+      <ng-container *ngFor="let item of print.values">
+        <ion-item button (click)="imprimir(item)" [disabled]="loading">
+          <ion-icon [name]="item.icon.value" size="small" slot="start"></ion-icon>
+          <ion-label>{{item.label | translate}}</ion-label>
+          <ion-note *ngFor="let note of item.notes" [color]="note.color" slot="end"><small>{{note.label | uppercase }}</small></ion-note>
+        </ion-item>
+      </ng-container>
+
+    </ion-list>
+  </ng-container>
+
+
+  <!-- view -->
+  <ng-container *ngIf="settings.view as view">
+    <ion-list *ngIf="view.visible">
+
+      <ion-item-divider>
+        <ion-icon name="eye" slot="start"></ion-icon>
+        <ion-label>{{'listSettings.view' | translate}}</ion-label>
+      </ion-item-divider>
+
+      <ng-container *ngFor="let item of view.values">
+        <ion-item button (click)="toggleView(item)" [disabled]="loading" detail="false">
+          <ion-icon [name]="checked(view, item) ? 'radio-button-on' : 'radio-button-off'" slot="start"></ion-icon>
+          <ion-label>{{item.label | translate}}</ion-label>
+        </ion-item>
+        <ng-container *ngFor="let option of viewOptions(item)">
+          <ion-item button (click)="toggleViewOption(item, option)" [expanded]="view.current === item.name" [disabled]="loading" class="indent" detail="false">
+            <ion-icon [name]="item.options[option].value ? 'checkbox-outline' : 'square-outline'" slot="start"></ion-icon>
+            <ion-label>{{item.options[option].label}}</ion-label>
+          </ion-item>
+        </ng-container>
+      </ng-container>
+
+    </ion-list>
+  </ng-container>
+
+
+  <!-- group -->
+  <ng-container *ngIf="settings.group as group">
+    <ion-list *ngIf="group.visible">
+
+      <ion-item-divider>
+        <ion-icon name="code-working-outline" slot="start"></ion-icon>
+        <ion-label>{{'listSettings.groupBy' | translate}}</ion-label>
+      </ion-item-divider>
+
+      <ng-container *ngFor="let item of group.values">
+        <ion-item button (click)="toggleGroupBy(item)" [disabled]="loading" detail="false">
+          <ion-icon [name]="checked(group, item) ? 'radio-button-on' : 'radio-button-off'" slot="start"></ion-icon>
+          <ion-label>{{item.label | translate}}</ion-label>
+        </ion-item>
+      </ng-container>
+
+      <ion-button (click)="collapseAllGroups()" [disabled]="!settings.group.current"
+        size="small" color="primary" expand="block" style="margin: 12px 24px;"
+      >{{'listSettings.collapseAllGroups' | translate}}</ion-button>
+
+    </ion-list>
+  </ng-container>
+
+</ng-container>

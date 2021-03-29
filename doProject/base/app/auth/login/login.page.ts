@@ -14,7 +14,8 @@ import { ThemeService, ConsoleService, focus } from 'src/core/util';
 
 import { VersionControlService } from 'src/modules/version-control';
 
-import { UserService } from '../user.service';
+import { UserService } from 'src/app/user';
+
 import { RecoveryPage } from '../recovery/recovery.page';
 
 
@@ -145,7 +146,7 @@ export class LoginPage extends AbstractComponent implements OnInit, OnDestroy {
 
   ionViewDidEnter() {
     // Ocultamos la pantalla inicial.
-    this.splashScreen.hide();
+    // this.splashScreen.hide();
   }
 
   validateBiometric() {

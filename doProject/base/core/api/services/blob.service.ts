@@ -1,6 +1,5 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { forkJoin, Observable, Subject, Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { Injectable, OnDestroy, Injector } from '@angular/core';
+import { Observable, Subject, BehaviorSubject, Subscriber, Subscription, of } from 'rxjs';
 
 import { AppConfig } from 'src/core/app-config';
 import { StoragePlugin } from 'src/core/native';
@@ -24,9 +23,10 @@ export class BlobService implements OnDestroy {
    *
    * Esta opción se complementa con el uso de la función `get()` para mantener actualizados los blobs en todo momento.
    */
-  updated: Subject<Blob> = new Subject();
+  updated = new Subject<Blob>();
 
-  updateSubscriptions: Subscription[] = [];
+  /** Coleccionamos los subjects para destinar uno para cada instancia diferente de settings. */
+  subjects: { [key: string]: { subject: BehaviorSubject<any>, sub: Subscription } } = {};
 
   constructor(
     public storage: StoragePlugin,
@@ -42,25 +42,36 @@ export class BlobService implements OnDestroy {
    * Obtiene el valor de un blob del storage y posteriormente de las actualizaciones notificadas a través de update.
    *
    * ```typescript
-   * this.blobs.get('mapsSettings').subscribe(blob => this.config = blob);
+   * this.blobs.get('mapsSettings').then(behavior => behavior.subscribe(value => this.mapsSettings = value));
    * ```
    */
-  get(key: string): Observable<any> {
-    return new Observable<any>(observer => {
+  async get(key: string): Promise<BehaviorSubject<any>> {
+    // Buscamos si existe un observable para la clave indicada.
+    if (this.subjects[key]) {
+      if (this.debug) { console.log(this.constructor.name + `.get('${key}') existing => `, this.subjects[key]); }
+      return of(this.subjects[key].subject).toPromise();
+
+    } else {
       // Obtenemos el valor actual del storage.
-      this.read(key).then(value => observer.next(value));
-      // Nos suscribimos al notificador de actualizaciones para su renvío.
-      const subscription = this.updated.subscribe(blob => {
-        if (blob.key === key) { observer.next(blob.value); }
+      return this.read(key).then(value => {
+        const subject = new BehaviorSubject<any>(value);
+        (subject as any).key = key;
+        // Nos suscribimos al notificador de actualizaciones para su renvío.
+        const sub = this.updated.subscribe(blob => { if (blob.key === key) { subject.next(blob.value); } });
+        // Almacenamos el subject.
+        this.subjects[key] = { subject, sub };
+        if (this.debug) { console.log(this.constructor.name + `.get('${key}') NEW! => `, this.subjects[key]); }
+        return subject;
       });
-      // Almacenamos el subscriptor para terminar la suscripción durante la destrucción del servicio.
-      this.updateSubscriptions.push(subscription);
-    });
+    }
   }
 
   ngOnDestroy() {
     if (this.updated) { this.updated.complete(); }
-    if (this.updateSubscriptions?.length) { this.updateSubscriptions.map(sub => sub.unsubscribe()); }
+    Object.keys(this.subjects).map(key => {
+      this.subjects[key].sub.unsubscribe();
+      this.subjects[key].subject.complete();
+    });
   }
 
   // ---------------------------------------------------------------------------------------------------
@@ -127,7 +138,7 @@ export class BlobService implements OnDestroy {
           // Actualizamos las versiones en el storage.
           promises.push(this.versions(versions));
           // Resolvemos todas las promesas pendientes.
-          forkJoin(promises).pipe(first()).subscribe(() => resolve(), error => reject(error));
+          Promise.all(promises).then(() => resolve(), error => reject(error));
 
         }).catch(error => reject(error));
       }
@@ -140,7 +151,7 @@ export class BlobService implements OnDestroy {
   // ---------------------------------------------------------------------------------------------------
 
   /** Obtiene o establece las versiones actuales de los blobs. */
-  protected versions(blobs?: Blob[]): Promise<Blob[]> {
+  versions(blobs?: Blob[]): Promise<Blob[]> {
     return new Promise<any>((resolve: any, reject: any) => {
       if (!blobs) {
         // get
@@ -188,11 +199,11 @@ export class BlobService implements OnDestroy {
     return new Promise<any>((resolve: any, reject: any) => {
       this.versions().then((versions: Blob[]) => {
         const promises: Promise<any>[] = [];
-        if (versions && versions.length) {
-          versions.map((v: Blob) => promises.push(this.storage.remove(this.prefix(v.key))));
+        if (versions?.length) {
+          versions.map((b: Blob) => promises.push(this.storage.remove(this.prefix(b.key))));
         }
         promises.push(this.storage.remove(this.prefix('versions')));
-        forkJoin(promises).pipe(first()).subscribe(() => resolve(), error => reject(error));
+        Promise.all(promises).then(() => resolve(), error => reject(error));
       });
     });
   }

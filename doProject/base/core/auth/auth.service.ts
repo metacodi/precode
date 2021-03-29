@@ -7,7 +7,7 @@ import { Observable, of } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import { AppConfig } from 'src/core/app-config';
-import { ApiRequestOptions, API_ERR_VALIDATION_PENDENT, ApiUserService, ApiService } from 'src/core/api';
+import { ApiRequestOptions, API_ERR_VALIDATION_PENDENT, ApiUserService, ApiService, BlobService } from 'src/core/api';
 import { DevicePlugin } from 'src/core/native';
 import { ConsoleService } from 'src/core/util';
 
@@ -37,6 +37,7 @@ export class AuthService {
     public user: ApiUserService,
     public device: DevicePlugin,
     public console: ConsoleService,
+    public blob: BlobService,
   ) {
     if (this.debug) { console.log(this.constructor.name + '.constructor()'); }
     // Instanciamos un nuevo emisor de eventos para notificar login y logout.
@@ -73,7 +74,7 @@ export class AuthService {
           // Si está pendiente de validación, lo redireccionamos como si acabase de registrase.
           if (error?.error?.api_code === API_ERR_VALIDATION_PENDENT ) {
             this.router.navigate(['/register-success', error.error.idreg]);
-            resolve();
+            resolve(false);
           } else {
             // NOTA: Para el resto de errores de login no navegamos, nos quedamos en la misma página.
             reject(error);
@@ -100,8 +101,8 @@ export class AuthService {
           this.onAuthenticationChanged('logout');
           // Navegamos al login.
           if (options.navigateToLogin) {
-            this.nav.navigateRoot(['/login'], { animated: true, animationDirection: 'back' }).finally(() => resolve()); } else { resolve();
-            }
+            this.nav.navigateRoot(['/login'], { animated: true, animationDirection: 'back' }).finally(() => resolve(true));
+          } else { resolve(true); }
 
         }).catch(error => reject(error));
       });
@@ -162,9 +163,8 @@ export class AuthService {
       this.getToken().subscribe(token => {
         if (token) {
           if (this.debug) { this.console.log(this.constructor.name + '.refreshToken() -> token => '); }
-          const data = { token };
           // Intentamos obtener un nuevo token del backend.
-          this.api.post('refreshToken', data, { showLoader: false, showErrors: false }).subscribe(response => {
+          this.api.post('refreshToken', { token }, { showLoader: false, showErrors: false, blobs: 'check' }).subscribe(response => {
             // NOTA: No se prevee el error api 493 Pendiente de validación porque refreshToken() solo se llama
             // si el usuario se encuentra en una área restringida a la que no podría haber llegado sin estar validado.
             this.doLogin(response, 'refresh').subscribe(
@@ -228,7 +228,7 @@ export class AuthService {
       // Enviamos el formulario.
       this.api.post(url, data).subscribe(row => {
         if (this.debug) { this.console.log('register SUCCESS => ', row); }
-        this.router.navigate(['/register-success', (row as any).idreg ]);
+        this.router.navigate(['/register-success', row.idreg ]);
         resolve(true);
         // ---------------------------------------------------------------------------------------------------
         // NOTA: La validación se produce en `register-success` tras introducir el pin de validación.

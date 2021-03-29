@@ -49,7 +49,7 @@ export class VersionControlPage implements OnInit {
 
   ionViewDidEnter() {
     // Ocultamos la pantalla inicial.
-    this.splashScreen.hide();
+    // this.splashScreen.hide();
   }
 
   ionViewWillLeave() {

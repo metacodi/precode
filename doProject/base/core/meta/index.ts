@@ -1,3 +1,4 @@
+export { numberOrExpr, booleanOrExpr, stringOrExpr } from './model/meta-types';
 
 export { ButtonComponent } from './components/button.component';
 export { CheckboxComponent } from './components/checkbox.component';
@@ -14,4 +15,3 @@ export { DynamicFieldsGridDirective } from './containers/dynamic-fields-grid.dir
 export { DynamicFieldsGridComponent } from './containers/dynamic-fields-grid.component';
 
 export * from './model/dynamic-types';
-

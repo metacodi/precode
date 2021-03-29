@@ -59,8 +59,9 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';  // |'HEAD
 export type HttpObserve = 'body' | 'response' | 'events';
 export type HttpResponseType = 'arraybuffer' | 'blob' | 'json' | 'text';
 
-export type ApiSearchOpClause = '=' | '<' | '>' | '<=' | '>=' | '<>' | 'is' | 'is not' | 'like';
-export type ApiSearchClause = [string, ApiSearchOpClause, string | number | boolean | null];
+export type ApiSearchOpClause = '=' | '<' | '>' | '<=' | '>=' | '<>' | 'is' | 'is not' | 'in' | 'not in' | 'like' | 'not like';
+// [field, '=', value]
+export type ApiSearchClause = [string, ApiSearchOpClause, string | number | number[] | boolean | null];
 export type ApiSearchOrClauses = { OR: (ApiSearchClause | ApiSearchOrClauses | ApiSearchAndClauses)[] };
 export type ApiSearchAndClauses = { AND: (ApiSearchClause | ApiSearchOrClauses | ApiSearchAndClauses)[] };
 export type ApiSearchClauses = ApiSearchAndClauses | ApiSearchOrClauses | ApiSearchClause;
@@ -129,6 +130,10 @@ export interface ApiForeignFieldsType { [key: string]: string; }
  * Expresa la notación de campos para la ApiRest.
  *
  * ```typescript
+ * interface ApiForeignFieldsType { [key: string]: string; }
+ * ```
+ *
+ * ```typescript
  * // Los campos se expresan separados por comas:
  * fields: 'nombre, apellidos, nif'
  * // También se pueden expresar mediante un array:
@@ -154,6 +159,38 @@ export type OrderByDirectionType = 'asc' | 'desc' | '+' | '-' | 1 | -1;
 /** Type guard for OrderByDirectionType type. */
 export function isOrderByDirectionType(order: any): order is OrderByDirectionType {
   return order === 'asc' || order === 'desc' || order === '+' || order === '-' || order === 1 || order === -1;
+}
+
+/** Reduce el valor de la dirección a solo tres opciones numéricas `1 | 0 | -1`. */
+export function normalizeDirection(direction?: OrderByDirectionType): 1 | 0 | -1 {
+  // Valor por defecto.
+  if (direction === undefined) { return 0; }
+  // Normalizamos la dirección reduciéndola a una expresión numérica.
+  return direction === 'asc' || direction === 1 || direction === '+' ? 1
+    : (direction === 'desc' || direction === -1 || direction === '-' ? -1 : 0);
+}
+
+/** Obtiene el valor primitivo resolviendo el árbol de propiedades cuando éste es un objeto. */
+export function resolveDirection(prop: any): 1 | -1 {
+  // Ej: value = { precio: 5.5, tarifa: { descripcion: 'T-1' } }
+  if (typeof prop === 'string') {
+    // Ej: prop = 'precio'
+    return prop.startsWith('-') || prop.endsWith('-') ? -1 : 1;
+
+  } else if (typeof prop === 'object') {
+    // Ej: prop = { tarifa: 'descripcion' }
+    for (const p in prop) {
+      // Ej: p = 'tarifa'
+      if (prop.hasOwnProperty(p)) {
+        // Ej: value[tarifa] = { descripcion: 'T-1' }, prop[tarifa] = 'descripcion'
+        return resolveDirection(prop[p]);
+      }
+    }
+    return 1;
+
+  } else {
+    throw new Error(`Invalid type '${typeof prop}' of property for obtain direction in OrderByPipe`);
+  }
 }
 
 /**
@@ -201,6 +238,21 @@ export interface OrderByTypeComplex { pipe: ApiFieldsType; callback?: (host: any
 export type OrderByType = OrderByDirectionType | ApiFieldsType | OrderByTypeComplex;
 
 
+/** Elimina los operadores y devuelve únicamente el nombre del campo real (el alias si está definido) */
+export function sanitizePropertyName(prop: string): string {
+  if (prop.startsWith('-')) { prop = prop.substring(1); }
+  if (prop.endsWith('-')) { prop = prop.slice(0, -1); }
+  if (prop.endsWith('?')) { prop = prop.slice(0, -1); }
+  if (prop.includes('->')) {
+    // Ej: poblaciones->origen(nombre)
+    const parts = prop.split('->');
+    // console.log(`prop.includes('->') => `, { parts });
+    // Nos quedamos únicamente con el alias de los campos.
+    return parts[1];
+  }
+  return prop;
+}
+
 /**
  * Devuelve el índice de la fila en la colección. Se utiliza como _callback_ para la función `findIndex`.
  *
@@ -212,11 +264,27 @@ export type OrderByType = OrderByDirectionType | ApiFieldsType | OrderByTypeComp
  */
 export function findRowIndex(row: any): (cur: any, index: number, rows: any[]) => boolean {
   return (cur: any, index: number, rows: any[]): boolean => {
-    if ((cur.idreg === 'new' && !cur.hasOwnProperty('idregNew')) || (row.idreg === 'new' && !row.hasOwnProperty('idregNew'))) {
+    if ( (cur.idreg === 'new' && !cur.hasOwnProperty('idregNew'))
+      || (row.idreg === 'new' && !row.hasOwnProperty('idregNew'))
+    ) {
       throw new Error('Se esperaba una propiedad `idregNew` en la fila para poder compararla con el resto de filas nuevas del array.');
     }
     const idregCur = cur.idreg === 'new' ? cur.idregNew : cur.idreg;
     const idregRow = row.idreg === 'new' ? row.idregNew : row.idreg;
     return idregRow === idregCur;
   };
+}
+
+/** Combina dos grupos de cláusulas con el operador indicado. */
+export function combineClauses(clausesA: ApiSearchClauses, clausesB: ApiSearchClauses, concatOp?: ConcatOperatorType): ApiSearchClauses {
+  if (!concatOp) { concatOp = 'AND'; }
+  if (Array.isArray(clausesA) && !clausesA.length) { clausesA = null; }
+  if (Array.isArray(clausesB) && !clausesB.length) { clausesB = null; }
+  if (!clausesA || !clausesB) { return clausesA || clausesB; }
+  // { OR: [clausesA, clausesB] } | { AND: [clausesA, clausesB] }
+  const clauses = { [concatOp]: [] };
+  // concatOp: 'OR' | 'AND'; clausesA: { OR: [...] } | { AND: [...] }
+  if (!clausesA[concatOp]) { clauses[concatOp].push(clausesA); } else { clauses[concatOp].push(...clausesA[concatOp]); }
+  if (!clausesB[concatOp]) { clauses[concatOp].push(clausesB); } else { clauses[concatOp].push(...clausesB[concatOp]); }
+  return clauses as ApiSearchClauses;
 }

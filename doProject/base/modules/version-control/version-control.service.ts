@@ -51,7 +51,7 @@ export class VersionControlService extends AbstractBaseClass implements OnDestro
 
     this.authenticationChangedSubscription = this.auth.authenticationChanged.subscribe((state: AuthenticationState) => {
       // Comprobamos la versión ahora por si el usuario no cierra nunca la app.
-      if (state.isAuthenticated) { this.reCheck(state.user.AppVersion); }
+      if (state.isAuthenticated && state.user.appVersion) { this.reCheck(state.user.appVersion); }
     });
   }
 
@@ -66,7 +66,7 @@ export class VersionControlService extends AbstractBaseClass implements OnDestro
     if (this.debug) { console.log(this.constructor.name + '.check()'); }
     // {"name": "iPhone 6s Plus", "uuid": "C963FFF7-ECAB-48F5-B376-2CB5CC7DCB01", "appId": "com.exceltaxisantcugat.user", "model": "iPhone", "appName": "Excel Taxi", "memUsed": 101859328, "appBuild": "1", "diskFree": 2783154176, "platform": "ios", "diskTotal": 15978983424, "isVirtual": false, "osVersion": "14.0.1", "appVersion": "1.0", "manufacturer": "Apple", "operatingSystem": "ios"}
     this.device.ready().then(info => {
-      const packageName = info.appId;
+      const packageName = AppConfig.app.package;
       this.current = info.appVersion;
 
 

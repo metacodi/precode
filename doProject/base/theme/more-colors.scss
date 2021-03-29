@@ -457,3 +457,48 @@
   --ion-color-tint: var(--ion-color-light-sea-green-tint);
 }
 
+
+// ---------------------------------------------------------------------------------------------------
+//  light-steel-desk
+// ---------------------------------------------------------------------------------------------------
+
+:root {
+  --ion-color-light-steel-desk: #fbfbff;
+  --ion-color-light-steel-desk-rgb: 251,251,255;
+  --ion-color-light-steel-desk-contrast: #000000;
+  --ion-color-light-steel-desk-contrast-rgb: 0,0,0;
+  --ion-color-light-steel-desk-shade: #dddde0;
+  --ion-color-light-steel-desk-tint: #fbfbff;
+}
+
+.ion-color-light-steel-desk {
+  --ion-color-base: var(--ion-color-light-steel-desk);
+  --ion-color-base-rgb: var(--ion-color-light-steel-desk-rgb);
+  --ion-color-contrast: var(--ion-color-light-steel-desk-contrast);
+  --ion-color-contrast-rgb: var(--ion-color-light-steel-desk-contrast-rgb);
+  --ion-color-shade: var(--ion-color-light-steel-desk-shade);
+  --ion-color-tint: var(--ion-color-light-steel-desk-tint);
+}
+
+
+// ---------------------------------------------------------------------------------------------------
+//  dark-steel-desk
+// ---------------------------------------------------------------------------------------------------
+
+:root {
+  --ion-color-dark-steel-desk: #101013;
+  --ion-color-dark-steel-desk-rgb: 16,16,19;
+  --ion-color-dark-steel-desk-contrast: #ffffff;
+  --ion-color-dark-steel-desk-contrast-rgb: 255,255,255;
+  --ion-color-dark-steel-desk-shade: #0e0e11;
+  --ion-color-dark-steel-desk-tint: #28282b;}
+
+.ion-color-dark-steel-desk {
+  --ion-color-base: var(--ion-color-dark-steel-desk);
+  --ion-color-base-rgb: var(--ion-color-dark-steel-desk-rgb);
+  --ion-color-contrast: var(--ion-color-dark-steel-desk-contrast);
+  --ion-color-contrast-rgb: var(--ion-color-dark-steel-desk-contrast-rgb);
+  --ion-color-shade: var(--ion-color-dark-steel-desk-shade);
+  --ion-color-tint: var(--ion-color-dark-steel-desk-tint);
+}
+
