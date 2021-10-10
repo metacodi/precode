@@ -7,7 +7,7 @@ import chalk from 'chalk';
  * **Usage**
  *
  * ```bash
- * npx ts-node scripts\ionic-angular\generate.ts -f C:\Users\Jordi\work\metacodi\taxi\apps\pre\logic-taxi\src\app\acciones -s accion
+ * npx ts-node scripts\ionic-angular\permissions.ts -f C:\Users\Jordi\work\metacodi\taxi\apps\pre\logic-taxi\src\app\permissions.ts -c metacodi:SGFhFy1YXj7473FhFy1Y -s ftp.metacodi.com -d /www/taxi/pre/api && cd C:\Users\Jordi\work\metacodi\taxi\apps\pre\logic-taxi\
  * ```
  *
  * `gen.bat`
@@ -16,8 +16,7 @@ import chalk from 'chalk';
  * cls
  * set cur=%cd%
  * cd C:\Users\Jordi\work\metacodi\tools\precode\scripts\ionic-angular\
- * if [%2]==[] (npx ts-node generate.ts -f %cur%\%1 && cd %cur%)
- * if [%2] NEQ [] (npx ts-node generate.ts -f %cur%\%1 -s %2 && cd %cur%)
+ * npx ts-node permissions.ts -f C:\Users\Jordi\work\metacodi\taxi\apps\pre\logic-taxi\src\app\permissions.ts -c metacodi:SGFhFy1YXj7473FhFy1Y -s ftp.metacodi.com -d /www/taxi/pre/api && cd C:\Users\Jordi\work\metacodi\taxi\apps\pre\logic-taxi\
  * ```
  */
 
@@ -79,11 +78,11 @@ project.initialize().then(async () => {
 
   // Terminal.log(chalk.bold('source: '), Terminal.green(sourceFile.text));
 
-  TypescriptParser.filter(sourceFile.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false }).map((node: ts.VariableStatement) => {
-    // Terminal.log(chalk.bold('Node: '), Terminal.green(node.getText()));
-    // Terminal.log(chalk.bold('Node: '), Terminal.green(JSON.stringify(node)));
-
-    node.declarationList.declarations.map(d => {
+  TypescriptParser.filter(sourceFile.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false }).map((node: ts.Node) => {
+    const variable: ts.VariableStatement = node as any;
+    // Terminal.log(chalk.bold('Node: '), Terminal.green(variable.getText()));
+    // Terminal.log(chalk.bold('Node: '), Terminal.green(JSON.stringify(variable)));
+    variable.declarationList.declarations.map(d => {
       // Terminal.log(chalk.bold('Variable: '), Terminal.green(d.name.getText()));
       if (d.name.getText() === 'permissions') {
         const text = d.getText();
