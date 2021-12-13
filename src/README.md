@@ -13,7 +13,7 @@ Crear un programa a partir de los archivos del proyecto:
 import * as ts from 'typescript';
 
 // hardcode our input file
-const fileName = './src/models.ts';
+const fileName = './src/model.ts';
 
 // create a program instance, which is a collection of source files
 // in this case we only have one source file
@@ -22,7 +22,7 @@ const program = ts.createProgram([fileName], {});
 // pull off the typechecker instance from our program
 const checker = program.getTypeChecker();
 
-// get our models.ts source file AST
+// get our model.ts source file AST
 const source = program.getSourceFile(fileName);
 
 // visit each node in the root AST and log its kind

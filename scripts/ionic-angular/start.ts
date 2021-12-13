@@ -53,7 +53,7 @@ project.initialize().then(async () => {
   // if (!api.url.dev) { api.url.dev = ''; }
   // if (!api.url.pro) { api.url.pro = ''; }
 
-  // --------------------------------------------------------------------------------
+  // // --------------------------------------------------------------------------------
 
   // await project.file('src/tslint.json', { contentFromFile: 'resources/tslint.json' });
 

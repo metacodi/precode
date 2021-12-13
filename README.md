@@ -94,7 +94,7 @@ if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
 Install MySQL driver:
 ```bash
 npm install mysql --save
-npm install @types/mysql --save
+npm install @types/mysql --save-dev
 ```
 Connect to server and get databases:
 ```typescript

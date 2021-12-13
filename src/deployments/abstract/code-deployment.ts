@@ -46,7 +46,7 @@ export abstract class CodeDeployment {
    * Executa el desplegament de codi en el projecte.
    * @param project Si no s'indica un projecte aleshores s'utilitza la referència obtinguda pel constructor.
    */
-  abstract async deploy(project?: CodeProject, options?: DeploymentOptions, data?: { [key: string]: any }): Promise<boolean>;
+  abstract deploy(project?: CodeProject, options?: DeploymentOptions, data?: { [key: string]: any }): Promise<boolean>;
 
   /** Executa les tasques de desplegament de codi. */
   async run(tasks: any[], project?: CodeProject, options?: DeploymentOptions): Promise<boolean> {
