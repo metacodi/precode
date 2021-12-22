@@ -10,8 +10,8 @@ import { TypescriptProject } from '../../../../projects/typescript-project';
 import { TypescriptDeployment } from '../../../abstract/typescript-deployment';
 
 import { TypescriptDependency } from '../../../typescript/typescript-dependency';
-import { TypescriptCapacitor } from '../../../typescript/typescript-capacitor';
-import { FileExists } from '../../../basics/file-exists';
+import { CapacitorCore } from './capacitor-core';
+import { FileExists } from '../../../utils/file-exists';
 
 
 /** Instal·la el mòdul de notificacions push del capacitor. */
@@ -35,7 +35,7 @@ export class PushCapacitor extends TypescriptDeployment {
 
       const tasks: any[] = [
 
-        new TypescriptCapacitor(),
+        new CapacitorCore(),
 
         new TypescriptDependency({ install: '@capacitor-community/fcm', type: '--save' }),
 
@@ -47,7 +47,7 @@ export class PushCapacitor extends TypescriptDeployment {
 
       ];
 
-      // TODO: app-core ? check core/plugins/push.ts, contructor, notifications.service
+      // TODO: app-core ? check core/plugins/push.ts, constructor, notifications.service
 
       if (data && data.showTitle) { Terminal.line(); }
 

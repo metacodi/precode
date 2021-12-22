@@ -39,7 +39,7 @@ Prompt.parse(process.argv);
 
 console.clear();
 
-Terminal.title('Install Ionic Angular App Core', 'magenta');
+Terminal.title('Install Ionic Angular App Core', { color: 'magenta' });
 
 if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
 

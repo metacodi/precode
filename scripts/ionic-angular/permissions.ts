@@ -24,6 +24,8 @@ import Prompt from 'commander';
 import { TypescriptParser } from '../../src/parsers/typescript-parser';
 import { IonicAngularProject } from '../../src/projects/ionic-angular-project';
 import { Terminal } from '../../src/utils/terminal';
+import { Resource } from '../../src/utils/resource';
+import { FileExists } from '../../src/deployments/basics/file-exists';
 
 Prompt
   .requiredOption('-f, --file <permissions file>', 'Ruta absoluta a l\'arxiu de definició dels permissos.')
@@ -47,7 +49,7 @@ if (Prompt.ajuda) {
   Terminal.log(Terminal.green('-c, --credentials <credentials>') + '  Credencials d\'usuari en forma "usuari:password"');
 
   Terminal.subtitle(' Exemple:');
-  Terminal.log(Terminal.yellow('npx ts-node permissions.ts -d  -f C:/Users/jordi/work/metacodi/taxi/pre/logic-taxi/src/app/configuracion/roles/permissions/permissions.ts'));
+  Terminal.log(Terminal.yellow('npx ts-node permissions.ts -f C:/Users/Jordi/work/metacodi/taxi/apps/pre/logic-taxi/src/app/permissions.ts -c metacodi:SGFhFy1YXj7473FhFy1Y -s ftp.metacodi.com -d /www/taxi/pre/api && cd C:/Users/Jordi/work/metacodi/taxi/apps/pre/logic-taxi/'));
 
   process.exit();
 }
@@ -63,8 +65,7 @@ Terminal.log(chalk.bold('Parsing: '), Terminal.green(Prompt.file));
 let directory: string = Prompt.file;
 do {
   const dir = directory.split(sep);
-  dir.pop();
-  directory = dir.join(sep);
+  dir.pop(); directory = dir.join(sep);
 } while (directory && !IonicAngularProject.isProjectFolder(directory));
 if (!directory) { Terminal.error(`No s'ha trobat la carpeta del projecte`); process.exit(1); }
 
@@ -73,6 +74,8 @@ Terminal.log(chalk.bold('Parsing2: '), Terminal.green(Prompt.file));
 // Creem una nova instància del projecte.
 const project = new IonicAngularProject(directory);
 project.initialize().then(async () => {
+
+  if (!Resource.isAccessible(Prompt.file)) { Terminal.error(`No s'ha trobat l'arxiu de permisos: '${Terminal.file(project.relativePath(Prompt.file))}'`); process.exit(1); }
 
   const sourceFile: ts.SourceFile = TypescriptParser.parse(Prompt.file);
 
@@ -88,6 +91,7 @@ project.initialize().then(async () => {
         const text = d.getText();
         // Terminal.log(chalk.bold('Variable Text: '), Terminal.green(text));
         const value = text.split('=')[1];
+        // tslint:disable-next-line: no-eval
         const perm = eval(value);
         const json = JSON.stringify(perm, null, '  ');
         Terminal.log(Terminal.green(json));

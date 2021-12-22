@@ -11,9 +11,8 @@ import { TypescriptDependency } from '../typescript/typescript-dependency';
 import { TypescriptImport } from '../typescript/typescript-import';
 import { AngularNgModule } from './ngModule';
 import { TypescriptDeployment } from '../abstract/typescript-deployment';
-import { TypescriptCapacitor } from '../typescript/typescript-capacitor';
 import { PushCapacitor } from '../ionic-angular/dependencies/capacitor/push-capacitor';
-import { CustomDeployment } from '../basics/custom-deployment';
+import { CustomDeployment } from '../utils/custom-deployment';
 
 
 /** i18n - Translate Module. */
