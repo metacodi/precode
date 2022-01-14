@@ -25,7 +25,6 @@ import { TypescriptParser } from '../../src/parsers/typescript-parser';
 import { IonicAngularProject } from '../../src/projects/ionic-angular-project';
 import { Terminal } from '../../src/utils/terminal';
 import { Resource } from '../../src/utils/resource';
-import { FileExists } from '../../src/deployments/basics/file-exists';
 
 Prompt
   .requiredOption('-f, --file <permissions file>', 'Ruta absoluta a l\'arxiu de definició dels permissos.')
