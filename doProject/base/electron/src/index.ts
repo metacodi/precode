@@ -1,9 +1,8 @@
-import { app, ipcMain, Notification, shell, BrowserWindow, NotificationConstructorOptions, remote, Menu } from 'electron';
+import { app, ipcMain, shell, BrowserWindow, remote, Menu, globalShortcut } from 'electron';
 import { createCapacitorElectronApp, createCapacitorElectronDeepLinking } from "@capacitor-community/electron";
 
 const contextMenu = require('electron-context-menu');
 const DownloadManager = require("electron-download-manager");
-const Badge = require('electron-windows-badge');
 const path = require('path');
 const fs = require('fs');
 const downloadFolder = app.getPath('downloads');
@@ -11,18 +10,48 @@ const gotTheLock = app.requestSingleInstanceLock();
 
 // Para controlar las ventas secundarias como el pago
 let openWin;
+/** Indica si la aplicación actualmente tiene el foco. */
+let focused = false;
 
 DownloadManager.register({
   downloadFolder
 });
 
+const isMac = process.platform === 'darwin';
+const appPath = app.getAppPath().replace('/app.asar', '');
 // The MainWindow object can be accessed via myCapacitorApp.getMainWindow()
+
 const myCapacitorApp = createCapacitorElectronApp({
   applicationMenuTemplate: [
     { role: 'appMenu' },
     { role: 'editMenu' },
-    { role: 'windowMenu' }
+    { role: 'windowMenu' },
+    // {
+    //   label: 'File',
+    //   submenu: [
+    //     {
+    //       label: 'Save',
+    //       accelerator: 'CommandOrControl+S',
+    //       click: async () => { myCapacitorApp.getMainWindow().webContents.send('saveRow'); }
+    //     }
+    //   ]
+    // },
   ],
+  splashScreen: {
+    splashOptions: {
+      imageFilePath: path.join(appPath, isMac ? '../assets/splash.png' : '../../assets/splash.png')
+    }
+  },
+  // splashScreen: {
+  //   useSplashScreen: false,
+  // },
+  mainWindow: {
+    windowOptions: {
+      show: null,
+      height: 1200,
+      width: 1900,
+    }
+  }
 });
 
 // This method will be called when Electron has finished
@@ -32,6 +61,7 @@ const myCapacitorApp = createCapacitorElectronApp({
 if (!gotTheLock) {
   app.quit();
 } else {
+
   app.on('second-instance', (event, commandLine, workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
     // const mainWindow = remote.BrowserWindow.getAllWindows();
@@ -43,62 +73,6 @@ if (!gotTheLock) {
 
   app.on("ready", () => {
     myCapacitorApp.init();
-
-    ipcMain.handle('downloadApp', async (event, urlApp) => {
-
-      const options = Object.assign({}, { path: '' }, urlApp);
-      const filename = decodeURIComponent(path.basename(urlApp));
-      const filePath = path.join(downloadFolder, options.path.toString(), filename.split(/[?#]/)[0]);
-
-      if (await fs.existsSync(filePath)) { await fs.unlinkSync(filePath); }
-
-      DownloadManager.download({ url: urlApp }, function (error, info) {
-        if (error) {
-          console.log(error);
-          return;
-        }
-        shell.showItemInFolder(filePath);
-        app.quit();
-      });
-    });
-
-    ipcMain.handle('sendNotification', async (event, args: any) => {
-
-      // Necesrio para que las notificaciones en windows se vea correctamente el título de la aplicación
-      if (process.platform === 'win32') {
-        app.setAppUserModelId(args.appId);
-      }
-
-      const notificationOptions: NotificationConstructorOptions = {
-        title: args.header,
-        body: args.message,
-        icon: path.join(__dirname, '../assets/appIcon.png'),
-        urgency: 'critical'
-      }
-      const notification = new Notification(notificationOptions);
-      notification.show();
-      notification.on('click', () => {
-        myCapacitorApp.getMainWindow().webContents.send('notificationClick', args.notified);
-      });
-    });
-
-    ipcMain.handle('openWindow', async (event, url) => {
-      openWin = new BrowserWindow({ width: 800, height: 600 });
-      // Load a remote URL
-      openWin.loadURL(url);
-      openWin.on('closed', () => {
-        myCapacitorApp.getMainWindow().webContents.send('window-closed', url);
-      });
-      return true;
-    });
-
-    ipcMain.handle('closeOpendWindow', async (event, url) => {
-      openWin.close();
-    });
-
-    ipcMain.handle('appQuit', async (event, shortCuts: string[]) => {
-      app.quit();
-    });
 
     ipcMain.handle('setContextMenu', async (event, args) => {
       // Crea menu contextual
@@ -142,7 +116,7 @@ if (!gotTheLock) {
       // });
 
 
-     // Menu.setApplicationMenu(Menu.buildFromTemplate(args));
+      // Menu.setApplicationMenu(Menu.buildFromTemplate(args));
 
       // const extras: any = {
       //   label: 'Inicio',
@@ -152,7 +126,7 @@ if (!gotTheLock) {
       //    },
       //   ]
       // } 
-      
+
       Menu.setApplicationMenu(Menu.buildFromTemplate([
         { role: 'appMenu' },
         { role: 'editMenu' },
@@ -179,18 +153,19 @@ if (!gotTheLock) {
       // Menu.setApplicationMenu(menu)
     });
 
-    // Badge for Mac / Linux
-    ipcMain.handle('setBatge', async (event, counter) => {
-      app.setBadgeCount(counter);
-    });
-
-    // Badge for windows
-    ipcMain.handle('update-badge', async (event, counter) => {
-      const badge = new Badge(myCapacitorApp.getMainWindow(), {});
-      badge.update(counter);
-    });
 
   });
+
+  app.on('browser-window-focus', () => {
+    myCapacitorApp.getMainWindow().webContents.send('browser-window-focus');
+  })
+  app.on('browser-window-blur', () => {
+    myCapacitorApp.getMainWindow().webContents.send('browser-window-blur');
+  })
+
+  // app.on('active', () => {
+  //   myCapacitorApp.getMainWindow().webContents.send('active');
+  // });
 
   // Quit when all windows are closed.
   app.on("window-all-closed", function () {
@@ -200,6 +175,12 @@ if (!gotTheLock) {
       app.quit();
     }
   });
+
+  app.on('will-quit', () => {
+    
+    // Unregister all shortcuts.
+    globalShortcut.unregisterAll()
+  })
 
   app.on("activate", function () {
     // On OS X it's common to re-create a window in the app when the

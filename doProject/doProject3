@@ -42,11 +42,11 @@ then
   echo "------------------------------------------------------"
   echo "cd $2 && npx cap init $3 $4"
   echo "------------------------------------------------------"
-  cd $2 && npm install @capacitor/cli@2.4.7 @capacitor/core@2.4.7 && cd ..
+  cd $2 && npm install @capacitor/cli @capacitor/core && cd ..
   cd $2 && npx cap init $3 $4 && cd ..
   cd $2 && npm install electron --save-dev && cd ..
   cd $2 && npm install electron-builder --save-dev && cd ..
-  # cp -rf base/capacitor.config.json $2/capacitor.config.json
+  cp -rf base/capacitor.config.json $2/capacitor.config.json
 fi
 
 if [ $FIRST_ARGUMENT == "build" ] 
@@ -62,7 +62,7 @@ then
   echo "------------------------------------------------------"
   echo "npx cap add ios && npx cap add android && npm i @capacitor-community/electron && npx cap add @capacitor-community/electron"
   echo "------------------------------------------------------"
-  cd $2 && npm install @capacitor/ios@2.4.7 && npx cap add ios && npm install @capacitor/android@2.4.7 && npx cap add android && npm i @capacitor-community/electron && npx cap add @capacitor-community/electron && cd ..
+  cd $2 && npm install @capacitor/ios && npx cap add ios && npm install @capacitor/android && npx cap add android && npm i @capacitor-community/electron && npx cap add @capacitor-community/electron && cd ..
 fi
 
 if [ $FIRST_ARGUMENT == "copy-platforms" ] 
@@ -92,6 +92,13 @@ then
   echo "------------------------------------------------------"
   echo "install-packages"
   echo "------------------------------------------------------"
+
+  echo "------------------------------------------------------"
+  echo "Capacitor Native Oficial"
+  echo "------------------------------------------------------"
+
+  cd $2 && npm install @capacitor/app && cd ..
+  cd $2 && npm install @capacitor/app-launcher && cd ..
 
   echo "------------------------------------------------------"
   echo "FMC"

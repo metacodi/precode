@@ -22,9 +22,10 @@ fi
 if [ $FIRST_ARGUMENT == "start" ] 
 then
   echo "------------------------------------------------------"
-  echo "ionic start $2 blank --capacitor"
+  echo "ionic start $2 blank --type angular --capacitor"
   echo "------------------------------------------------------"
-  ionic start $2 blank --capacitor && cd $2 && npm audit fix && cd ..
+  ionic start $2 blank --type angular --capacitor && cd $2 && npm audit fix && cd ..
+  # ionic start logic-taxi blank --type angular --capacitor && cd logic-taxi && npm audit fix && cd ..
 fi
 
 if [ $FIRST_ARGUMENT == "resources" ] 
@@ -35,6 +36,9 @@ then
   cp -rf base/resources $2/resources
   cp -rf base/do $2/do && chmod +x $2/do
   cp -rf base/do.bat $2/do.bat
+  # cp -rf base/resources logic-taxi/resources
+  # cp -rf base/do logic-taxi/do && chmod +x logic-taxi/do
+  # cp -rf base/do.bat logic-taxi/do.bat
 fi
 
 if [ $FIRST_ARGUMENT == "init" ] 
@@ -42,11 +46,10 @@ then
   echo "------------------------------------------------------"
   echo "cd $2 && npx cap init $3 $4"
   echo "------------------------------------------------------"
-  cd $2 && npm install @capacitor/cli@2.4.7 @capacitor/core@2.4.7 && cd ..
+  cd $2 && npm install @capacitor/cli @capacitor/core && cd ..
   cd $2 && npx cap init $3 $4 && cd ..
   cd $2 && npm install electron --save-dev && cd ..
   cd $2 && npm install electron-builder --save-dev && cd ..
-  # cp -rf base/capacitor.config.json $2/capacitor.config.json
 fi
 
 if [ $FIRST_ARGUMENT == "build" ] 
@@ -62,7 +65,7 @@ then
   echo "------------------------------------------------------"
   echo "npx cap add ios && npx cap add android && npm i @capacitor-community/electron && npx cap add @capacitor-community/electron"
   echo "------------------------------------------------------"
-  cd $2 && npm install @capacitor/ios@2.4.7 && npx cap add ios && npm install @capacitor/android@2.4.7 && npx cap add android && npm i @capacitor-community/electron && npx cap add @capacitor-community/electron && cd ..
+  cd $2 && npm install @capacitor/ios && npx cap add ios && npm install @capacitor/android && npx cap add android && npm i @capacitor-community/electron && npx cap add @capacitor-community/electron && cd ..
 fi
 
 if [ $FIRST_ARGUMENT == "copy-platforms" ] 
@@ -99,8 +102,6 @@ then
   cd $2 && npm install @capacitor-community/fcm && cd ..
   cp -rf base/GoogleService-Info.plist $2/ios/App/App/GoogleService-Info.plist
   cp -rf base/google-services.json $2/android/app/google-services.json
-  # cp -rf base/GoogleService-Info.plist logic-taxi/ios/App/App/GoogleService-Info.plist
-  # cp -rf base/google-services.json logic-taxi/android/app/google-services.json
 
   echo "------------------------------------------------------"
   echo "Biometric"
@@ -110,6 +111,12 @@ then
   cd $2 && npm install @ionic-native/android-fingerprint-auth && cd ..
   cd $2 && npm install cordova-plugin-android-fingerprint-auth && cd ..
   
+  echo "------------------------------------------------------"
+  echo "Datepicker"
+  echo "------------------------------------------------------"
+  cd $2 && npm install @logisticinfotech/ionic4-datepicker && cd ..
+  cd $2 && npm install @ionic-native/splash-screen @ionic-native/status-bar && cd ..
+
   echo "------------------------------------------------------"
   echo "Media"
   echo "------------------------------------------------------"
@@ -168,18 +175,18 @@ then
   echo "Chart.js"
   echo "------------------------------------------------------"
   cd $2 && npm install ng2-charts@2.4.2 --save && cd ..
-  cd $2 && npm install chart.js@2.9.3 --save && cd ..
+  cd $2 && npm install chart.js --save && cd ..
   cd $2 && npm install chartjs-plugin-datalabels --save && cd ..
   
   echo "------------------------------------------------------"
   echo "Ionic Capacitor capacitor-plugin-file-downloader"
   echo "------------------------------------------------------"
-  cd $2 && npm install capacitor-plugin-file-downloader && cd ..
+  cd $2 && npm install capacitor-keep-screen-on && cd ..
   
   echo "------------------------------------------------------"
   echo "Ionic Capacitor Keep Screen On plugin"
   echo "------------------------------------------------------"
-  cd $2 && npm install capacitor-keep-screen-on && cd ..
+  cd $2 && npm install capacitor-plugin-file-downloader && cd ..
   
   echo "------------------------------------------------------"
   echo "ngx-electron"
@@ -206,13 +213,6 @@ then
   cd $2 && npm install @types/file-saver --save-dev && cd ..
   cd $2 && npm install moment --save-prod && cd ..
   cd $2 && npm i angular-svg-icon --save && cd ..
-
-  echo "------------------------------------------------------"
-  echo "Datepicker"
-  echo "------------------------------------------------------"
-  cd $2 && npm install @logisticinfotech/ionic4-datepicker && cd ..
-  cd $2 && npm install @ionic-native/splash-screen @ionic-native/status-bar && cd ..
-
 
   echo "------------------------------------------------------"
   echo "jetifier, Para Android Sudio X, necesario para File Opener"
@@ -263,13 +263,13 @@ then
   sh doProject resources $2 
   sh doProject init $2 $3 $4
   sh doProject build $2
- sh doProject add-platforms $2
- sh doProject copy-platforms $2
- sh doProject copy-electron-resources $2
- sh doProject install-packages $2
- sh doProject install-base $2
- sh doProject resources-platforms $2
- sh doProject build $2
- sh doProject copy-platforms $2
- sh doProject sync-platforms $2
+  sh doProject add-platforms $2
+  sh doProject copy-platforms $2
+  sh doProject copy-electron-resources $2
+  sh doProject install-packages $2
+  sh doProject install-base $2
+  sh doProject resources-platforms $2
+  sh doProject build $2
+  sh doProject copy-platforms $2
+  sh doProject sync-platforms $2
 fi
