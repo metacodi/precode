@@ -1,6 +1,6 @@
 # Precode
 
-[ts-node](#ts-node) | [scripting](#scripting) | [mysql](#mysql) | [code](#code) | [docs](#documentacio)
+[ts-node](#ts-node) | [scripting](#scripting) | [code](#code) | [docs](#documentació)
 
 Assistent per implementar tasques d'scripting de creació i manteniment de projectes `TypeScript` en un context de **pre-desenvolupament** sobre un servidor `node.js`.
 
@@ -8,6 +8,8 @@ Assistent per implementar tasques d'scripting de creació i manteniment de proje
 
 - `src/scripts` conté scripts per executar amb l'eina `ts-node`.
 - `src/code` conté classes i tipus dissenyats per manipular arxius de codi `TypeScript`.
+
+<br />
 
 # ts-node
 
@@ -36,20 +38,15 @@ npm install typescript
 
 Creem un nou arxiu i escribim el següent codi per l'script:
 
-`prova.ts`:
+`hello-world.ts`:
 ```typescript
-export const content = `Hello, Mary`;
-
-const search = new RegExp(`Mary`, g);
-const replace = `John`;
-
-const result = content.replace(search, replace);
-console.log(result);
+const message = `Hello, world!`;
+console.log(message);
 ```
 
 I ja podem executar l'script des de la consola:
 ```bash
-npx ts-node prova.ts
+npx ts-node hello-world.ts
 ```
 
 Durant l'execució *ts-node* agafa l'script, fa les comprovacions semàntiques necessàries i, a continuació, *transpil·la* l'script de *TypeScript* a *JavaScript*.
@@ -85,70 +82,6 @@ if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
 
 
 <br />
-
-# MySQL
-
-- Repo: <https://www.npmjs.com/package/mysql>
-- Samples: <https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/mysql/mysql-tests.ts>
-
-Install MySQL driver:
-```bash
-npm install mysql --save
-npm install @types/mysql --save
-```
-Connect to server and get databases:
-```typescript
-import * as mysql from 'mysql';
-
-const con = mysql.createConnection({
-  host: "localhost",
-  user: "yourusername",
-  password: "yourpassword"
-});
-
-con.connect((err: any) => {
-  if (err) { throw err; }
-  console.log('Connected!');
-  const sql = 'SHOW DATABASES;';
-  con.query(sql, (error: any, result) => {
-    if (error) { throw error; }
-    console.log('databases => ', JSON.stringify(result));
-  });
-});
-```
-
-Use same connection for multiples queries:
-```typescript
-import * as mysql from 'mysql';
-
-const pool  = mysql.createPool({
-  connectionLimit : 10,
-  host: "localhost",
-  user: "yourusername",
-  password: "yourpassword"
-  database: 'yourdatabasename'
-});
-
-pool.getConnection((err, connection) => {
-  if (err) { throw err; }
-
-  // Use the connection
-  connection.query('SELECT idreg, name FROM `roles` LIMIT 5', (error, response) => {
-    // Handle error after the release.
-    if (error) { throw error; }
-    console.log('roles => ', JSON.stringify(response, null, '  '));
-  });
-
-  // Use the connection again and release it.
-  connection.query('SELECT idreg, email FROM `users` LIMIT 5', (error, response) => {
-    // When done with the connection, release it.
-    connection.release();
-    // Handle error after the release.
-    if (error) { throw error; }
-    console.log('users => ', JSON.stringify(response, null, '  '));
-  });
-});
-```
 
 <br />
 
@@ -218,8 +151,9 @@ Per executar-lo des del terminal:
 npx ts-node ionic/start.ts -d C:\work\apps\my-test-app
 ```
 
+<br />
 
-## Documentació
+# Documentació
 
 Per obtenir la documentació del projecte ens cal executar l'eina [`typedoc`](https://typedoc.org/guides/installation/). Per saber si la tenim instl·lada:
 ```bash

@@ -8,7 +8,6 @@ import { TextReplacer } from '../utils/text-replacer';
 import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions, TypescriptImportType } from './types';
 import { Terminal } from '../utils/terminal';
 import { Resource, ResourceType } from '../utils/resource';
-import { CodeDeployment } from '../deployments/abstract/code-deployment';
 import { TypescriptParser } from '../parsers/typescript-parser';
 
 

@@ -160,7 +160,6 @@ export class IonicAngularProject extends AngularProject {
     await this.file(`${fileName}.html`, { content: listComponentHtml, replaces: [
       { match: '{{EntityPlural}}', replace: this.sanitizeEntity(entity.plural) },
     ] });
-
   }
 
   async generateDetailPage(folder: string, entity: { singular: string, plural: string }): Promise<any> {

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+
 // ---------------------------------------------------------------------------------------------------
 //  Parsers
 // ---------------------------------------------------------------------------------------------------
@@ -34,6 +35,7 @@ export { AngularDeployment } from './deployments/abstract/angular-deployment';
 export { IonicAngularDeployment } from './deployments/abstract/ionic-angular-deployment';
 
 /* Typescript */
+export { TypescriptConstructor } from './deployments/typescript/typescript-constructor';
 export { TypescriptDependency } from './deployments/typescript/typescript-dependency';
 export { TypescriptImport } from './deployments/typescript/typescript-import';
 
@@ -42,8 +44,8 @@ export { AngularNgModule } from './deployments/angular/ngModule';
 export { I18n } from './deployments/angular/i18n';
 
 /* Ionic + Angular */
-export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacitor/push-capacitor';
 export { IonicAngularAppCore } from './deployments/ionic-angular/dependencies/ionic-angular-app-core';
+export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacitor/push-capacitor';
 
 
 // ---------------------------------------------------------------------------------------------------
@@ -51,6 +53,6 @@ export { IonicAngularAppCore } from './deployments/ionic-angular/dependencies/io
 // ---------------------------------------------------------------------------------------------------
 
 export { Resource, ResourceType } from './utils/resource';
-export { Terminal, chalkColor } from './utils/terminal';
+export { Terminal, ChalkColor } from './utils/terminal';
 export { TextReplacer, TextReplacement } from './utils/text-replacer';
 

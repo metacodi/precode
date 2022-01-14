@@ -112,7 +112,7 @@ export class Git {
    */
   static async publish(options?: { folder?: string, commit?: string, branch?: string, run?: TerminalRunOptions }): Promise<void> {
     if (!options) { options = {}; }
-    if (options.commit === undefined) { options.commit = 'auto-update'; }
+    if (options.commit === undefined) { options.commit = 'auto-commit'; }
     if (options.branch === undefined) { options.branch = 'master'; }
     if (options.run === undefined) { options.run = {}; }
     const cwd = process.cwd();

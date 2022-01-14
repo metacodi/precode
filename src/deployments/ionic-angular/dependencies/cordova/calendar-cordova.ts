@@ -10,7 +10,7 @@ import { TypescriptProject } from '../../../../projects/typescript-project';
 import { TypescriptDeployment } from '../../../abstract/typescript-deployment';
 
 import { TypescriptDependency } from '../../../typescript/typescript-dependency';
-import { FileExists } from '../../../basics/file-exists';
+import { FileExists } from '../../../utils/file-exists';
 import { TypescriptImport } from '../../../typescript/typescript-import';
 import { AngularNgModule } from '../../../angular/ngModule';
 

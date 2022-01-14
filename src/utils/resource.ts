@@ -28,8 +28,8 @@ export class Resource {
   static concat(folder: string, fileName: string): string {
     if (!folder) { return fileName; }
     if (!fileName) { return folder; }
-    const concat: string = folder.endsWith('/') || folder.endsWith('\\') ? '' : '/';
-    const file = fileName.startsWith('/') || fileName.startsWith('\\') ? fileName.substr(1) : fileName;
+    const concat = (folder.endsWith('/') || folder.endsWith('\\')) ? '' : '/';
+    const file = (fileName.startsWith('/') || fileName.startsWith('\\')) ? fileName.substring(1) : fileName;
     return Resource.normalize(folder + concat + file);
   }
 
@@ -135,11 +135,11 @@ export class Resource {
    *   "created": "2020-06-15T13:37:16.891Z",
    *   "modified": "2020-06-18T10:59:27.228Z"
    * }
-   *
+   * ```
    * @param resource Ruta absoluta del recurs que es vol explorar.
    * @param extra Indica si s'obtindrà informació més detallada dels recursos a través d'una crida a `fs.statSync`.
    * @param ignore Expressió regular per escloure arxius i carpetes.
-   * @param recursive Realitza crides recursives per descobrir els recursos de dins les carpetes.
+   * @param recursive Realitza crides recursives fins descobrir tots els recursos de dins les sub-carpetes.
    */
   static discover(resource: string, options?: { ignore?: string | RegExp, recursive?: boolean }, indent = ''): ResourceType | ResourceType[] {
     if (!options) { options = {}; }

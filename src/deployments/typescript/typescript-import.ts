@@ -37,14 +37,12 @@ export class TypescriptImport extends TypescriptDeployment {
 
         } else {
           if (options.echo) { Terminal.success(`Instal·lant importació ${chalk.bold(specifier)} a l'arxiu ${Terminal.file(fileName)}.`); }
-          const content = await project.fileImports(file.fileName, [
-            { import: specifier, from },
-          ]);
+          const content = project.fileImports(file.fileName, [{ import: specifier, from }]);
           resolve(Resource.save(file.fileName, content));
         }
 
       } else {
-        if (options.echo) { Terminal.success(`Importació correcta de ${chalk.bold(specifier)} a l'arxiu ${Terminal.file(fileName)}.`); }
+        if (options.verbose) { Terminal.success(`Importació correcta de ${chalk.bold(specifier)} a l'arxiu ${Terminal.file(fileName)}.`); }
         resolve(true);
       }
     });

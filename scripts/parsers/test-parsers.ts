@@ -37,7 +37,7 @@ Prompt.parse(process.argv);
 
 console.clear();
 
-Terminal.title('Test Parsers', 'magenta');
+Terminal.title('Test Parsers', { color: 'magenta' });
 
 if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
 

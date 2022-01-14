@@ -83,7 +83,7 @@ export class CodeProject {
   /** Referència a la connexió mysql oberta. */
   connection: mysql.Connection | mysql.PoolConnection;
 
-  /** Executa una ordre directament al terminal.
+  /** Executa una ordre directament al terminal tenint cura dels estàndars d'entrada i de sortida alhora de mostrar els resultats.
    * @category Command
    */
   static async execute(command: string): Promise<any> {
@@ -104,7 +104,7 @@ export class CodeProject {
   }
 
   /**
-   * Instal·la les dependències indicades al directori del projecte.
+   * Instal·la les dependències indicades des del directori del projecte i encabat restaura el directori anterior al procés.
    *
    * **Usage**
    * ```typescript
@@ -137,18 +137,10 @@ export class CodeProject {
 
   /** @category Init */
   constructor(projectPath: string, scriptPath?: string) {
-    try {
-      this.projectPath = projectPath;
-      this.scriptPath = scriptPath;
-      this.name = this.projectPath.split('/').pop();
-
-      // this.initialize().then(result => {
-      //   Terminal.log('Initialized!');
-      // });
-
-    } catch (error) {
-      Terminal.error(error);
-    }
+    if (!projectPath || typeof projectPath !== 'function') { Terminal.error(`No s'ha indicat cap ruta per a la creació del projecte de codi.`, true); }
+    this.projectPath = projectPath;
+    this.scriptPath = scriptPath;
+    this.name = this.projectPath.split('/').pop();
   }
 
   /**
@@ -422,7 +414,7 @@ export class CodeProject {
     if (!options.action) { options.action = 'add'; }
 
     const fullName = this.rootPath(folderName);
-    const exists = await utils.pathExists(fullName);
+    // const exists = await utils.pathExists(fullName);
 
     if (await utils.pathExists(fullName)) {
       if (options.action === 'remove') {
@@ -638,6 +630,13 @@ export class CodeProject {
     // const normalized = Resource.normalize(fileName);
     // return Resource.normalize(fileName);
     // // return Resource.normalize(utils.existsSync(fileName) ? fileName : Resource.concat(folder ? folder : this.projectPath, fileName));
+  }
+
+  /** Retorna la part de la ruta relativa al projecte. */
+  relativePath(fileName: string): string {
+    if (!fileName || typeof fileName !== 'string') { return fileName; }
+    const idx = fileName.indexOf(this.projectPath);
+    if (idx > -1) { return fileName.substring(idx); }
   }
 
 
