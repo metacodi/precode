@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import { Terminal } from './terminal';
 
 
@@ -141,11 +141,12 @@ export class Resource {
    * @param ignore Expressió regular per escloure arxius i carpetes.
    * @param recursive Realitza crides recursives fins descobrir tots els recursos de dins les sub-carpetes.
    */
-  static discover(resource: string, options?: { ignore?: string | RegExp, recursive?: boolean }, indent = ''): ResourceType | ResourceType[] {
+  static discover(resource: string, options?: { ignore?: string | RegExp, filter?: string | RegExp, recursive?: boolean }, indent = ''): ResourceType | ResourceType[] {
     if (!options) { options = {}; }
     if (options.ignore === undefined) { options.ignore = 'node_modules|\.git'; }
     if (options.recursive === undefined) { options.recursive = false; }
     if (typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
+    if (typeof options.filter === 'string') { options.filter = new RegExp(options.filter); }
 
     if (!fs.existsSync(resource) || !Resource.isAccessible(resource)) { Terminal.error(`No existeix el recurs '${Terminal.file(resource)}'`); return []; }
 
@@ -159,7 +160,7 @@ export class Resource {
       const fullName = path.join(resource, name);
       const stat: fs.Stats = fs.statSync(fullName);
 
-      if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name))) {
+      if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name)) && (!options.filter || options.filter.test(name))) {
         const info: ResourceType = {
           name,
           path: resource,

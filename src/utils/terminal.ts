@@ -1,5 +1,5 @@
-import chalk from 'chalk';
 import { StdioOptions, exec, spawn, ExecException } from 'child_process';
+import chalk from 'chalk';
 
 
 export type CssExtendedColor = 'aliceblue' | 'antiquewhite' | 'aqua' | 'aquamarine'
