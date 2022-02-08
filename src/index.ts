@@ -5,11 +5,7 @@
 //  Parsers
 // ---------------------------------------------------------------------------------------------------
 
-export { JavaParser } from './parsers/java-parser';
-export { PhpParser } from './parsers/php-parser';
-export { TypescriptParser } from './parsers/typescript-parser';
-export { XmlParser } from './parsers/xml-parser';
-
+export * from './parsers';
 
 // ---------------------------------------------------------------------------------------------------
 //  Projects

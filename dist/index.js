@@ -11,15 +11,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextReplacer = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = exports.XmlParser = exports.TypescriptParser = exports.PhpParser = exports.JavaParser = void 0;
-var java_parser_1 = require("./parsers/java-parser");
-Object.defineProperty(exports, "JavaParser", { enumerable: true, get: function () { return java_parser_1.JavaParser; } });
-var php_parser_1 = require("./parsers/php-parser");
-Object.defineProperty(exports, "PhpParser", { enumerable: true, get: function () { return php_parser_1.PhpParser; } });
-var typescript_parser_1 = require("./parsers/typescript-parser");
-Object.defineProperty(exports, "TypescriptParser", { enumerable: true, get: function () { return typescript_parser_1.TypescriptParser; } });
-var xml_parser_1 = require("./parsers/xml-parser");
-Object.defineProperty(exports, "XmlParser", { enumerable: true, get: function () { return xml_parser_1.XmlParser; } });
+exports.TextReplacer = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = void 0;
+__exportStar(require("./parsers"), exports);
 var code_project_1 = require("./projects/code-project");
 Object.defineProperty(exports, "CodeProject", { enumerable: true, get: function () { return code_project_1.CodeProject; } });
 var typescript_project_1 = require("./projects/typescript-project");
