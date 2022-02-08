@@ -1,17 +1,24 @@
 {
   "name": "precode",
   "version": "1.0.0",
-  "description": "Scripts per adaptar projectes ionic després d'haver-se instal·lat.",
+  "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "http://ZEYAt5UZyeyiZ6PyXBLP@gitlab.codi.ovh/tools/precode.git"
-  },
   "scripts": {
     "dev": "TS_NODE_PROJECT='./tsconfig.json' ts-node-dev  --inspect --respawn ./src src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/metacodi/precode.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "engines": {
+    "node": ">= 8.0.0"
+  },
+  "homepage": "https://github.com/metacodi/precode#readme",
   "keywords": [],
   "author": "",
   "license": "ISC",
