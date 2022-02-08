@@ -1,6 +1,6 @@
 {
-  "name": "precode",
-  "version": "1.0.0",
+  "name": "@metacodi/precode",
+  "version": "1.0.2",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -22,7 +22,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "@angular/common": "^9.0.0",
     "@angular/core": "^9.0.0",
     "@ionic-native/core": "^5.1.0",
@@ -35,7 +35,9 @@
     "mysql": "^2.18.1",
     "ng2-charts": "^2.4.2",
     "qs": "^6.9.3",
-    "zone.js": "^0.10.3",
+    "zone.js": "^0.10.3"
+  },
+  "devDependencies": {
     "@angular/compiler": "^9.0.0",
     "@types/fs-extra": "^8.0.1",
     "@types/mysql": "^2.15.14",

@@ -101,7 +101,7 @@ export class AngularProject extends TypescriptProject {
       return undefined;
     }
     const obj = (deco.expression  as ts.CallExpression).arguments[0] as ts.ObjectLiteralExpression;
-    const prop = obj.properties.find((p: ts.PropertyAssignment) => p.name.getText() === propName) as ts.PropertyAssignment;
+    const prop = obj.properties.find((p: ts.Node) => (p as ts.PropertyAssignment).name.getText() === propName) as ts.PropertyAssignment;
     if (!prop) {
       if (throwError) { Terminal.error(`No s'ha trobat la propietat '${chalk.bold(propName)}' al decorador de classe '${chalk.bold('@NgModule')}'.`, false); }
       return undefined;
