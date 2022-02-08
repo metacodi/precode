@@ -2,7 +2,8 @@
   "name": "precode",
   "version": "1.0.0",
   "description": "Scripts per adaptar projectes ionic després d'haver-se instal·lat.",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "http://ZEYAt5UZyeyiZ6PyXBLP@gitlab.codi.ovh/tools/precode.git"
@@ -14,7 +15,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "@angular/common": "^9.0.0",
     "@angular/core": "^9.0.0",
     "@ionic-native/core": "^5.1.0",
@@ -27,9 +28,7 @@
     "mysql": "^2.18.1",
     "ng2-charts": "^2.4.2",
     "qs": "^6.9.3",
-    "zone.js": "^0.10.3"
-  },
-  "devDependencies": {
+    "zone.js": "^0.10.3",
     "@angular/compiler": "^9.0.0",
     "@types/fs-extra": "^8.0.1",
     "@types/mysql": "^2.15.14",

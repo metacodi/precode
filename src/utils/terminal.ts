@@ -142,8 +142,8 @@ export class Terminal {
   static file(fileName: string, relativeTo?: string): string {
     const i = relativeTo ? Terminal.relative(fileName, relativeTo) : fileName.split('\\').join('/').lastIndexOf('/');
     if (i > 0) {
-      const base = fileName.substr(0, i + 1);
-      const name = fileName.substr(i + 1);
+      const base = fileName.substring(0, i);
+      const name = fileName.substring(i);
       return chalk.green(base) + chalk.bold.green(name);
 
     } else {

@@ -36,7 +36,7 @@ Prompt.parse(process.argv);
 
 console.clear();
 
-Terminal.title('Test PHP', 'magenta');
+Terminal.title('Test PHP', { color: 'magenta' });
 
 if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
 
