@@ -4,12 +4,12 @@ import fs from 'fs';
 import path from 'path';
 import php, { Program, Node } from 'php-parser';
 
-import { Terminal } from '../utils/terminal';
-import { Resource, ResourceType } from '../utils/resource';
-import { TextReplacer } from '../utils/text-replacer';
+import { Terminal } from '../../src/utils/terminal';
+import { Resource, ResourceType } from '../../src/utils/resource';
+import { TextReplacer } from '../../src/utils/text-replacer';
 
-import { PhpProject } from './php-project';
-import { CodeDeployment } from '../deployments/abstract/code-deployment';
+import { PhpProject } from '../../scripts/php-project';
+import { CodeDeployment } from '../../src/deployments/abstract/code-deployment';
 import Engine from 'php-parser';
 
 

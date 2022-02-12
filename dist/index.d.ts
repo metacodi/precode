@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-export * from './parsers';
+export * from './parsers/typescript-parser';
 export { CodeProject } from './projects/code-project';
 export { TypescriptProject } from './projects/typescript-project';
 export { AngularProject } from './projects/angular-project';
@@ -19,4 +19,5 @@ export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacito
 export { Resource, ResourceType } from './utils/resource';
 export { Terminal, ChalkColor } from './utils/terminal';
 export { TextReplacer, TextReplacement } from './utils/text-replacer';
+export { Git } from './utils/git';
 //# sourceMappingURL=index.d.ts.map

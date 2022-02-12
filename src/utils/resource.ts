@@ -48,17 +48,24 @@ export class Resource {
    * Per exemple, si l'arxiu és un de tipus `json` aleshores es retorna el resultat de
    * `JSON.parse(content)`
    */
-  static open(fileName: string): any {
+  static open(fileName: string, options?: { parseJsonFile?: boolean }): any {
     try {
+      if (!options) { options = {}; }
+      const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
+
       // Obtenim el contingut de l'arxiu.
-      let content = fs.readFileSync(fileName).toString();
+      let content = fs.readFileSync(fileName, { encoding: "utf8" }).toString();
 
       // Parsejem el contingut.
       const file = Resource.discover(fileName) as ResourceType;
-      if (file.extension === '.json') {
+      if (parseJsonFile && file.extension === '.json') {
         if (file.name.startsWith('tsconfig')) {
           // Remove comments.
           content = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '');
+          // Eliminem la coma de la darrera propietat d'un objecte literal.
+          content = content.replace(/\,[\s]*\}/gm, '}');
+          // Eliminem la coma del darrer element d'un array.
+          content = content.replace(/\,[\s]*\]/gm, ']');
         }
         return JSON.parse(content);
       }
@@ -152,31 +159,36 @@ export class Resource {
 
     const content: ResourceType[] = [];
     const resourceIsDirectory = fs.lstatSync(resource).isDirectory();
+    // NOTA: Si el recurs és la unitat, afegim una barra pq sinó accedirà a la carpeta actual process.cwd() i no trobarà aquests arxius a l'arrel de la unitat.
+    if (resource.length === 2 && resource.endsWith(':')) resource = resource + (process.platform === 'win32' ? '\\' : '/');
     const resources: string[] = resourceIsDirectory ? fs.readdirSync(resource) : [ path.basename(resource) ];
     resource = resourceIsDirectory ? resource : path.dirname(resource);
 
     for (const name of Object.values(resources)) {
-
       const fullName = path.join(resource, name);
-      const stat: fs.Stats = fs.statSync(fullName);
-
-      if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name)) && (!options.filter || options.filter.test(name))) {
-        const info: ResourceType = {
-          name,
-          path: resource,
-          fullName,
-          isDirectory: stat.isDirectory(),
-          isFile: stat.isFile(),
-          extension: stat.isDirectory() ? '' : path.extname(name),
-          size: stat.size,
-          created: stat.birthtime,
-          modified: stat.mtime,
-        };
-        // console.log(indent + (info.isDirectory ? '+ ' : '  ') + info.name + ' (' + info.size + ')');
-        // Si el recurs era un arxiu, sortiem desrpés de la primera voltra retornant un objecte en lloc d'un array.
-        if (resourceIsDirectory) { content.push(info); } else { return info; }
-        // -> Crida recursiva
-        if (info.isDirectory && options.recursive) { info.children = this.discover(fullName, options, indent + '  ') as ResourceType[]; }
+      try {
+        // NOTA: Encara que sigui accessible, no podem recuperar el seu status si no ho permeten els permisos.
+        const stat: fs.Stats = fs.statSync(fullName);
+        if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name)) && (!options.filter || options.filter.test(name))) {
+          const info: ResourceType = {
+            name,
+            path: resource,
+            fullName,
+            isDirectory: stat.isDirectory(),
+            isFile: stat.isFile(),
+            extension: stat.isDirectory() ? '' : path.extname(name),
+            size: stat.size,
+            created: stat.birthtime,
+            modified: stat.mtime,
+          };
+          // console.log(indent + (info.isDirectory ? '+ ' : '  ') + info.name + ' (' + info.size + ')');
+          // Si el recurs era un arxiu, sortiem desrpés de la primera voltra retornant un objecte en lloc d'un array.
+          if (resourceIsDirectory) { content.push(info); } else { return info; }
+          // -> Crida recursiva
+          if (info.isDirectory && options.recursive) { info.children = this.discover(fullName, options, indent + '  ') as ResourceType[]; }
+        }
+      } catch (error) {
+        // console.error(error);
       }
     }
     return content;

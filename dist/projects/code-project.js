@@ -34,7 +34,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CodeProject = void 0;
 const fs = __importStar(require("fs"));
-const utils = __importStar(require("@ionic/utils-fs/dist/index.js"));
 const path = __importStar(require("path"));
 const chalk_1 = __importDefault(require("chalk"));
 const child_process_1 = require("child_process");
@@ -44,7 +43,7 @@ const terminal_1 = require("../utils/terminal");
 const resource_1 = require("../utils/resource");
 class CodeProject {
     constructor(projectPath, scriptPath) {
-        if (!projectPath || typeof projectPath !== 'function') {
+        if (!projectPath) {
             terminal_1.Terminal.error(`No s'ha indicat cap ruta per a la creació del projecte de codi.`, true);
         }
         this.projectPath = projectPath;
@@ -112,11 +111,11 @@ class CodeProject {
     read(fileName, fromPath) {
         return __awaiter(this, void 0, void 0, function* () {
             const fullName = this.rootPath(fileName, fromPath === 'project' ? this.projectPath : this.scriptPath);
-            if (!(yield utils.pathExists(fullName))) {
+            if (!resource_1.Resource.exists(fullName)) {
                 terminal_1.Terminal.error(`No s'ha trobat l'arxiu '${terminal_1.Terminal.file(fullName)}'...`);
             }
             else {
-                return utils.fileToString(fullName);
+                return resource_1.Resource.open(fullName);
             }
         });
     }
@@ -137,18 +136,18 @@ class CodeProject {
             }
             const fullName = this.rootPath(fileName);
             try {
-                if (!(yield utils.pathExists(fullName))) {
+                if (!resource_1.Resource.exists(fullName)) {
                     terminal_1.Terminal.success(`Creant arxiu '${terminal_1.Terminal.file(fileName)}'.`);
                 }
                 else {
                     if (!options.content) {
                         terminal_1.Terminal.verbose(`Llegint arxiu '${terminal_1.Terminal.file(fileName)}'.`);
-                        options.content = yield utils.fileToString(fullName);
+                        options.content = yield resource_1.Resource.open(fullName);
                     }
                     else {
                         terminal_1.Terminal.success(`Actualitzant arxiu '${terminal_1.Terminal.file(fileName)}'.`);
                         if (options.appendRatherThanOverwrite) {
-                            const content = (yield utils.fileToString(fullName)) || '';
+                            const content = (yield resource_1.Resource.open(fullName)) || '';
                             options.content = content + '\n' + options.content;
                         }
                     }
@@ -214,7 +213,7 @@ class CodeProject {
                 options.action = 'add';
             }
             const fullName = this.rootPath(folderName);
-            if (yield utils.pathExists(fullName)) {
+            if (resource_1.Resource.exists(fullName)) {
                 if (options.action === 'remove') {
                     terminal_1.Terminal.success(`  Eliminant la carpeta '${terminal_1.Terminal.file(folderName)}'.`);
                     const command = process.platform === 'win32' ? `rmdir /S /Q "${fullName}"` : `rm -Rf ${fullName}`;
@@ -250,7 +249,7 @@ class CodeProject {
             if (options.removePreviousFolder === undefined) {
                 options.removePreviousFolder = true;
             }
-            if (options.removePreviousFolder && (yield utils.pathExists(to))) {
+            if (options.removePreviousFolder && resource_1.Resource.exists(to)) {
                 yield this.remove(options.to);
             }
             const command = `git clone ${from} ${to}`;
@@ -277,8 +276,8 @@ class CodeProject {
         return __awaiter(this, void 0, void 0, function* () {
             const from = this.rootPath(fromPath);
             const to = this.rootPath(toPath);
-            if (!(yield utils.pathExists(from))) {
-                if (!(yield utils.pathExists(to))) {
+            if (!resource_1.Resource.exists(from)) {
+                if (!resource_1.Resource.exists(to)) {
                     terminal_1.Terminal.warning(`No s'ha trobat la carpeta d'origen '${terminal_1.Terminal.file(fromPath)}'.`);
                 }
                 else {
@@ -295,7 +294,7 @@ class CodeProject {
     remove(name) {
         return __awaiter(this, void 0, void 0, function* () {
             const fullName = this.rootPath(name);
-            if (yield utils.pathExists(fullName)) {
+            if (resource_1.Resource.exists(fullName)) {
                 const stat = fs.lstatSync(fullName);
                 if (stat.isFile()) {
                     const command = process.platform === 'win32' ? `del "${fullName}"` : `rm -Rf ${fullName}`;

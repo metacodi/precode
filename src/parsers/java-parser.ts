@@ -3,6 +3,12 @@ import fs from 'fs';
 
 export class JavaParser {
 
+  constructor() {
+
+  }
+
+  foo() { return 'bar'; }
+
   static parse(fullName: string, content?: string): any {
     // if (!content && !fs.existsSync(fullName)) { return undefined; }
     // const { cst, tokenVector } = parser(content || fs.readFileSync(fullName, 'utf-8'));

@@ -3,7 +3,6 @@ import chalk from 'chalk'; // const chalk = require('chalk');
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as utils from '@ionic/utils-fs/dist/index.js';
 import { TextReplacer } from '../utils/text-replacer';
 import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions, TypescriptImportType } from './types';
 import { Terminal } from '../utils/terminal';
@@ -91,6 +90,20 @@ export class TypescriptProject extends CodeProject {
         reject(error);
       }
     });
+  }
+
+
+  // --------------------------------------------------------------------------------
+  //  package.json
+  // --------------------------------------------------------------------------------
+
+  incrementPackageVersion() {
+    const pkg = Resource.open('package.json');
+    const version: string[] = pkg.version.split('.');
+    version[2] = `${+version[2] + 1}`;
+    pkg.version = version.join('.');
+    Terminal.log('Incremented ' + chalk.bold('package.json') + ' patch version to:', Terminal.green(pkg.version));
+    Resource.save('package.json', pkg);
   }
 
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs';
-import * as utils from '@ionic/utils-fs/dist/index.js';
 import * as path from 'path';
 import chalk from 'chalk';
 import { exec } from 'child_process';
@@ -137,7 +136,7 @@ export class CodeProject {
 
   /** @category Init */
   constructor(projectPath: string, scriptPath?: string) {
-    if (!projectPath || typeof projectPath !== 'function') { Terminal.error(`No s'ha indicat cap ruta per a la creació del projecte de codi.`, true); }
+    if (!projectPath) { Terminal.error(`No s'ha indicat cap ruta per a la creació del projecte de codi.`, true); }
     this.projectPath = projectPath;
     this.scriptPath = scriptPath;
     this.name = this.projectPath.split('/').pop();
@@ -222,11 +221,11 @@ export class CodeProject {
   async read(fileName: string, fromPath?: 'project' | 'script'): Promise<string> {
     // Si l'arxiu no existeix intentem enrutar-lo.
     const fullName = this.rootPath(fileName, fromPath === 'project' ? this.projectPath : this.scriptPath);
-    if (!await utils.pathExists(fullName)) {
+    if (!Resource.exists(fullName)) {
       Terminal.error(`No s'ha trobat l'arxiu '${Terminal.file(fullName)}'...`);
     } else {
       // Terminal.verbose(`Llegint arxiu '${Terminal.file(fullName)}'...`);
-      return utils.fileToString(fullName);
+      return Resource.open(fullName);
     }
   }
 
@@ -308,19 +307,19 @@ export class CodeProject {
 
     try {
       // Content
-      if (!await utils.pathExists(fullName)) {
+      if (!Resource.exists(fullName)) {
         Terminal.success(`Creant arxiu '${Terminal.file(fileName)}'.`);
 
       } else {
         if (!options.content) {
           Terminal.verbose(`Llegint arxiu '${Terminal.file(fileName)}'.`);
-          options.content = await utils.fileToString(fullName);
+          options.content = await Resource.open(fullName);
 
         } else {
           Terminal.success(`Actualitzant arxiu '${Terminal.file(fileName)}'.`);
           if (options.appendRatherThanOverwrite) {
             // Append content
-            const content: string = await utils.fileToString(fullName) || '';
+            const content: string = await Resource.open(fullName) || '';
             options.content = content + '\n' + options.content;
           }
         }
@@ -414,9 +413,9 @@ export class CodeProject {
     if (!options.action) { options.action = 'add'; }
 
     const fullName = this.rootPath(folderName);
-    // const exists = await utils.pathExists(fullName);
+    // const exists = Resource.exists(fullName);
 
-    if (await utils.pathExists(fullName)) {
+    if (Resource.exists(fullName)) {
       if (options.action === 'remove') {
         Terminal.success(`  Eliminant la carpeta '${Terminal.file(folderName)}'.`);
         const command = process.platform === 'win32' ? `rmdir /S /Q "${fullName}"` : `rm -Rf ${fullName}`;
@@ -470,7 +469,7 @@ export class CodeProject {
     const from = options.from.startsWith('http') ? options.from : `${git.url}/${options.from}`;
     const to = this.rootPath(options.to);
     if (options.removePreviousFolder === undefined) { options.removePreviousFolder = true; }
-    if (options.removePreviousFolder && await utils.pathExists(to)) {
+    if (options.removePreviousFolder && Resource.exists(to)) {
       // Remove directory before clone.
       await this.remove(options.to);
     }
@@ -534,8 +533,8 @@ export class CodeProject {
   async move(fromPath: string, toPath: string): Promise<any> {
     const from = this.rootPath(fromPath);
     const to = this.rootPath(toPath);
-    if (!await utils.pathExists(from)) {
-      if (!await utils.pathExists(to)) {
+    if (!Resource.exists(from)) {
+      if (!Resource.exists(to)) {
         Terminal.warning(`No s'ha trobat la carpeta d'origen '${Terminal.file(fromPath)}'.`);
       } else {
         Terminal.verbose(`La carpeta ja estava moguda a '${Terminal.file(fromPath)}'.`);
@@ -571,7 +570,7 @@ export class CodeProject {
    */
   async remove(name: string): Promise<any> {
     const fullName = this.rootPath(name);
-    if (await utils.pathExists(fullName)) {
+    if (Resource.exists(fullName)) {
       const stat = fs.lstatSync(fullName);
       if (stat.isFile()) {
         // File

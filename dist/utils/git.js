@@ -12,6 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Git = void 0;
 const terminal_1 = require("./terminal");
 class Git {
+    constructor() {
+    }
+    foo() { return 'bar'; }
     static hasChanges(options) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!options) {
@@ -117,12 +120,20 @@ class Git {
             if (diffDir) {
                 process.chdir(options.folder);
             }
-            yield terminal_1.Terminal.run(`git add -A`, options.run).catch(err => { });
-            yield terminal_1.Terminal.run(`git commit -m "${options.commit}"`, options.run).catch(err => { });
-            yield terminal_1.Terminal.run(`git push origin ${options.branch}`, options.run).catch(err => { });
+            let hasErrors = false;
+            if (!hasErrors) {
+                yield terminal_1.Terminal.run(`git add -A`, options.run).catch(err => { hasErrors = true; terminal_1.Terminal.log(`> git add -A`); terminal_1.Terminal.error(err); });
+            }
+            if (!hasErrors) {
+                yield terminal_1.Terminal.run(`git commit -m "${options.commit}"`, options.run).catch(err => { hasErrors = true; terminal_1.Terminal.log(`> git commit -m "${options.commit}"`); terminal_1.Terminal.error(err); });
+            }
+            if (!hasErrors) {
+                yield terminal_1.Terminal.run(`git push origin ${options.branch}`, options.run).catch(err => { hasErrors = true; terminal_1.Terminal.log(`> git push origin ${options.branch}`); terminal_1.Terminal.error(err); });
+            }
             if (diffDir) {
                 process.chdir(cwd);
             }
+            return Promise.resolve(!hasErrors);
         });
     }
     static codeToStatus(code) {

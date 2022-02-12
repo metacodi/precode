@@ -5,7 +5,11 @@
 //  Parsers
 // ---------------------------------------------------------------------------------------------------
 
-export * from './parsers';
+// export * from './parsers/java-parser';
+// export * from './parsers/php-parser';
+export * from './parsers/typescript-parser';
+// export * from './parsers/xml-parser';
+
 
 // ---------------------------------------------------------------------------------------------------
 //  Projects
@@ -51,4 +55,4 @@ export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacito
 export { Resource, ResourceType } from './utils/resource';
 export { Terminal, ChalkColor } from './utils/terminal';
 export { TextReplacer, TextReplacement } from './utils/text-replacer';
-
+export { Git } from './utils/git';

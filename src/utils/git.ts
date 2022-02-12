@@ -2,6 +2,12 @@ import { Terminal, TerminalRunOptions } from './terminal';
 
 export class Git {
 
+  constructor() {
+
+  }
+
+  foo() { return 'bar'; }
+
   /**
    * Comprova si hi ha canvis al repositori indicat o, s'hi no se n'indica cap, a l'actual.
    *
@@ -110,7 +116,7 @@ export class Git {
    * git push origin master
    * ```
    */
-  static async publish(options?: { folder?: string, commit?: string, branch?: string, run?: TerminalRunOptions }): Promise<void> {
+  static async publish(options?: { folder?: string, commit?: string, branch?: string, run?: TerminalRunOptions }): Promise<boolean> {
     if (!options) { options = {}; }
     if (options.commit === undefined) { options.commit = 'auto-commit'; }
     if (options.branch === undefined) { options.branch = 'master'; }
@@ -121,15 +127,19 @@ export class Git {
     // Esstablim el directori del repositori.
     if (diffDir) { process.chdir(options.folder); }
 
+    let hasErrors = false;
+
     // Acceptem els canvis al reposiori.
-    await Terminal.run(`git add -A`, options.run).catch(err => {});
+    if (!hasErrors) { await Terminal.run(`git add -A`, options.run).catch(err => { hasErrors = true; Terminal.log(`> git add -A`); Terminal.error(err); }); }
     // Fem el commit al reposiori.
-    await Terminal.run(`git commit -m "${options.commit}"`, options.run).catch(err => {});
+    if (!hasErrors) { await Terminal.run(`git commit -m "${options.commit}"`, options.run).catch(err => { hasErrors = true; Terminal.log(`> git commit -m "${options.commit}"`); Terminal.error(err); }); }
     // Publiquem el reposiori.
-    await Terminal.run(`git push origin ${options.branch}`, options.run).catch(err => {});
+    if (!hasErrors) { await Terminal.run(`git push origin ${options.branch}`, options.run).catch(err => { hasErrors = true; Terminal.log(`> git push origin ${options.branch}`); Terminal.error(err); }); }
 
     // Restablim l'anterior carpeta de treball.
     if (diffDir) { process.chdir(cwd); }
+
+    return Promise.resolve(!hasErrors);
   }
 
   /**

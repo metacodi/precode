@@ -11,8 +11,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextReplacer = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = void 0;
-__exportStar(require("./parsers"), exports);
+exports.Git = exports.TextReplacer = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = void 0;
+__exportStar(require("./parsers/typescript-parser"), exports);
 var code_project_1 = require("./projects/code-project");
 Object.defineProperty(exports, "CodeProject", { enumerable: true, get: function () { return code_project_1.CodeProject; } });
 var typescript_project_1 = require("./projects/typescript-project");
@@ -50,4 +50,6 @@ var terminal_1 = require("./utils/terminal");
 Object.defineProperty(exports, "Terminal", { enumerable: true, get: function () { return terminal_1.Terminal; } });
 var text_replacer_1 = require("./utils/text-replacer");
 Object.defineProperty(exports, "TextReplacer", { enumerable: true, get: function () { return text_replacer_1.TextReplacer; } });
+var git_1 = require("./utils/git");
+Object.defineProperty(exports, "Git", { enumerable: true, get: function () { return git_1.Git; } });
 //# sourceMappingURL=index.js.map

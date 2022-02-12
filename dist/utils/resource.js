@@ -44,13 +44,19 @@ class Resource {
         const replace = process.platform === 'win32' ? '\\' : '/';
         return fileName.replace(new RegExp(find, 'g'), replace);
     }
-    static open(fileName) {
+    static open(fileName, options) {
         try {
-            let content = fs.readFileSync(fileName).toString();
+            if (!options) {
+                options = {};
+            }
+            const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
+            let content = fs.readFileSync(fileName, { encoding: "utf8" }).toString();
             const file = Resource.discover(fileName);
-            if (file.extension === '.json') {
+            if (parseJsonFile && file.extension === '.json') {
                 if (file.name.startsWith('tsconfig')) {
                     content = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '');
+                    content = content.replace(/\,[\s]*\}/gm, '}');
+                    content = content.replace(/\,[\s]*\]/gm, ']');
                 }
                 return JSON.parse(content);
             }
@@ -139,32 +145,38 @@ class Resource {
         }
         const content = [];
         const resourceIsDirectory = fs.lstatSync(resource).isDirectory();
+        if (resource.length === 2 && resource.endsWith(':'))
+            resource = resource + (process.platform === 'win32' ? '\\' : '/');
         const resources = resourceIsDirectory ? fs.readdirSync(resource) : [path.basename(resource)];
         resource = resourceIsDirectory ? resource : path.dirname(resource);
         for (const name of Object.values(resources)) {
             const fullName = path.join(resource, name);
-            const stat = fs.statSync(fullName);
-            if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name)) && (!options.filter || options.filter.test(name))) {
-                const info = {
-                    name,
-                    path: resource,
-                    fullName,
-                    isDirectory: stat.isDirectory(),
-                    isFile: stat.isFile(),
-                    extension: stat.isDirectory() ? '' : path.extname(name),
-                    size: stat.size,
-                    created: stat.birthtime,
-                    modified: stat.mtime,
-                };
-                if (resourceIsDirectory) {
-                    content.push(info);
+            try {
+                const stat = fs.statSync(fullName);
+                if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name)) && (!options.filter || options.filter.test(name))) {
+                    const info = {
+                        name,
+                        path: resource,
+                        fullName,
+                        isDirectory: stat.isDirectory(),
+                        isFile: stat.isFile(),
+                        extension: stat.isDirectory() ? '' : path.extname(name),
+                        size: stat.size,
+                        created: stat.birthtime,
+                        modified: stat.mtime,
+                    };
+                    if (resourceIsDirectory) {
+                        content.push(info);
+                    }
+                    else {
+                        return info;
+                    }
+                    if (info.isDirectory && options.recursive) {
+                        info.children = this.discover(fullName, options, indent + '  ');
+                    }
                 }
-                else {
-                    return info;
-                }
-                if (info.isDirectory && options.recursive) {
-                    info.children = this.discover(fullName, options, indent + '  ');
-                }
+            }
+            catch (error) {
             }
         }
         return content;

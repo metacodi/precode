@@ -8,6 +8,7 @@ export declare class TypescriptProject extends CodeProject {
     static createProject(folder: string): void;
     constructor(folder: string);
     initialize(): Promise<boolean>;
+    incrementPackageVersion(): void;
     hasDependency(name: string, type?: '--save-prod' | '--save-dev'): boolean;
     isCapacitorElectron(): boolean;
     isCapacitoriOS(): boolean;

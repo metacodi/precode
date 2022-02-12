@@ -1,6 +1,6 @@
-import { DeploymentOptions } from '../../projects/types';
-import { CodeDeployment } from './code-deployment';
-import { PhpProject } from '../../projects/php-project';
+import { DeploymentOptions } from '../../src/projects/types';
+import { CodeDeployment } from '../../src/deployments/abstract/code-deployment';
+import { PhpProject } from './php-project';
 
 /**
  * Classe abstracta que s'utilitza per definir un procés de desplagament de codi en projectes `php`.

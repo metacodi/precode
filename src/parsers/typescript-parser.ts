@@ -4,6 +4,12 @@ import ts from 'typescript';
 
 export class TypescriptParser {
 
+  constructor() {
+
+  }
+
+  foo() { return 'bar'; }
+
   static parse(fullName: string, content?: string): ts.SourceFile {
     if (!content && !fs.existsSync(fullName)) { return undefined; }
     return ts.createSourceFile(fullName, content || fs.readFileSync(fullName, 'utf-8'), ts.ScriptTarget.Latest, true);

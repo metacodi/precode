@@ -1,5 +1,7 @@
 import { TerminalRunOptions } from './terminal';
 export declare class Git {
+    constructor();
+    foo(): string;
     static hasChanges(options?: {
         folder?: string;
         filter?: string;
@@ -18,7 +20,7 @@ export declare class Git {
         commit?: string;
         branch?: string;
         run?: TerminalRunOptions;
-    }): Promise<void>;
+    }): Promise<boolean>;
     static codeToStatus(code: string): string;
 }
 //# sourceMappingURL=git.d.ts.map

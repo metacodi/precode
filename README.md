@@ -4,16 +4,9 @@
 
 Assistent per implementar tasques d'scripting de creació i manteniment de projectes `TypeScript` en un context de **pre-desenvolupament** sobre un servidor `node.js`.
 
-## Estructura del projecte
-
-- `src/scripts` conté scripts per executar amb l'eina `ts-node`.
-- `src/code` conté classes i tipus dissenyats per manipular arxius de codi `TypeScript`.
-
-<br />
-
 # ts-node
 
-El projecte es fonamenta en l'ús de la llibreria `ts-node` (*TypeScript execution and REPL for node.js*) que permet escriure i executar les tasques desitjades utilitzant **typescript** com a llenguatge de scripting.
+Aquest projecte es fonamenta en l'ús de la llibreria `ts-node` (*TypeScript execution and REPL for node.js*) que permet escriure i executar tasques utilitzant **typescript** com a llenguatge d'scripting.
 
 - Repositori: [ts-node](https://github.com/TypeStrong/ts-node)
 
@@ -85,6 +78,56 @@ if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
 
 <br />
 
+# precode
+
+Per utilitzar `precode` en un projecte, cal instal·lar el package des de l'arrel del projecte:
+
+```bash
+npm i -D @metacodi/precode
+```
+
+Per definir scripts en `.ts`, crearem una carpeta a l'arrel del projecte `/precode`.
+
+Si el projecte de destí té una resolució de mòdul diferent, com per exemple `"module": "esnext"`, podem tenir problemes alhora de definir el nostre script, per exemple quan fem importacions. Per paliar-ho, creant un nou arxiu `tsconfig.json`i establint l'argument `--project` durant l'execució dels scripts:
+
+```bash
+npx ts-node --project precode/tsconfig.json precode/publish.ts
+```
+> Compte amb les barres inclinades, en entorn `Windows` cal canviar-les per `\`.
+
+`precode/tsconfig.json`
+```json
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+  }
+}
+```
+
+
+Habilitem `esModuleInterop` per poder importar mòduls `commonjs` sense errors encara que estiguem en un projecte amb resolució `esnext`:
+
+```typescript
+import Prompt from 'commander';
+```
+
+Al projecte on utilitzem `precode` haurem d'esmenar el seu arxiu `tsconfig.json` per excloure de la compilació la carpeta on crearem els scripts:
+
+`/tsconfig.json`
+```json
+{
+  "exclude": [
+    "precode"
+  ]
+}
+```
+
+<br />
+
+<br />
+
 # code
 
 La classe `CodeProject` representa un projecte de codi `TypeScript` i implementa mètodes per a les principals tasques de scripting:
@@ -95,36 +138,6 @@ La classe `CodeProject` representa un projecte de codi `TypeScript` i implementa
 - Clonar repositoris remots.
 - Executar ordres a la consola.
 
-A la ubicació del projecte s'espera trobar un arxiu `precode.json` amb la configuració del projecte.
-Aquest arxiu ha de tenir l'estructura del tipus `CodeProjectConfig`:
-```typescript
-export interface CodeProjectConfig {
-  app: { name: string; package: string; };
-  api?: { url: { dev: string; pre?: string; pro?: string; }, version?: string };
-  git?: { url: string; token?: string; };
-  dependencies?: ProjectDependency[];
-}
-
-export interface ProjectDependency {
-  name: string;
-  url: string;
-  dependencies: ProjectDependency[];
-}
-```
-
-`precode.json`
-```json
-{
-  "app": {
-    "name": "test-ionic-project",
-    "package": "com.test-ionic-project.app"
-  },
-  "git": {
-    "url": "http://gitlab.codi.ovh",
-    "token": "ZEYAt5UZyeyiZ6PyXBLP"
-  }
-}
-```
 
 ## Usage
 

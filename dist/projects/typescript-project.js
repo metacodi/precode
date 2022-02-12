@@ -75,6 +75,14 @@ class TypescriptProject extends code_project_1.CodeProject {
             });
         });
     }
+    incrementPackageVersion() {
+        const pkg = resource_1.Resource.open('package.json');
+        const version = pkg.version.split('.');
+        version[2] = `${+version[2] + 1}`;
+        pkg.version = version.join('.');
+        terminal_1.Terminal.log('Incremented ' + chalk_1.default.bold('package.json') + ' patch version to:', terminal_1.Terminal.green(pkg.version));
+        resource_1.Resource.save('package.json', pkg);
+    }
     hasDependency(name, type) {
         if (this.package && typeof this.package.dependencies === 'object') {
             return Object.keys(this.package[type === '--save-prod' ? 'dependencies' : 'devDependencies']).includes(name);

@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JavaParser = void 0;
 class JavaParser {
+    constructor() {
+    }
+    foo() { return 'bar'; }
     static parse(fullName, content) {
     }
     static find(nodes, match, options) {

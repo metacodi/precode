@@ -3,7 +3,6 @@ import chalk from 'chalk'; // const chalk = require('chalk');
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as utils from '@ionic/utils-fs/dist/index.js';
 import { TextReplacer } from '../utils/text-replacer';
 import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions } from './types';
 import { Terminal } from '../utils/terminal';

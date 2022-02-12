@@ -1,1 +1,0 @@
-{"version":3,"file":"api-php-project.d.ts","sourceRoot":"","sources":["../../src/projects/api-php-project.ts"],"names":[],"mappings":"AAUA,OAAO,EAAE,UAAU,EAAE,MAAM,eAAe,CAAC;AAM3C,qBAAa,aAAc,SAAQ,UAAU;IAG3C,MAAM,CAAC,eAAe,CAAC,MAAM,EAAE,MAAM,GAAG,OAAO;IAW/C,MAAM,CAAC,aAAa,CAAC,MAAM,EAAE,MAAM;gBASvB,MAAM,EAAE,MAAM;IAQpB,UAAU,IAAI,OAAO,CAAC,OAAO,CAAC;CAiBrC"}

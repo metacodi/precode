@@ -7,6 +7,9 @@ exports.TypescriptParser = void 0;
 const fs_1 = __importDefault(require("fs"));
 const typescript_1 = __importDefault(require("typescript"));
 class TypescriptParser {
+    constructor() {
+    }
+    foo() { return 'bar'; }
     static parse(fullName, content) {
         if (!content && !fs_1.default.existsSync(fullName)) {
             return undefined;

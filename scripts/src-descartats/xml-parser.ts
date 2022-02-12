@@ -6,6 +6,12 @@ import { buildAst, accept, XMLDocument } from '@xml-tools/ast';
 /** <https://www.npmjs.com/package/@xml-tools/ast> */
 export class XmlParser {
 
+  constructor() {
+
+  }
+
+  foo() { return 'bar'; }
+
   static parse(fullName: string, content?: string): XMLDocument {
     if (!content && !fs.existsSync(fullName)) { return undefined; }
     const { cst, tokenVector } = parser(content || fs.readFileSync(fullName, 'utf-8'));
