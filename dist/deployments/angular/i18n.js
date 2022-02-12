@@ -41,8 +41,7 @@ class I18n extends angular_deployment_1.AngularDeployment {
                     new typescript_import_1.TypescriptImport({ file: appModule, import: 'HttpClientModule', from: '@angular/common/http' }),
                     new typescript_import_1.TypescriptImport({ file: appModule, import: 'HttpClient', from: '@angular/common/http' }),
                     new ngModule_1.AngularNgModule({ file: appModule, ngModule: 'AppModule', property: 'imports', element: 'HttpClientModule', test: (e) => e.getText() === 'HttpClientModule' }),
-                    new ngModule_1.AngularNgModule({ file: appModule, ngModule: 'AppModule', property: 'imports', element: 'TranslateModule', test: (e) => e.getText().startsWith('TranslateModule'),
-                        text: `TranslateModule.forRoot({
+                    new ngModule_1.AngularNgModule({ file: appModule, ngModule: 'AppModule', property: 'imports', element: 'TranslateModule', test: (e) => e.getText().startsWith('TranslateModule'), text: `TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
         useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),

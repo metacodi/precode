@@ -54,7 +54,7 @@ class CodeProject {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
                 terminal_1.Terminal.log(`${chalk_1.default.blue(command)}`);
-                (0, child_process_1.exec)(command, (error, stdout, stderr) => {
+                child_process_1.exec(command, (error, stdout, stderr) => {
                     if (error) {
                         terminal_1.Terminal.error(error);
                         reject(false);
@@ -309,7 +309,7 @@ class CodeProject {
             }
             else {
                 terminal_1.Terminal.verbose(`La carpeta no existeix '${terminal_1.Terminal.file(fullName)}'.`);
-                return yield (0, rxjs_1.of)().toPromise();
+                return yield rxjs_1.of().toPromise();
             }
         });
     }

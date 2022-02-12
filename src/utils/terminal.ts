@@ -74,7 +74,7 @@ export class Terminal {
 
         // Quan la sortida standard (stdio) està en 'inherit', el resultat surt directament per consola.
         // Quan la sortida està en 'pipe', els handlers (stdout, stderr) s'activen i des d'allà escribim inmediatament el resultat per no fer esperar l'usuari a que s'acibi el procés.
-        let stdout = ''; if (proc.stdout) { proc.stdout.on('data', (data: any) => { stdout += data.toString(); process.stdout.write(chalk.green(data.toString())); }); }
+        let stdout = ''; if (proc.stdout) { console.log('kk', proc.stdout); proc.stdout.on('data', (data: any) => { stdout += data.toString(); process.stdout.write(chalk.green(data.toString())); }); }
         let stderr = ''; if (proc.stderr) { proc.stderr.on('data', (data: any) => { stderr += data.toString(); process.stdout.write(chalk.yellow(data.toString())); }); }
         proc.once('exit', (code: number, signal: NodeJS.Signals) => {
           // Només sortim amb error si hi ha un codi d'error i a més tb un missatge escrit quan el pipe està derivat.

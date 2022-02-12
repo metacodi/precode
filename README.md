@@ -1,10 +1,15 @@
-# Precode
+<div id="top"></div>
 
-[ts-node](#ts-node) | [scripting](#scripting) | [code](#code) | [docs](#documentació)
+# @metacodi/precode
+
+
+[ts-node](#ts-node) | [scripting](#scripting) | [precode](#precode) | [template](#template) | [code](#code) | [docs](#documentació)
 
 Assistent per implementar tasques d'scripting de creació i manteniment de projectes `TypeScript` en un context de **pre-desenvolupament** sobre un servidor `node.js`.
 
-# ts-node
+<br />
+
+# [ts-node](#top)
 
 Aquest projecte es fonamenta en l'ús de la llibreria `ts-node` (*TypeScript execution and REPL for node.js*) que permet escriure i executar tasques utilitzant **typescript** com a llenguatge d'scripting.
 
@@ -49,7 +54,7 @@ Per evitar els errors de transpil·lat es pot utilitzar l'argument `-T` or `--tr
 
 <br />
 
-# scripting
+# [scripting](#top)
 
 Els scripts han de tenir aquestes dues primeres línies a l'inici de l'arxiu.
 ```typescript
@@ -78,7 +83,7 @@ if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
 
 <br />
 
-# precode
+# [precode](#top)
 
 Per utilitzar `precode` en un projecte, cal instal·lar el package des de l'arrel del projecte:
 
@@ -86,9 +91,20 @@ Per utilitzar `precode` en un projecte, cal instal·lar el package des de l'arre
 npm i -D @metacodi/precode
 ```
 
+Haurem d'esmenar l'arxiu `tsconfig.json` del projecte per excloure de la compilació la carpeta on crearem els scripts:
+
+`/tsconfig.json`
+```json
+{
+  "exclude": [
+    "precode"
+  ]
+}
+```
+
 Per definir scripts en `.ts`, crearem una carpeta a l'arrel del projecte `/precode`.
 
-Si el projecte de destí té una resolució de mòdul diferent, com per exemple `"module": "esnext"`, podem tenir problemes alhora de definir el nostre script, per exemple quan fem importacions. Per paliar-ho, creant un nou arxiu `tsconfig.json`i establint l'argument `--project` durant l'execució dels scripts:
+Si el projecte de destí té una resolució de mòdul diferent, com per exemple `"module":"esnext"`, podem tenir problemes a l'hora de definir el nostre script, per exemple quan fem importacions. Podem evitar-ho creant un nou arxiu `tsconfig.json` i establint l'argument `--project` durant l'execució dels scripts:
 
 ```bash
 npx ts-node --project precode/tsconfig.json precode/publish.ts
@@ -107,28 +123,49 @@ npx ts-node --project precode/tsconfig.json precode/publish.ts
 ```
 
 
-Habilitem `esModuleInterop` per poder importar mòduls `commonjs` sense errors encara que estiguem en un projecte amb resolució `esnext`:
+Habilitem `esModuleInterop` i `allowSyntheticDefaultImports` per poder importar mòduls `commonjs` sense errors encara que estiguem en un projecte amb resolució `esnext`:
 
 ```typescript
 import Prompt from 'commander';
 ```
 
-Al projecte on utilitzem `precode` haurem d'esmenar el seu arxiu `tsconfig.json` per excloure de la compilació la carpeta on crearem els scripts:
 
-`/tsconfig.json`
-```json
-{
-  "exclude": [
-    "precode"
-  ]
-}
+<br />
+
+# [template](#top)
+
+Plantilla per fer els scripts:
+
+```typescript
+#!/usr/bin/env node
+import chalk from 'chalk';
+import Prompt from 'commander';
+
+import { TypescriptProject, Terminal, Resource, Git } from '@metacodi/precode';
+
+Terminal.title('PUBLISH');
+
+Prompt
+  // .requiredOption('-n, --name <name>', 'Nom del component.')
+  .option('-v, --verbose', 'Log verbose')
+  ;
+Prompt.parse(process.argv);
+
+if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
+
+Prompt.folder = Resource.normalize((Prompt.folder || process.cwd()));
+
+const project: TypescriptProject = new TypescriptProject(Prompt.folder);
+project.initialize().then(async () => {
+
+  // Escriure aquí les accions que volem realitzar per aquest projecte.
+
+});
 ```
 
 <br />
 
-<br />
-
-# code
+# [code](#top)
 
 La classe `CodeProject` representa un projecte de codi `TypeScript` i implementa mètodes per a les principals tasques de scripting:
 
@@ -166,7 +203,7 @@ npx ts-node ionic/start.ts -d C:\work\apps\my-test-app
 
 <br />
 
-# Documentació
+# [Documentació](#top)
 
 Per obtenir la documentació del projecte ens cal executar l'eina [`typedoc`](https://typedoc.org/guides/installation/). Per saber si la tenim instl·lada:
 ```bash
