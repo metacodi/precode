@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
-import { exec } from 'child_process';
+import { exec, ExecException } from 'child_process';
 import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions } from './types';
 import { of } from 'rxjs';
 import * as mysql from 'mysql';
@@ -88,7 +88,7 @@ export class CodeProject {
   static async execute(command: string): Promise<any> {
     return new Promise<any>((resolve, reject) => {
       Terminal.log(`${chalk.blue(command)}`);
-      exec(command, (error, stdout, stderr) => {
+      exec(command, (error: ExecException, stdout: string, stderr: string) => {
         if (error) {
           Terminal.error(error);
           reject(false);
@@ -225,7 +225,7 @@ export class CodeProject {
       Terminal.error(`No s'ha trobat l'arxiu '${Terminal.file(fullName)}'...`);
     } else {
       // Terminal.verbose(`Llegint arxiu '${Terminal.file(fullName)}'...`);
-      return Resource.open(fullName);
+      return Resource.open(fullName, { parseJsonFile: false });
     }
   }
 
@@ -492,7 +492,7 @@ export class CodeProject {
    *
    * La crida anterior executaria una ordre com la següent:
    * ```bash
-   * curl -sb --request GET --header 'PRIVATE-TOKEN: TOKEN' https://gitlab.codi.ovh/tools/app-core src/app/core
+   * curl -sb --request GET --header 'PRIVATE-TOKEN: {{TOKEN}}' https://gitlab.codi.ovh/tools/app-core src/app/core
    * ```
    * @param options Parametrización del comando curl.
    * @category Command

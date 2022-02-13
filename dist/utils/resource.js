@@ -45,14 +45,14 @@ class Resource {
         return fileName.replace(new RegExp(find, 'g'), replace);
     }
     static open(fileName, options) {
-        try {
-            if (!options) {
-                options = {};
-            }
-            const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
-            let content = fs.readFileSync(fileName, { encoding: "utf8" }).toString();
-            const file = Resource.discover(fileName);
-            if (parseJsonFile && file.extension === '.json') {
+        if (!options) {
+            options = {};
+        }
+        const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
+        let content = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+        const file = Resource.discover(fileName);
+        if (parseJsonFile && file.extension === '.json') {
+            try {
                 if (file.name.startsWith('tsconfig')) {
                     content = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '');
                     content = content.replace(/\,[\s]*\}/gm, '}');
@@ -60,12 +60,12 @@ class Resource {
                 }
                 return JSON.parse(content);
             }
-            return content;
+            catch (err) {
+                terminal_1.Terminal.error(`Error parsejant l'arxiu JSON '${terminal_1.Terminal.file(fileName)}'.`, false);
+                return undefined;
+            }
         }
-        catch (err) {
-            terminal_1.Terminal.error(`Error parsejant l'arxiu JSON '${terminal_1.Terminal.file(fileName)}'.`, false);
-            return undefined;
-        }
+        return content;
     }
     static save(fileName, content, options) {
         try {
@@ -152,8 +152,11 @@ class Resource {
         for (const name of Object.values(resources)) {
             const fullName = path.join(resource, name);
             try {
-                const stat = fs.statSync(fullName);
-                if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name)) && (!options.filter || options.filter.test(name))) {
+                const accessible = Resource.isAccessible(fullName);
+                const filtered = !options.filter || options.filter.test(name);
+                const accepted = !options.ignore || !options.ignore.test(name);
+                if (accessible && accepted && filtered) {
+                    const stat = fs.statSync(fullName);
                     const info = {
                         name,
                         path: resource,

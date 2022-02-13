@@ -26,13 +26,12 @@ class Terminal {
             const color = options.titleColor;
             return new Promise((resolve, reject) => {
                 if (verbose) {
-                    Terminal.subtitle(`${command}`, { color });
+                    Terminal.renderChalk(command, { color, bold: true });
                     const parts = command.split(' ');
                     const args = parts.slice(1);
                     const proc = child_process_1.spawn(parts[0], args, { stdio, shell: true });
                     let stdout = '';
                     if (proc.stdout) {
-                        console.log('kk', proc.stdout);
                         proc.stdout.on('data', (data) => { stdout += data.toString(); process.stdout.write(chalk_1.default.green(data.toString())); });
                     }
                     let stderr = '';
@@ -63,6 +62,7 @@ class Terminal {
     }
     static log(message, data) {
         const indent = '  '.repeat(Terminal.indent);
+        Terminal.clearLine();
         if (data === undefined) {
             console.log(indent + message);
         }
@@ -72,20 +72,24 @@ class Terminal {
     }
     static verbose(message, data) {
         if (Terminal.verboseEnabled) {
+            Terminal.clearLine();
             Terminal.log(message, data);
         }
     }
     static blob(content) {
         if (Terminal.verboseEnabled) {
+            Terminal.clearLine();
             Terminal.line();
             Terminal.log(content);
             Terminal.line();
         }
     }
     static warning(message) {
+        Terminal.clearLine();
         Terminal.log(chalk_1.default.bold.yellow('WARN: ') + chalk_1.default.yellow(message) + '\n');
     }
     static error(error, exit = true) {
+        Terminal.clearLine();
         const message = typeof error === 'string' ? error : error.error || error.message || 'Error desconegut';
         Terminal.log(chalk_1.default.bold.red('ERROR: ') + chalk_1.default.red(message));
         if (exit) {
@@ -115,10 +119,16 @@ class Terminal {
         return i - 1;
     }
     static success(message, check = '√') {
+        Terminal.clearLine();
         Terminal.log(`${chalk_1.default.bold.green(check)} ${message}`);
     }
     static fail(error, check = 'x') {
+        Terminal.clearLine();
         Terminal.log(`${chalk_1.default.bold.red(check)} ${error}`);
+    }
+    static clearLine() {
+        process.stdout.clearLine(0);
+        process.stdout.cursorTo(0);
     }
     static line(options) {
         if (!options) {

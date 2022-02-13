@@ -115,7 +115,7 @@ class CodeProject {
                 terminal_1.Terminal.error(`No s'ha trobat l'arxiu '${terminal_1.Terminal.file(fullName)}'...`);
             }
             else {
-                return resource_1.Resource.open(fullName);
+                return resource_1.Resource.open(fullName, { parseJsonFile: false });
             }
         });
     }

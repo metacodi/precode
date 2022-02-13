@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
 import Prompt from 'commander';
+import Client from 'ftp';
 
 /**
  * **Usage**
@@ -11,6 +12,8 @@ import Prompt from 'commander';
  */
 
 import { TypescriptProject, Terminal, Resource, Git } from '../src/';
+import { FtpClient } from '../src/utils/ftp';
+import * as path from 'path';
 
 Terminal.title('PUBLISH');
 
@@ -33,8 +36,8 @@ project.initialize().then(async () => {
   Terminal.log(chalk.bold(`Compilant projecte typescript`));
   await Terminal.run(`tsc`);
 
-  const ok = await Git.publish({ branch: 'main', commit: Prompt.commit });
-  if (ok) { Terminal.log(`Git published successfully!`); }
+  // const ok = await Git.publish({ branch: 'main', commit: Prompt.commit });
+  // if (ok) { Terminal.log(`Git published successfully!`); }
 
   Terminal.log(`npm publish`);
   await Terminal.run(`npm publish`);

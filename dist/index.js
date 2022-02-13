@@ -11,7 +11,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Git = exports.TextReplacer = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = void 0;
+exports.FtpClient = exports.Git = exports.TextReplacer = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = void 0;
 __exportStar(require("./parsers/typescript-parser"), exports);
 var code_project_1 = require("./projects/code-project");
 Object.defineProperty(exports, "CodeProject", { enumerable: true, get: function () { return code_project_1.CodeProject; } });
@@ -52,4 +52,6 @@ var text_replacer_1 = require("./utils/text-replacer");
 Object.defineProperty(exports, "TextReplacer", { enumerable: true, get: function () { return text_replacer_1.TextReplacer; } });
 var git_1 = require("./utils/git");
 Object.defineProperty(exports, "Git", { enumerable: true, get: function () { return git_1.Git; } });
+var ftp_1 = require("./utils/ftp");
+Object.defineProperty(exports, "FtpClient", { enumerable: true, get: function () { return ftp_1.FtpClient; } });
 //# sourceMappingURL=index.js.map

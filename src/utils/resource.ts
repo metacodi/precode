@@ -49,16 +49,16 @@ export class Resource {
    * `JSON.parse(content)`
    */
   static open(fileName: string, options?: { parseJsonFile?: boolean }): any {
-    try {
-      if (!options) { options = {}; }
-      const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
+    if (!options) { options = {}; }
+    const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
 
-      // Obtenim el contingut de l'arxiu.
-      let content = fs.readFileSync(fileName, { encoding: "utf8" }).toString();
+    // Obtenim el contingut de l'arxiu.
+    let content = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
 
-      // Parsejem el contingut.
-      const file = Resource.discover(fileName) as ResourceType;
-      if (parseJsonFile && file.extension === '.json') {
+    // Parsejem el contingut.
+    const file = Resource.discover(fileName) as ResourceType;
+    if (parseJsonFile && file.extension === '.json') {
+      try {
         if (file.name.startsWith('tsconfig')) {
           // Remove comments.
           content = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '');
@@ -68,14 +68,13 @@ export class Resource {
           content = content.replace(/\,[\s]*\]/gm, ']');
         }
         return JSON.parse(content);
+
+      } catch (err) {
+        Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
+        return undefined;
       }
-
-      return content;
-
-    } catch (err) {
-      Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
-      return undefined;
     }
+    return content;
   }
 
   /**
@@ -168,8 +167,11 @@ export class Resource {
       const fullName = path.join(resource, name);
       try {
         // NOTA: Encara que sigui accessible, no podem recuperar el seu status si no ho permeten els permisos.
-        const stat: fs.Stats = fs.statSync(fullName);
-        if (Resource.isAccessible(fullName) && (!options.ignore || !options.ignore.test(name)) && (!options.filter || options.filter.test(name))) {
+        const accessible = Resource.isAccessible(fullName);
+        const filtered = !options.filter || options.filter.test(name);
+        const accepted = !options.ignore || !options.ignore.test(name);
+        if (accessible && accepted && filtered) {
+          const stat: fs.Stats = fs.statSync(fullName);
           const info: ResourceType = {
             name,
             path: resource,

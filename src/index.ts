@@ -56,3 +56,4 @@ export { Resource, ResourceType } from './utils/resource';
 export { Terminal, ChalkColor } from './utils/terminal';
 export { TextReplacer, TextReplacement } from './utils/text-replacer';
 export { Git } from './utils/git';
+export { FtpClient } from './utils/ftp';

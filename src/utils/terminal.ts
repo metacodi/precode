@@ -56,25 +56,21 @@ export class Terminal {
   /** @category Execution */
   static async run(command: string, options?: TerminalRunOptions): Promise<any> {
     if (!options) { options = {}; }
-    // if (options.verbose === undefined) { options.verbose = false; }
-    // const verbose = options.verbose;
     const verbose = options.verbose === undefined ? Terminal.verboseEnabled : !!options.verbose;
-    // if (options.stdio === undefined) { options.stdio = 'inherit'; }
     const stdio = options.stdio || (verbose ? 'pipe' : 'inherit');
     const color = options.titleColor;
-    // console.log( { 'options.verbose': options.verbose, verbose, 'Terminal.verboseEnabled': Terminal.verboseEnabled });
     return new Promise<any>((resolve: any, reject: any) => {
 
       if (verbose) {
 
-        Terminal.subtitle(`${command}`, { color });
+        Terminal.renderChalk(command, { color, bold: true });
         const parts = command.split(' ');
         const args = parts.slice(1);
         const proc = spawn(parts[0], args, { stdio, shell: true });
 
         // Quan la sortida standard (stdio) està en 'inherit', el resultat surt directament per consola.
         // Quan la sortida està en 'pipe', els handlers (stdout, stderr) s'activen i des d'allà escribim inmediatament el resultat per no fer esperar l'usuari a que s'acibi el procés.
-        let stdout = ''; if (proc.stdout) { console.log('kk', proc.stdout); proc.stdout.on('data', (data: any) => { stdout += data.toString(); process.stdout.write(chalk.green(data.toString())); }); }
+        let stdout = ''; if (proc.stdout) { proc.stdout.on('data', (data: any) => { stdout += data.toString(); process.stdout.write(chalk.green(data.toString())); }); }
         let stderr = ''; if (proc.stderr) { proc.stderr.on('data', (data: any) => { stderr += data.toString(); process.stdout.write(chalk.yellow(data.toString())); }); }
         proc.once('exit', (code: number, signal: NodeJS.Signals) => {
           // Només sortim amb error si hi ha un codi d'error i a més tb un missatge escrit quan el pipe està derivat.
@@ -103,6 +99,7 @@ export class Terminal {
   /** @category Log */
   static log(message: string, data?: any): void {
     const indent = '  '.repeat(Terminal.indent);
+    Terminal.clearLine();
     if (data === undefined) {
       console.log(indent + message);
     } else {
@@ -113,6 +110,7 @@ export class Terminal {
   /** @category Log */
   static verbose(message: string, data?: any): void {
     if (Terminal.verboseEnabled) {
+      Terminal.clearLine();
       Terminal.log(message, data);
     }
   }
@@ -120,6 +118,7 @@ export class Terminal {
   /** @category Log */
   static blob(content: any): void {
     if (Terminal.verboseEnabled) {
+      Terminal.clearLine();
       Terminal.line();
       Terminal.log(content);
       Terminal.line();
@@ -128,11 +127,13 @@ export class Terminal {
 
   /** @category Log */
   static warning(message: string): void {
+    Terminal.clearLine();
     Terminal.log(chalk.bold.yellow('WARN: ') + chalk.yellow(message) + '\n');
   }
 
   /** @category Log */
   static error(error: any, exit = true): void {
+    Terminal.clearLine();
     const message = typeof error === 'string' ? error : error.error || error.message || 'Error desconegut';
     Terminal.log(chalk.bold.red('ERROR: ') + chalk.red(message));
     if (exit) { Terminal.line(); process.exit(1); }
@@ -171,6 +172,7 @@ export class Terminal {
    * @category Test result
    */
   static success(message: string, check = '√'): void {
+    Terminal.clearLine();
     Terminal.log(`${chalk.bold.green(check)} ${message}`);
   }
 
@@ -179,7 +181,15 @@ export class Terminal {
    * @category Test result
    */
   static fail(error: string, check = 'x'): void {
+    Terminal.clearLine();
     Terminal.log(`${chalk.bold.red(check)} ${error}`);
+  }
+
+  static clearLine() {
+    // Neteja la línia actual.
+    process.stdout.clearLine(0);
+    // Coloca el cursor a la primera posició de la línia.
+    process.stdout.cursorTo(0);
   }
 
 

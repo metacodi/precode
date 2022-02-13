@@ -1,6 +1,6 @@
 {
   "name": "@metacodi/precode",
-  "version": "1.0.2",
+  "version": "1.0.21",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,6 +30,7 @@
     "@ngx-translate/http-loader": "^6.0.0",
     "@xml-tools/parser": "^1.0.11",
     "commander": "^4.0.1",
+    "ftp": "^0.3.10",
     "glob": "^7.1.6",
     "mysql": "^2.18.1",
     "ng2-charts": "^2.4.2",
@@ -40,6 +41,7 @@
   "devDependencies": {
     "@angular/compiler": "~11.2.0",
     "@types/fs-extra": "^8.0.1",
+    "@types/ftp": "^0.3.33",
     "@types/mysql": "^2.15.14",
     "@types/node": "^12.12.27",
     "@xml-tools/ast": "^4.2.1",

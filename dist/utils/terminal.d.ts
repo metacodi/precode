@@ -31,6 +31,7 @@ export declare class Terminal {
     static relative(from: string, to: string): number;
     static success(message: string, check?: string): void;
     static fail(error: string, check?: string): void;
+    static clearLine(): void;
     static line(options?: ChalkOptions): void;
     static double(options?: ChalkOptions): void;
     static title(text: string, options?: ChalkOptions): void;
