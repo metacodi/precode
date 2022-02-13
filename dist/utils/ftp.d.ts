@@ -1,4 +1,10 @@
 import Client from 'ftp';
+export interface FtpUploadOptions {
+    continueOnError?: boolean;
+    verbose?: boolean;
+    ignore?: string | RegExp;
+    filter?: string | RegExp;
+}
 export declare class FtpClient {
     protected ftp: Client;
     protected options: Client.Options;
@@ -16,11 +22,15 @@ export declare class FtpClient {
     upload(local: string, remote: string, options?: {
         continueOnError?: boolean;
         verbose?: boolean;
+        ignore?: string | RegExp;
+        filter?: string | RegExp;
     }): Promise<void>;
     private uploadAll;
     remove(remote: string, options?: {
         continueOnError?: boolean;
         verbose?: boolean;
+        ignore?: string | RegExp;
+        filter?: string | RegExp;
     }): Promise<void>;
     private removeAll;
     mkdir(remote: string, recursive?: boolean): Promise<boolean>;

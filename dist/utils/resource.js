@@ -133,10 +133,10 @@ class Resource {
         if (options.recursive === undefined) {
             options.recursive = false;
         }
-        if (typeof options.ignore === 'string') {
+        if (!!options.ignore && typeof options.ignore === 'string') {
             options.ignore = new RegExp(options.ignore);
         }
-        if (typeof options.filter === 'string') {
+        if (!!options.filter && typeof options.filter === 'string') {
             options.filter = new RegExp(options.filter);
         }
         if (!fs.existsSync(resource) || !Resource.isAccessible(resource)) {

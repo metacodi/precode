@@ -103,7 +103,8 @@ class FtpClient {
                 options = {};
             }
             const verbose = options.verbose === undefined ? false : options.verbose;
-            const continueOnError = options.continueOnError === undefined ? false : options.continueOnError;
+            const filter = options.filter === undefined ? undefined : options.filter;
+            const ignore = options.ignore === undefined ? undefined : options.ignore;
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
                     remote = this.normalize(remote);
@@ -117,7 +118,7 @@ class FtpClient {
                             resolve(true);
                         }
                         catch (error) {
-                            if (continueOnError) {
+                            if (options.continueOnError) {
                                 terminal_1.Terminal.error(error, false);
                                 resolve(false);
                             }
@@ -132,7 +133,7 @@ class FtpClient {
                         }
                         try {
                             yield this.mkdir(remote, true);
-                            const resources = resource_1.Resource.discover(local);
+                            const resources = resource_1.Resource.discover(local, { ignore, filter });
                             const directories = resources.filter(r => r.isDirectory);
                             for (const dir of directories) {
                                 yield this.uploadAll(dir.fullName, path.join(remote, dir.name), options);
@@ -144,7 +145,7 @@ class FtpClient {
                             resolve(true);
                         }
                         catch (error) {
-                            if (continueOnError) {
+                            if (options.continueOnError) {
                                 terminal_1.Terminal.error(error, false);
                                 resolve(false);
                             }

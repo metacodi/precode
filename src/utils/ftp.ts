@@ -7,6 +7,14 @@ import { Resource, ResourceType } from './resource';
 import { Terminal } from './terminal';
 
 
+export interface FtpUploadOptions {
+  continueOnError?: boolean;
+  verbose?: boolean;
+  ignore?: string | RegExp;
+  filter?: string | RegExp;
+}
+
+
 /**
  * Tiny FTP client.
  *
@@ -106,7 +114,7 @@ export class FtpClient {
   // ---------------------------------------------------------------------------------------------------
 
   /** Uploads file or directory recursively. */
-  async upload(local: string, remote: string, options?: { continueOnError?: boolean; verbose?: boolean; }) {
+  async upload(local: string, remote: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; }) {
     const start = moment();
     Terminal.log(`- Uploading ${chalk.green(local)} to ${chalk.green(remote)}`);
     const result = await this.uploadAll(local, remote, options);
@@ -114,36 +122,35 @@ export class FtpClient {
     Terminal.success(`Uploaded ${result ? 'successfully' : 'with errors'} (${duration})`);
   }
 
-  private async uploadAll(local: string, remote: string, options?: { continueOnError?: boolean; verbose?: boolean; }) {
+  private async uploadAll(local: string, remote: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; }) {
     if (!options) { options = {}; }
     const verbose = options.verbose === undefined ? false : options.verbose;
-    const continueOnError = options.continueOnError === undefined ? false : options.continueOnError;
+    const filter = options.filter === undefined ? undefined : options.filter;
+    const ignore = options.ignore === undefined ? undefined : options.ignore;
     return new Promise<any>(async (resolve: any, reject: any) => {
       this.ready().then(async () => {
         remote = this.normalize(remote);
         if (this.isFile(local)) {
           if (verbose) { this.verbose(`  uploading... ${chalk.green(remote)}`); }
-          // console.log('file =>', { local, remote });
           try {
             await this.mkdir(path.dirname(remote), true);
             await this.put(local, remote);
             resolve(true);
           } catch (error) {
-            if (continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
+            if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
           }
         } else {
           if (verbose) { this.verbose(`  uploading... ${chalk.green(remote)}`); }
-          // console.log('dir =>', { local, remote });
           try {
             await this.mkdir(remote, true);
-            const resources = Resource.discover(local) as ResourceType[];
+            const resources = Resource.discover(local, { ignore, filter }) as ResourceType[];
             const directories = resources.filter(r => r.isDirectory);
             for (const dir of directories) { await this.uploadAll(dir.fullName, path.join(remote, dir.name), options); }
             const files = resources.filter(r => r.isFile);
             for (const file of files) { await this.uploadAll(file.fullName, path.join(remote, file.name), options); }
             resolve(true);
           } catch (error) {
-            if (continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
+            if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
           }
         }
       })
@@ -151,7 +158,7 @@ export class FtpClient {
   }
 
   /** Removes file or directory content and itself recursively. */
-  async remove(remote: string, options?: { continueOnError?: boolean; verbose?: boolean; }) {
+  async remove(remote: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; }) {
     const start = moment();
     Terminal.log(`- Deleting ${chalk.green('www/app/')} from server`);
     const result = await this.removeAll(remote, options);
@@ -170,12 +177,10 @@ export class FtpClient {
           const isFile = !!path.extname(remote);
           if (isFile) {
             if (verbose) { this.verbose(`  deleting... ${chalk.green(remote)}`); }
-            // console.log('file =>', { remote });
             await this.delete(remote);
             resolve(true);
           } else {
             if (verbose) { this.verbose(`  deleting... ${chalk.green(remote)}`); }
-            // console.log('dir =>', { remote });
             const list = await this.list(remote);
             const directories = list.filter(r => r.type === 'd' && r.name !== '..' && r.name !== '.').map(r => path.posix.join(remote, r.name));
             const files = list.filter(r => r.type !== 'd').map(r => path.posix.join(remote, r.name));

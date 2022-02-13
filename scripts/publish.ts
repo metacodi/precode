@@ -19,7 +19,7 @@ Terminal.title('PUBLISH');
 
 Prompt
   // .requiredOption('-f, --folder <folder>', 'Ruta absoluta de la carpeta i nom del component.')
-  .option('-c, --commit <dir>', 'Descripció pel commit')
+  // .option('-c, --commit <dir>', 'Descripció pel commit')
   .option('-v, --verbose', 'Log verbose')
   ;
 Prompt.parse(process.argv);

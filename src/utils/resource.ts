@@ -151,8 +151,8 @@ export class Resource {
     if (!options) { options = {}; }
     if (options.ignore === undefined) { options.ignore = 'node_modules|\.git'; }
     if (options.recursive === undefined) { options.recursive = false; }
-    if (typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
-    if (typeof options.filter === 'string') { options.filter = new RegExp(options.filter); }
+    if (!!options.ignore && typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
+    if (!!options.filter && typeof options.filter === 'string') { options.filter = new RegExp(options.filter); }
 
     if (!fs.existsSync(resource) || !Resource.isAccessible(resource)) { Terminal.error(`No existeix el recurs '${Terminal.file(resource)}'`); return []; }
 
@@ -168,8 +168,8 @@ export class Resource {
       try {
         // NOTA: Encara que sigui accessible, no podem recuperar el seu status si no ho permeten els permisos.
         const accessible = Resource.isAccessible(fullName);
-        const filtered = !options.filter || options.filter.test(name);
-        const accepted = !options.ignore || !options.ignore.test(name);
+        const filtered = !options.filter || (options.filter as RegExp).test(name);
+        const accepted = !options.ignore || !(options.ignore as RegExp).test(name);
         if (accessible && accepted && filtered) {
           const stat: fs.Stats = fs.statSync(fullName);
           const info: ResourceType = {
@@ -184,7 +184,7 @@ export class Resource {
             modified: stat.mtime,
           };
           // console.log(indent + (info.isDirectory ? '+ ' : '  ') + info.name + ' (' + info.size + ')');
-          // Si el recurs era un arxiu, sortiem desrpés de la primera voltra retornant un objecte en lloc d'un array.
+          // Si el recurs era un arxiu, sortirem desrpés de la primera volta retornant un objecte en lloc d'un array.
           if (resourceIsDirectory) { content.push(info); } else { return info; }
           // -> Crida recursiva
           if (info.isDirectory && options.recursive) { info.children = this.discover(fullName, options, indent + '  ') as ResourceType[]; }
