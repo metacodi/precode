@@ -39,7 +39,7 @@ export class IonicAngularAppCore extends IonicAngularDeployment {
         const appModule: ts.SourceFile = project.getSourceFile('src/app/app.module.ts');
 
         const appComponent: ts.SourceFile = project.getSourceFile('src/app/app.component.ts');
-        const classe = project.findClassDeclaration('AppComponent', appComponent.statements);
+        const classe = project.findClassDeclaration('AppComponent', appComponent);
 
         const tasks: any[] = [
 

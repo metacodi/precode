@@ -65,7 +65,7 @@ export class IonicAngularProject extends AngularProject {
   //  constructor . initialize
   // --------------------------------------------------------------------------------
 
-  constructor(folder: string) { super(folder); }
+  constructor(folder?: string) { super(folder); }
 
   /**
    * Inicialitza el projecte:

@@ -1,3 +1,1 @@
-echo off
-
-npx ts-node scripts\publish.ts
+npx ts-node scripts\publish.ts %*

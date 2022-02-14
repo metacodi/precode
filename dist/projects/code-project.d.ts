@@ -4,12 +4,11 @@ import * as mysql from 'mysql';
 export declare class CodeProject {
     name: string;
     projectPath: string;
-    scriptPath: string;
     config: any;
     connection: mysql.Connection | mysql.PoolConnection;
     static execute(command: string): Promise<any>;
     static install(folder: string, dependencies: any[]): Promise<any>;
-    constructor(projectPath: string, scriptPath?: string);
+    constructor(projectPath: string);
     initialize(): Promise<any>;
     install(dependencies: any[]): Promise<any>;
     read(fileName: string, fromPath?: 'project' | 'script'): Promise<string>;

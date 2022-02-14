@@ -72,9 +72,11 @@ class Resource {
             if (!options) {
                 options = {};
             }
-            const file = Resource.discover(fileName);
-            if (file.extension === '.json' && typeof content === 'object') {
-                content = JSON.stringify(content, null, 2);
+            if (Resource.exists(fileName)) {
+                const file = Resource.discover(fileName);
+                if (file.extension === '.json' && typeof content === 'object') {
+                    content = JSON.stringify(content, null, 2);
+                }
             }
             fs.writeFileSync(fileName, content, options);
             return true;

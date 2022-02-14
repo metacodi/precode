@@ -3,7 +3,7 @@ export declare class IonicAngularProject extends AngularProject {
     ionic: any;
     static isProjectFolder(folder: string): boolean;
     static createProject(folder?: string): void;
-    constructor(folder: string);
+    constructor(folder?: string);
     initialize(): Promise<boolean>;
     sanitizeEntity(entity: string): string;
     generateSchema(folder: string, entity: {

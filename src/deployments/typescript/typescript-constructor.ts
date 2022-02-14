@@ -28,7 +28,7 @@ export class TypescriptConstructor extends TypescriptDeployment {
       const file: ts.SourceFile = project.getSourceFile(data.file.fileName);
       const classe = data.class
         // Busquem la classe a partir del nom suministrat.
-        ? project.findClassDeclaration(data.class, file.statements)
+        ? project.findClassDeclaration(data.class, file)
         // Si no s'ha indicat cap nomm de classe, ens quedem amb la primera aparició.
         : TypescriptParser.find(file.statements, ts.SyntaxKind.ClassDeclaration, { recursive: true }) as ts.ClassDeclaration;
 

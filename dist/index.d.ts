@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-export * from './parsers/typescript-parser';
+export { TypescriptParser } from './parsers/typescript-parser';
 export { CodeProject } from './projects/code-project';
 export { TypescriptProject } from './projects/typescript-project';
 export { AngularProject } from './projects/angular-project';

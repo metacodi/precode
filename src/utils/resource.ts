@@ -87,10 +87,12 @@ export class Resource {
     try {
       if (!options) { options = {}; }
 
-      // Parsejem el contingut.
-      const file = Resource.discover(fileName) as ResourceType;
-      if (file.extension === '.json' && typeof content === 'object') {
-        content = JSON.stringify(content, null, 2);
+      if (Resource.exists(fileName)) {
+        // Parsejem el contingut.
+        const file = Resource.discover(fileName) as ResourceType;
+        if (file.extension === '.json' && typeof content === 'object') {
+          content = JSON.stringify(content, null, 2);
+        }
       }
 
       fs.writeFileSync(fileName, content, options);

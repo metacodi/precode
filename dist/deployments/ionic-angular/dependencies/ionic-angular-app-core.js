@@ -43,7 +43,7 @@ class IonicAngularAppCore extends ionic_angular_deployment_1.IonicAngularDeploym
                 }
                 const appModule = project.getSourceFile('src/app/app.module.ts');
                 const appComponent = project.getSourceFile('src/app/app.component.ts');
-                const classe = project.findClassDeclaration('AppComponent', appComponent.statements);
+                const classe = project.findClassDeclaration('AppComponent', appComponent);
                 const tasks = [
                     new i18n_1.I18n(),
                     new push_capacitor_1.PushCapacitor(),

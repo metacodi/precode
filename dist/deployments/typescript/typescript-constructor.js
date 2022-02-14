@@ -38,7 +38,7 @@ class TypescriptConstructor extends typescript_deployment_1.TypescriptDeployment
                 }
                 const file = project.getSourceFile(data.file.fileName);
                 const classe = data.class
-                    ? project.findClassDeclaration(data.class, file.statements)
+                    ? project.findClassDeclaration(data.class, file)
                     : typescript_parser_1.TypescriptParser.find(file.statements, typescript_1.default.SyntaxKind.ClassDeclaration, { recursive: true });
                 const method = typescript_parser_1.TypescriptParser.find(classe, typescript_1.default.SyntaxKind.Constructor, { recursive: true });
                 if (!method) {

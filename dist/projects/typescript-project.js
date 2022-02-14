@@ -41,7 +41,7 @@ const terminal_1 = require("../utils/terminal");
 const resource_1 = require("../utils/resource");
 const typescript_parser_1 = require("../parsers/typescript-parser");
 class TypescriptProject extends code_project_1.CodeProject {
-    constructor(folder) { super(folder, __dirname); }
+    constructor(folder) { super(folder); }
     static isProjectFolder(folder) {
         const resources = resource_1.Resource.discover(folder);
         return !!resources.find(d => d.name === 'tsconfig.json');
@@ -228,12 +228,99 @@ class TypescriptProject extends code_project_1.CodeProject {
         return result;
     }
     findClassDeclaration(name, source, throwError = true) {
+        if (typeof source === 'string') {
+            source = this.getSourceFile(source);
+        }
         const classe = typescript_parser_1.TypescriptParser.find(source, (node) => node.kind === ts.SyntaxKind.ClassDeclaration && node.name.text === name);
         if (!classe && throwError) {
             terminal_1.Terminal.error(`No s'ha trobat la classe '${chalk_1.default.bold(name)}'.`, false);
             return undefined;
         }
         return classe;
+    }
+    findVariableDeclaration(variable, source, throwError = true) {
+        if (typeof source === 'string') {
+            source = this.getSourceFile(source);
+        }
+        const variables = typescript_parser_1.TypescriptParser.filter(source.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false });
+        for (const node of variables) {
+            const found = node.declarationList.declarations.find(d => d.name.getText() === variable);
+            if (found) {
+                return found;
+            }
+        }
+    }
+    findPropertyAssignment(parent, name) {
+        const properties = typescript_parser_1.TypescriptParser.filter(parent, ts.SyntaxKind.PropertyAssignment, { recursive: true, firstOnly: false });
+        return properties.find(d => d.name.getText() === name);
+    }
+    getPropertyValue(parent, name) {
+        const props = name.split('.');
+        const found = props.reduce((prev, cur) => {
+            const prop = this.findPropertyAssignment(prev, cur);
+            if (!prop) {
+                throw Error(`No s'ha trobat la propietat ${chalk_1.default.bold(cur)} de ${chalk_1.default.bold(name)}`);
+            }
+            return prop;
+        }, parent);
+        return this.parsePropertyInitializer(found.initializer);
+    }
+    parsePropertyInitializer(value) {
+        switch (value.kind) {
+            case ts.SyntaxKind.StringLiteral: return value.text;
+            case ts.SyntaxKind.NumericLiteral: return +value.text;
+            case ts.SyntaxKind.TrueKeyword: return true;
+            case ts.SyntaxKind.FalseKeyword: return false;
+            case ts.SyntaxKind.NullKeyword: return null;
+            default: return value.getText();
+        }
+    }
+    parseDeclaration(fileName, variable) {
+        const sourceFile = typescript_parser_1.TypescriptParser.parse(fileName);
+        if (!sourceFile) {
+            throw Error(`No s'ha trobat l'arxiu '${fileName}' que s'havia de parsejar.`);
+        }
+        const found = typescript_parser_1.TypescriptParser.filter(sourceFile.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false }).find((node) => {
+            const variableStatement = node;
+            return variableStatement.declarationList.declarations.find(d => {
+                return d.name.getText() === variable;
+            });
+        });
+        if (found) {
+            const text = found.getText();
+            const value = text.split('=')[1];
+            return value;
+        }
+        else {
+            throw Error(`No s'ha trobat la variable '${variable}' a l'arxiu '${fileName}'.`);
+        }
+    }
+    ;
+    saveSourceFile(fileName, content) {
+        const source = ts.createSourceFile(resource_1.Resource.normalize(fileName), content, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);
+        const replacements = [];
+        this.normalizeObjectLiteral(source, replacements);
+        const replaced = this.aplyReplacements(content, replacements.reverse()).replace(/\n  (?=\w)/g, '\n\n  ');
+        fs.writeFileSync(resource_1.Resource.normalize(fileName), replaced);
+    }
+    normalizeObjectLiteral(node, replacements) {
+        if (ts.isPropertyAssignment(node)) {
+            const propName = node.getChildren()[0];
+            const propValue = node.getChildren()[2];
+            if (ts.isStringLiteral(propName)) {
+                replacements.push({ start: propName.end - propName.getText().length, end: propName.end, text: propName.text });
+            }
+            if (ts.isStringLiteral(propValue)) {
+                if (propValue.getText().trim().startsWith('"')) {
+                    replacements.push({ start: propValue.end - propValue.getText().length, end: propValue.end, text: `'${propValue.text}'` });
+                }
+            }
+        }
+        node.forEachChild(child => this.normalizeObjectLiteral(child, replacements));
+    }
+    aplyReplacements(content, replacements) {
+        replacements.sort((r1, r2) => r2.start - r1.start).map(r => content = content.slice(0, r.start) + r.text + content.slice(r.end));
+        return content;
     }
 }
 exports.TypescriptProject = TypescriptProject;

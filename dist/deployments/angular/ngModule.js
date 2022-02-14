@@ -39,7 +39,7 @@ class AngularNgModule extends angular_deployment_1.AngularDeployment {
                 const element = data.element;
                 const text = data.text || data.element;
                 const test = data.test;
-                const classe = project.findClassDeclaration(ngModule, file.statements);
+                const classe = project.findClassDeclaration(ngModule, file);
                 const prop = project.getNgModuleProperty(classe, property);
                 const value = prop.initializer;
                 if (!value.elements.find(e => test(e))) {

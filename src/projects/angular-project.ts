@@ -58,7 +58,7 @@ export class AngularProject extends TypescriptProject {
   //  constructor . initialize
   // --------------------------------------------------------------------------------
 
-  constructor(folder: string) { super(folder); }
+  constructor(folder?: string) { super(folder); }
 
   /**
    * Inicialitza el projecte:

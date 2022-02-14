@@ -6,7 +6,7 @@ export declare class TypescriptProject extends CodeProject {
     package: any;
     static isProjectFolder(folder: string): boolean;
     static createProject(folder: string): void;
-    constructor(folder: string);
+    constructor(folder?: string);
     initialize(): Promise<boolean>;
     incrementPackageVersion(): void;
     hasDependency(name: string, type?: '--save-prod' | '--save-dev'): boolean;
@@ -22,6 +22,14 @@ export declare class TypescriptProject extends CodeProject {
     }[];
     protected replaces(fileName: string, options: FileOptions): string;
     getSourceFile(fileName: string, content?: string): ts.SourceFile;
-    findClassDeclaration(name: string, source: any, throwError?: boolean): ts.ClassDeclaration;
+    findClassDeclaration(name: string, source: string | ts.SourceFile, throwError?: boolean): ts.ClassDeclaration;
+    findVariableDeclaration(variable: string, source: string | ts.SourceFile, throwError?: boolean): ts.VariableDeclaration;
+    findPropertyAssignment(parent: ts.Node, name: string): ts.PropertyAssignment;
+    getPropertyValue(parent: ts.Node, name: string): number | string | boolean | null;
+    parsePropertyInitializer(value: ts.Expression): number | string | boolean | null;
+    parseDeclaration(fileName: string, variable: string): string;
+    saveSourceFile(fileName: string, content: string): void;
+    private normalizeObjectLiteral;
+    aplyReplacements(content: string, replacements: any[]): string;
 }
 //# sourceMappingURL=typescript-project.d.ts.map

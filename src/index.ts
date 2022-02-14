@@ -7,7 +7,7 @@
 
 // export * from './parsers/java-parser';
 // export * from './parsers/php-parser';
-export * from './parsers/typescript-parser';
+export { TypescriptParser } from './parsers/typescript-parser';
 // export * from './parsers/xml-parser';
 
 

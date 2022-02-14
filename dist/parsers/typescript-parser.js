@@ -9,7 +9,6 @@ const typescript_1 = __importDefault(require("typescript"));
 class TypescriptParser {
     constructor() {
     }
-    foo() { return 'bar'; }
     static parse(fullName, content) {
         if (!content && !fs_1.default.existsSync(fullName)) {
             return undefined;
@@ -75,6 +74,7 @@ class TypescriptParser {
         }
         return results;
     }
+    foo() { return 'bar'; }
 }
 exports.TypescriptParser = TypescriptParser;
 //# sourceMappingURL=typescript-parser.js.map

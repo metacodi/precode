@@ -73,8 +73,6 @@ export class CodeProject {
   name: string;
   /** Carpeta del projecte. */
   projectPath: string;
-  /** Ubicació de l'script des d'on s'executa la instància de la clase. */
-  scriptPath: string;
   /** @deprecated */
   config: any;
   // /** Debug helper */
@@ -135,10 +133,9 @@ export class CodeProject {
   // --------------------------------------------------------------------------------
 
   /** @category Init */
-  constructor(projectPath: string, scriptPath?: string) {
-    if (!projectPath) { Terminal.error(`No s'ha indicat cap ruta per a la creació del projecte de codi.`, true); }
-    this.projectPath = projectPath;
-    this.scriptPath = scriptPath;
+  constructor(projectPath: string) {
+    // if (!projectPath) { Terminal.error(`No s'ha indicat cap ruta per a la creació del projecte de codi.`, true); }
+    this.projectPath = projectPath || process.cwd();
     this.name = this.projectPath.split('/').pop();
   }
 
@@ -220,7 +217,7 @@ export class CodeProject {
    */
   async read(fileName: string, fromPath?: 'project' | 'script'): Promise<string> {
     // Si l'arxiu no existeix intentem enrutar-lo.
-    const fullName = this.rootPath(fileName, fromPath === 'project' ? this.projectPath : this.scriptPath);
+    const fullName = this.rootPath(fileName, this.projectPath);
     if (!Resource.exists(fullName)) {
       Terminal.error(`No s'ha trobat l'arxiu '${Terminal.file(fullName)}'...`);
     } else {

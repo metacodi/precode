@@ -42,12 +42,8 @@ const mysql = __importStar(require("mysql"));
 const terminal_1 = require("../utils/terminal");
 const resource_1 = require("../utils/resource");
 class CodeProject {
-    constructor(projectPath, scriptPath) {
-        if (!projectPath) {
-            terminal_1.Terminal.error(`No s'ha indicat cap ruta per a la creació del projecte de codi.`, true);
-        }
-        this.projectPath = projectPath;
-        this.scriptPath = scriptPath;
+    constructor(projectPath) {
+        this.projectPath = projectPath || process.cwd();
         this.name = this.projectPath.split('/').pop();
     }
     static execute(command) {
@@ -110,7 +106,7 @@ class CodeProject {
     }
     read(fileName, fromPath) {
         return __awaiter(this, void 0, void 0, function* () {
-            const fullName = this.rootPath(fileName, fromPath === 'project' ? this.projectPath : this.scriptPath);
+            const fullName = this.rootPath(fileName, this.projectPath);
             if (!resource_1.Resource.exists(fullName)) {
                 terminal_1.Terminal.error(`No s'ha trobat l'arxiu '${terminal_1.Terminal.file(fullName)}'...`);
             }

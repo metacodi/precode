@@ -12,8 +12,6 @@ import Client from 'ftp';
  */
 
 import { TypescriptProject, Terminal, Resource, Git } from '../src/';
-import { FtpClient } from '../src/utils/ftp';
-import * as path from 'path';
 
 Terminal.title('PUBLISH');
 
@@ -26,9 +24,9 @@ Prompt.parse(process.argv);
 
 if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
 
-Prompt.folder = Resource.normalize((Prompt.folder || process.cwd()));
+Prompt.folder = Resource.normalize(Prompt.folder || process.cwd());
 
-const project: TypescriptProject = new TypescriptProject(Prompt.folder);
+const project: TypescriptProject = new TypescriptProject();
 project.initialize().then(async () => {
 
   project.incrementPackageVersion();

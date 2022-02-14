@@ -8,8 +8,6 @@ export class TypescriptParser {
 
   }
 
-  foo() { return 'bar'; }
-
   static parse(fullName: string, content?: string): ts.SourceFile {
     if (!content && !fs.existsSync(fullName)) { return undefined; }
     return ts.createSourceFile(fullName, content || fs.readFileSync(fullName, 'utf-8'), ts.ScriptTarget.Latest, true);
@@ -55,4 +53,7 @@ export class TypescriptParser {
     }
     return results;
   }
+
+  foo() { return 'bar'; }
+
 }

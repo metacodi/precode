@@ -35,7 +35,7 @@ export class AngularNgModule extends AngularDeployment {
       const text: string = data.text || data.element;
       const test: (e: any) => boolean = data.test;
 
-      const classe = project.findClassDeclaration(ngModule, file.statements);
+      const classe = project.findClassDeclaration(ngModule, file);
       const prop = project.getNgModuleProperty(classe, property);
       const value = prop.initializer as ts.ArrayLiteralExpression;
 
