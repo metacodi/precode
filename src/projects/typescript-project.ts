@@ -349,6 +349,7 @@ export class TypescriptProject extends CodeProject {
     }
   }
 
+  /** @deprecated */
   parseDeclaration(fileName: string, variable: string): string {
     const sourceFile: ts.SourceFile = TypescriptParser.parse(fileName) as ts.SourceFile;
     if (!sourceFile) { throw Error(`No s'ha trobat l'arxiu '${fileName}' que s'havia de parsejar.`); }
@@ -367,6 +368,7 @@ export class TypescriptProject extends CodeProject {
     }
   };
 
+  /** @deprecated */
   saveSourceFile(fileName: string, content: string): void {
     const source = ts.createSourceFile(Resource.normalize(fileName), content, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);
     const replacements: any[] = [];

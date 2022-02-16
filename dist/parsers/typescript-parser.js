@@ -4,10 +4,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TypescriptParser = void 0;
+const chalk_1 = __importDefault(require("chalk"));
 const fs_1 = __importDefault(require("fs"));
 const typescript_1 = __importDefault(require("typescript"));
+const resource_1 = require("../utils/resource");
 class TypescriptParser {
-    constructor() {
+    constructor(fullName, content) {
+        this.fullName = fullName;
+        this.replacements = [];
+        fullName = resource_1.Resource.normalize(fullName);
+        if (!content) {
+            if (!fs_1.default.existsSync(fullName)) {
+                throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
+            }
+            this.content = fs_1.default.readFileSync(fullName, 'utf-8');
+        }
+        this.source = typescript_1.default.createSourceFile(fullName, this.content, typescript_1.default.ScriptTarget.Latest);
     }
     static parse(fullName, content) {
         if (!content && !fs_1.default.existsSync(fullName)) {
@@ -74,7 +86,74 @@ class TypescriptParser {
         }
         return results;
     }
-    foo() { return 'bar'; }
+    replaceProperty(propertyPath, value) {
+        const path = propertyPath.split('.');
+        let identifier;
+        for (const prop of path) {
+            identifier = this.findIdentifier(prop, identifier);
+            if (!identifier) {
+                throw Error(`No s'ha trobat l'identificador '${chalk_1.default.bold(prop)}' cercant '${chalk_1.default.bold(propertyPath)}'`);
+            }
+        }
+        if (identifier.kind !== typescript_1.default.SyntaxKind.PropertyAssignment) {
+            throw Error(`La propietat '${chalk_1.default.bold(propertyPath)}' no és un node de tipus 'PropertyAssignment'.`);
+        }
+        const initializer = identifier.initializer;
+        const valid = [
+            typescript_1.default.SyntaxKind.StringLiteral,
+            typescript_1.default.SyntaxKind.NumericLiteral,
+            typescript_1.default.SyntaxKind.TrueKeyword,
+            typescript_1.default.SyntaxKind.FalseKeyword,
+            typescript_1.default.SyntaxKind.NullKeyword,
+            typescript_1.default.SyntaxKind.RegularExpressionLiteral,
+        ];
+        if (!valid.includes(initializer.kind)) {
+            throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPath)}' no és una expressió substituïble.`);
+        }
+        const propValue = initializer;
+        const text = typeof value === 'string' ? `'${value}'` : `${value}`;
+        const quotes = typescript_1.default.isStringLiteral(propValue) ? 2 : 0;
+        this.replacements.push({ start: propValue.end - propValue.text.length - quotes, end: propValue.end, text });
+    }
+    findIdentifier(name, parent, indent = '') {
+        indent += '  ';
+        const nodes = this.getNodes(parent || this.source);
+        for (const node of nodes) {
+            if (this.hasIdentifierChild(name, node, indent)) {
+                return node;
+            }
+            const found = this.findIdentifier(name, node, indent);
+            if (found) {
+                return found;
+            }
+        }
+        return undefined;
+    }
+    hasIdentifierChild(name, parent, indent = '') {
+        const children = this.getNodes(parent);
+        for (const child of children) {
+            if (child.kind === typescript_1.default.SyntaxKind.Identifier) {
+                if (child.text === name) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    getNodes(parent) {
+        if (parent.kind === typescript_1.default.SyntaxKind.SourceFile) {
+            return parent.statements;
+        }
+        const nodes = [];
+        parent.forEachChild(node => {
+            nodes.push(node);
+        });
+        return nodes;
+    }
+    save() {
+        this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
+        fs_1.default.writeFileSync(resource_1.Resource.normalize(this.fullName), this.content);
+    }
 }
 exports.TypescriptParser = TypescriptParser;
 //# sourceMappingURL=typescript-parser.js.map

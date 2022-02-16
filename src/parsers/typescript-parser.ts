@@ -1,12 +1,26 @@
+import chalk from 'chalk';
 import fs from 'fs';
-import ts from 'typescript';
+import ts, { RegularExpressionLiteral } from 'typescript';
+import { Terminal } from '..';
 
+import { Resource } from '../utils/resource';
+
+
+export interface TextReplacement {
+  start: number;
+  end: number;
+  text: string;
+  priority?: number;
+}
 
 export class TypescriptParser {
 
-  constructor() {
-
-  }
+  /** Contingut de l'arxiu. */
+  content: string;
+  /** AST de l'arxiu. */
+  source: ts.SourceFile;
+  /** Substitucions del contingut que s'aplicaran al guardar l'arxiu. */
+  replacements: TextReplacement[] = [];
 
   static parse(fullName: string, content?: string): ts.SourceFile {
     if (!content && !fs.existsSync(fullName)) { return undefined; }
@@ -54,6 +68,86 @@ export class TypescriptParser {
     return results;
   }
 
-  foo() { return 'bar'; }
+  constructor(
+    public fullName: string,
+    content?: string,
+  ) {
+    fullName = Resource.normalize(fullName);
+    if (!content) {
+      // console.log('Sense contingut');
+      if (!fs.existsSync(fullName)) { throw Error(`No s'ha trobat l'arxiu '${fullName}'.`); }
+      // console.log('L\'arxiu existeix');
+      this.content = fs.readFileSync(fullName, 'utf-8');
+      // console.log('contingut =>', this.content);
+    }
+    this.source = ts.createSourceFile(fullName, this.content, ts.ScriptTarget.Latest);
+  }
+
+  replaceProperty(propertyPath: string, value: string | number | boolean | null | RegExp) {
+    // console.log('replaceProperty =>', { propertyPath, value });
+    const path = propertyPath.split('.');
+    let identifier: ts.Node;
+    // Iterem larray per anar cercant recursivament dins dels nodes trobats.
+    for (const prop of path) {
+      identifier = this.findIdentifier(prop, identifier);
+      if (!identifier) { throw Error(`No s'ha trobat l'identificador '${chalk.bold(prop)}' cercant '${chalk.bold(propertyPath)}'`); }
+    }
+    if (identifier.kind !== ts.SyntaxKind.PropertyAssignment) { throw Error(`La propietat '${chalk.bold(propertyPath)}' no és un node de tipus 'PropertyAssignment'.`); }
+    const initializer = (identifier as ts.PropertyAssignment).initializer;
+    const valid = [
+      ts.SyntaxKind.StringLiteral,
+      ts.SyntaxKind.NumericLiteral,
+      ts.SyntaxKind.TrueKeyword,
+      ts.SyntaxKind.FalseKeyword,
+      ts.SyntaxKind.NullKeyword,
+      ts.SyntaxKind.RegularExpressionLiteral,
+    ];
+    if (!valid.includes(initializer.kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPath)}' no és una expressió substituïble.`); }
+    const propValue = initializer as any as ts.LiteralLikeNode;
+    const text = typeof value === 'string' ? `'${value}'` : `${value}`;
+    const quotes = ts.isStringLiteral(propValue) ? 2 : 0;
+    this.replacements.push({ start: propValue.end - propValue.text.length - quotes, end: propValue.end, text });
+  }
+
+  findIdentifier(name: string, parent: ts.Node, indent = ''): ts.Node {
+    indent += '  ';
+    // console.log(indent + 'findIdentifier =>', { parent: this.syntaxKindToName(parent?.kind) });
+    const nodes = this.getNodes(parent || this.source);
+    for (const node of nodes) {
+      // Obteneim els fills per buscar l'identificador a dins i tornar el seu pare, pq el node identificador no té referència al seu pare.
+      if (this.hasIdentifierChild(name, node, indent)) { return node; }
+      // Seguim cercant recursivament.
+      const found = this.findIdentifier(name, node, indent);
+      if (found) { return found; }
+    }
+    return undefined;
+  }
+
+  hasIdentifierChild(name: string, parent: ts.Node, indent = ''): boolean {
+    const children = this.getNodes(parent);
+    for (const child of children) {
+      // console.log(indent + 'child =>', { child: this.syntaxKindToName(child?.kind) });
+      if (child.kind === ts.SyntaxKind.Identifier) {
+        // console.log(indent + 'identifier =>', { search: name, current: (child as ts.Identifier).text });
+        if ((child as ts.Identifier).text === name) { return true; }
+      }
+    }
+    return false;
+  }
+
+  getNodes(parent: ts.Node): ts.Node[] {
+    if (parent.kind === ts.SyntaxKind.SourceFile) { return (parent as any).statements; }
+    const nodes: ts.Node[] = [];
+    parent.forEachChild(node => {
+      // console.log('child =>', node);
+      nodes.push(node);
+    });
+    return nodes;
+  }
+
+  save() {
+    this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
+    fs.writeFileSync(Resource.normalize(this.fullName), this.content);
+  }
 
 }
