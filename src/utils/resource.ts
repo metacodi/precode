@@ -36,10 +36,32 @@ export class Resource {
   /** Substitueix totes les barres per contra-barres.
    * @category Path
    */
-  static normalize(fileName: string): string {
+   static normalize(fileName: string): string {
     const find = process.platform === 'win32' ? '/' : '\\\\';
-    const replace = process.platform === 'win32' ? '\\' : '/';
+    // const replace = process.platform === 'win32' ? '\\' : '/';
+    const replace = Resource.platformPathSeparator;
     return fileName.replace(new RegExp(find, 'g'), replace);
+  }
+
+  /** Retorna un array amb els segments del camí indicat.
+   * @category Path
+   */
+  static split(path: string): string[] {
+    return Resource.normalize(path).replace('\\', '/').split('/');
+  }
+
+  /** Retorna un camí a partir dels seus segments normalitzat per la plataforma actual.
+   * @category Path
+   */
+  static join(path: string[]): string {
+    return Resource.normalize(path.join('/'));
+  }
+
+  /** Obté el caràcter separador de carpetes que fa servir la plataforma actual.
+   * @category Path
+   */
+  static get platformPathSeparator(): string {
+    return process.platform === 'win32' ? '\\' : '/';
   }
 
   /**
@@ -145,7 +167,6 @@ export class Resource {
    * }
    * ```
    * @param resource Ruta absoluta del recurs que es vol explorar.
-   * @param extra Indica si s'obtindrà informació més detallada dels recursos a través d'una crida a `fs.statSync`.
    * @param ignore Expressió regular per escloure arxius i carpetes.
    * @param recursive Realitza crides recursives fins descobrir tots els recursos de dins les sub-carpetes.
    */
