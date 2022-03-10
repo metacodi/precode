@@ -106,7 +106,7 @@ export class Resource {
 
   /** Indica si un recurs existeix. */
   static exists(resource: string): boolean {
-    try { fs.existsSync(resource); return true; } catch (err) { return false; }
+    try { return fs.existsSync(resource); } catch (err) { return false; }
   }
   /** Indica si un recurs existeix i a més és accessible. */
   static isAccessible(resource: string): boolean {

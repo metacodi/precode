@@ -88,8 +88,7 @@ class Resource {
     }
     static exists(resource) {
         try {
-            fs.existsSync(resource);
-            return true;
+            return fs.existsSync(resource);
         }
         catch (err) {
             return false;
