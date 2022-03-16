@@ -15,8 +15,12 @@ export interface ResourceType {
 export declare class Resource {
     static concat(folder: string, fileName: string): string;
     static normalize(fileName: string): string;
+    static split(value: string): string[];
+    static join(values: string[]): string;
+    static get platformPathSeparator(): string;
     static open(fileName: string, options?: {
         parseJsonFile?: boolean;
+        wrapAsArray?: boolean;
     }): any;
     static save(fileName: string, content: any, options?: fs.WriteFileOptions): boolean;
     static exists(resource: string): boolean;

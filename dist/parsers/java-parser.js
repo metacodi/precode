@@ -4,7 +4,6 @@ exports.JavaParser = void 0;
 class JavaParser {
     constructor() {
     }
-    foo() { return 'bar'; }
     static parse(fullName, content) {
     }
     static find(nodes, match, options) {
@@ -58,6 +57,7 @@ class JavaParser {
         }
         return results;
     }
+    foo() { return 'bar'; }
 }
 exports.JavaParser = JavaParser;
 //# sourceMappingURL=java-parser.js.map

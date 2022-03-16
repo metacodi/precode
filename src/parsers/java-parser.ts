@@ -7,8 +7,6 @@ export class JavaParser {
 
   }
 
-  foo() { return 'bar'; }
-
   static parse(fullName: string, content?: string): any {
     // if (!content && !fs.existsSync(fullName)) { return undefined; }
     // const { cst, tokenVector } = parser(content || fs.readFileSync(fullName, 'utf-8'));
@@ -56,4 +54,7 @@ export class JavaParser {
     }
     return results;
   }
+
+  foo() { return 'bar'; }
 }
+

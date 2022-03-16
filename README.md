@@ -5,7 +5,7 @@
 
 [ts-node](#ts-node) | [scripting](#scripting) | [precode](#precode) | [template](#template) | [code](#code) | [docs](#documentació)
 
-Assistent per implementar tasques d'scripting de creació i manteniment de projectes `TypeScript` en un context de **pre-desenvolupament** sobre un servidor `node.js`.
+Assistent per implementar tasques d'scripting de creació i manteniment de projectes `TypeScript` sobre un servidor `node.js` en un context de **pre/post-desenvolupament** .
 
 <br />
 

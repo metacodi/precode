@@ -41,24 +41,35 @@ class Resource {
     }
     static normalize(fileName) {
         const find = process.platform === 'win32' ? '/' : '\\\\';
-        const replace = process.platform === 'win32' ? '\\' : '/';
+        const replace = Resource.platformPathSeparator;
         return fileName.replace(new RegExp(find, 'g'), replace);
+    }
+    static split(value) {
+        return Resource.normalize(value).replace('\\', '/').split('/');
+    }
+    static join(values) {
+        return Resource.normalize(values.join('/'));
+    }
+    static get platformPathSeparator() {
+        return process.platform === 'win32' ? '\\' : '/';
     }
     static open(fileName, options) {
         if (!options) {
             options = {};
         }
-        const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
         let content = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+        if (!options) {
+            options = {};
+        }
         const file = Resource.discover(fileName);
-        if (parseJsonFile && file.extension === '.json') {
+        if (options.parseJsonFile === true || (options.parseJsonFile === undefined && file.extension === '.json')) {
             try {
                 if (file.name.startsWith('tsconfig')) {
                     content = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '');
                     content = content.replace(/\,[\s]*\}/gm, '}');
                     content = content.replace(/\,[\s]*\]/gm, ']');
                 }
-                return JSON.parse(content);
+                return JSON.parse(options.wrapAsArray ? `[${content}]` : content);
             }
             catch (err) {
                 terminal_1.Terminal.error(`Error parsejant l'arxiu JSON '${terminal_1.Terminal.file(fileName)}'.`, false);
@@ -147,7 +158,7 @@ class Resource {
         const content = [];
         const resourceIsDirectory = fs.lstatSync(resource).isDirectory();
         if (resource.length === 2 && resource.endsWith(':'))
-            resource = resource + (process.platform === 'win32' ? '\\' : '/');
+            resource += (process.platform === 'win32' ? '\\' : '/');
         const resources = resourceIsDirectory ? fs.readdirSync(resource) : [path.basename(resource)];
         resource = resourceIsDirectory ? resource : path.dirname(resource);
         for (const name of Object.values(resources)) {

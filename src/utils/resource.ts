@@ -44,17 +44,17 @@ export class Resource {
   }
 
   /** Retorna un array amb els segments del camí indicat.
-   * @category Path
+   * @category value
    */
-  static split(path: string): string[] {
-    return Resource.normalize(path).replace('\\', '/').split('/');
+  static split(value: string): string[] {
+    return Resource.normalize(value).replace('\\', '/').split('/');
   }
 
   /** Retorna un camí a partir dels seus segments normalitzat per la plataforma actual.
-   * @category Path
+   * @category values
    */
-  static join(path: string[]): string {
-    return Resource.normalize(path.join('/'));
+  static join(values: string[]): string {
+    return Resource.normalize(values.join('/'));
   }
 
   /** Obté el caràcter separador de carpetes que fa servir la plataforma actual.
@@ -67,19 +67,18 @@ export class Resource {
   /**
    * Llegeix el contingut d'un arxiu i intenta parsejar-lo comprovant l'extensió.
    *
-   * Per exemple, si l'arxiu és un de tipus `json` aleshores es retorna el resultat de
-   * `JSON.parse(content)`
+   * Per exemple, si l'arxiu és un de tipus `json` aleshores es retorna el resultat de `JSON.parse(content)`.
    */
-  static open(fileName: string, options?: { parseJsonFile?: boolean }): any {
+  static open(fileName: string, options?: { parseJsonFile?: boolean; wrapAsArray?: boolean; }): any {
     if (!options) { options = {}; }
-    const parseJsonFile = options.parseJsonFile === undefined ? true : options.parseJsonFile;
 
     // Obtenim el contingut de l'arxiu.
     let content = fs.readFileSync(fileName, { encoding: 'utf8' }).toString();
+    if (!options) { options = {}; }
 
     // Parsejem el contingut.
     const file = Resource.discover(fileName) as ResourceType;
-    if (parseJsonFile && file.extension === '.json') {
+    if (options.parseJsonFile === true || (options.parseJsonFile === undefined && file.extension === '.json')) {
       try {
         if (file.name.startsWith('tsconfig')) {
           // Remove comments.
@@ -89,7 +88,7 @@ export class Resource {
           // Eliminem la coma del darrer element d'un array.
           content = content.replace(/\,[\s]*\]/gm, ']');
         }
-        return JSON.parse(content);
+        return JSON.parse(options.wrapAsArray ? `[${content}]` : content);
 
       } catch (err) {
         Terminal.error(`Error parsejant l'arxiu JSON '${Terminal.file(fileName)}'.`, false);
@@ -182,7 +181,7 @@ export class Resource {
     const content: ResourceType[] = [];
     const resourceIsDirectory = fs.lstatSync(resource).isDirectory();
     // NOTA: Si el recurs és la unitat, afegim una barra pq sinó accedirà a la carpeta actual process.cwd() i no trobarà aquests arxius a l'arrel de la unitat.
-    if (resource.length === 2 && resource.endsWith(':')) resource = resource + (process.platform === 'win32' ? '\\' : '/');
+    if (resource.length === 2 && resource.endsWith(':')) resource += (process.platform === 'win32' ? '\\' : '/');
     const resources: string[] = resourceIsDirectory ? fs.readdirSync(resource) : [ path.basename(resource) ];
     resource = resourceIsDirectory ? resource : path.dirname(resource);
 

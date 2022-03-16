@@ -311,63 +311,6 @@ export class TypescriptProject extends CodeProject {
     return classe;
   }
 
-  /** Atraviesa el AST en busca de un nodo con la declaración de la variable indicada. */
-  findVariableDeclaration(variable: string, source: string | ts.SourceFile, throwError = true): ts.VariableDeclaration {
-    if (typeof source === 'string') { source = this.getSourceFile(source); }
-    const variables = TypescriptParser.filter(source.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false })
-    for (const node of variables) {
-      const found = (node as ts.VariableStatement).declarationList.declarations.find(d => d.name.getText() === variable);
-      if (found) { return found; }
-    }
-  }
-
-  /** Atraviesa el AST en busca de un nodo con la declaración de la variable indicada. */
-  findPropertyAssignment(parent: ts.Node, name: string): ts.PropertyAssignment {
-    const properties: ts.PropertyAssignment[] = TypescriptParser.filter(parent, ts.SyntaxKind.PropertyAssignment, { recursive: true, firstOnly: false }) as ts.PropertyAssignment[];
-    return properties.find(d => d.name.getText() === name);
-  }
-
-  /** Retorna el valor de la propietat. */
-  getPropertyValue(parent: ts.Node, name: string): number | string | boolean | null {
-    const props = name.split('.');
-    const found = props.reduce((prev: ts.Node, cur: string) => {
-      const prop = this.findPropertyAssignment(prev, cur);
-      if (!prop) { throw Error(`No s'ha trobat la propietat ${chalk.bold(cur)} de ${chalk.bold(name)}`); }
-      return prop;
-    }, parent) as ts.PropertyAssignment;
-    return this.parsePropertyInitializer(found.initializer);
-  }
-
-  parsePropertyInitializer(value: ts.Expression): number | string | boolean | null {
-    switch (value.kind) {
-      case ts.SyntaxKind.StringLiteral: return (value as ts.StringLiteral).text;
-      case ts.SyntaxKind.NumericLiteral: return +(value as ts.NumericLiteral).text;
-      case ts.SyntaxKind.TrueKeyword: return true;
-      case ts.SyntaxKind.FalseKeyword: return false;
-      case ts.SyntaxKind.NullKeyword: return null;
-      default: return value.getText();
-    }
-  }
-
-  /** @deprecated */
-  parseDeclaration(fileName: string, variable: string): string {
-    const sourceFile: ts.SourceFile = TypescriptParser.parse(fileName) as ts.SourceFile;
-    if (!sourceFile) { throw Error(`No s'ha trobat l'arxiu '${fileName}' que s'havia de parsejar.`); }
-    const found = TypescriptParser.filter(sourceFile.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false }).find((node: ts.Node) => {
-      const variableStatement: ts.VariableStatement = node as any;
-      return variableStatement.declarationList.declarations.find(d => {
-        return d.name.getText() === variable;
-      });
-    });
-    if (found) {
-      const text = found.getText();
-      const value = text.split('=')[1];
-      return value;
-    } else {
-      throw Error(`No s'ha trobat la variable '${variable}' a l'arxiu '${fileName}'.`);
-    }
-  };
-
   /** @deprecated */
   saveSourceFile(fileName: string, content: string): void {
     const source = ts.createSourceFile(Resource.normalize(fileName), content, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);

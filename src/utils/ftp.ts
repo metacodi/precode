@@ -129,8 +129,8 @@ export class FtpClient {
     const ignore = options.ignore === undefined ? undefined : options.ignore;
     return new Promise<any>(async (resolve: any, reject: any) => {
       this.ready().then(async () => {
-        remote = this.normalize(remote);
-        if (this.isFile(local)) {
+        remote = this.normalizeRemote(remote);
+        if (this.isLocalFile(local)) {
           if (verbose) { this.verbose(`  uploading... ${chalk.green(remote)}`); }
           try {
             await this.mkdir(path.dirname(remote), true);
@@ -157,6 +157,67 @@ export class FtpClient {
     });
   }
 
+  /** Downloads file or directory recursively. */
+  async download(remote: string, local: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; }) {
+    const start = moment();
+    Terminal.log(`- Downloading ${chalk.green(remote)} to ${chalk.green(local)}`);
+    const result = await this.downloadAll(remote, local, options);
+    const duration = moment.duration(moment().diff(start)).asSeconds();
+    Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration})`);
+  }
+
+  private async downloadAll(remote: string, local: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; element?: Client.ListingElement; }) {
+    if (!options) { options = {}; }
+    const verbose = options.verbose === undefined ? false : options.verbose;
+    const element = options.element === undefined ? false : options.element;
+    if (!!options.ignore && typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
+    if (!!options.filter && typeof options.filter === 'string') { options.filter = new RegExp(options.filter); }
+    return new Promise<any>(async (resolve: any, reject: any) => {
+      this.ready().then(async () => {
+        remote = this.normalizeRemote(remote);
+        const filtered = !options.filter || (options.filter as RegExp).test(path.basename(remote));
+        const accepted = !options.ignore || !(options.ignore as RegExp).test(path.basename(remote));
+        if (filtered && accepted) {
+          const isRemoteFile = element ? !this.isRemoteDirectory(element) : !!path.extname(remote);
+          if (isRemoteFile) {
+            if (verbose) { this.verbose(`  downloading... ${chalk.green(remote)}`); }
+            try {
+              fs.mkdirSync(path.dirname(local), { recursive: true });
+              // TODO: Apply overwriting options if file exists.
+              const filePath = fs.createWriteStream(local);
+              const stream = await this.get(remote);
+              stream.pipe(filePath);
+              filePath.on('finish', () => {
+                filePath.close();
+                // console.log('Download Completed');
+                resolve(true);
+              }).on('error', error => {
+                filePath.close();
+                reject(error);
+              })
+            } catch (error) {
+              if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
+            }
+          } else {
+            if (verbose) { this.verbose(`  downloading... ${chalk.green(remote)}`); }
+            try {
+              fs.mkdirSync(local, { recursive: true });
+              const resources = await this.list(remote);
+              for (const el of [...resources.filter(r => this.isRemoteDirectory(r)), ...resources.filter(r => this.isRemoteFile(r))]) {
+                await this.downloadAll(path.join(remote, el.name), path.join(local, el.name), { ...options, element: el });
+              }
+              resolve(true);
+            } catch (error) {
+              if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
+            }
+          }
+        } else {
+          resolve(false);
+        }
+      })
+    });
+  }
+
   /** Removes file or directory content and itself recursively. */
   async remove(remote: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; }) {
     const start = moment();
@@ -173,7 +234,7 @@ export class FtpClient {
     return new Promise<any>(async (resolve: any, reject: any) => {
       this.ready().then(async () => {
         try {
-          remote = this.normalize(remote);
+          remote = this.normalizeRemote(remote);
           const isFile = !!path.extname(remote);
           if (isFile) {
             if (verbose) { this.verbose(`  deleting... ${chalk.green(remote)}`); }
@@ -210,7 +271,7 @@ export class FtpClient {
     if (recursive === undefined) { recursive = true; }
     return new Promise<boolean>((resolve: any, reject: any) => {
       this.ready().then(async () => {
-        remote = this.normalize(remote);
+        remote = this.normalizeRemote(remote);
         if (remote === '/') {
           resolve(false);
         } else {
@@ -228,7 +289,7 @@ export class FtpClient {
     const continueOnError = options.continueOnError === undefined ? false : options.continueOnError;
     return new Promise<boolean>((resolve: any, reject: any) => {
       this.ready().then(async () => {
-        remote = this.normalize(remote);
+        remote = this.normalizeRemote(remote);
         if (remote === '/') {
           resolve(false);
         } else {
@@ -244,10 +305,20 @@ export class FtpClient {
     });
   }
 
+  /** Retrieves a file at path from the server. useCompression defaults to false. */
+  get(remote: string): Promise<NodeJS.ReadableStream> {
+    return new Promise<any>((resolve: any, reject: any) => {
+      remote = this.normalizeRemote(remote);
+      this.ftp.get(remote, (error, stream) => {
+        if (error) { reject(error); } else { resolve(stream); }
+      });
+    });
+  }
+
   /** Sends data to the server to be stored as destPath. */
   put(local: string, remote: string): Promise<boolean> {
     return new Promise<any>((resolve: any, reject: any) => {
-      this.ftp.put(local, this.normalize(remote), error => {
+      this.ftp.put(local, this.normalizeRemote(remote), error => {
         if (error) { reject(error); } else { resolve(true); }
       });
     });
@@ -257,7 +328,7 @@ export class FtpClient {
   delete(remote: string): Promise<boolean> {
     return new Promise<any>((resolve: any, reject: any) => {
       this.ready().then(async () => {
-        this.ftp.delete(this.normalize(remote), error => {
+        this.ftp.delete(this.normalizeRemote(remote), error => {
           if (error) { reject(error); } else { resolve(true); }
         });
       });
@@ -268,7 +339,7 @@ export class FtpClient {
   list(remote?: string): Promise<Client.ListingElement[]> {
     return new Promise<Client.ListingElement[]>(async (resolve: any, reject: any) => {
       this.ready().then(async () => {
-        remote = this.normalize(remote);
+        remote = this.normalizeRemote(remote);
         if (!remote) { remote = await this.pwd(); }
         this.ftp.list(remote, (error, list) => {
           if (error) { reject(error); } else { resolve(list); }
@@ -288,18 +359,58 @@ export class FtpClient {
     });
   }
 
+  /** Aborts the current data transfer (e.g. from get(), put(), or list()). */
+  abort(): Promise<void> {
+    return new Promise<void>((resolve: any, reject: any) => {
+      this.ready().then(async () => {
+        this.ftp.abort((error) => {
+          if (error) { reject(error); } else { resolve(); }
+        });
+      });
+    });
+  }
+
+  /** Sets the transfer data type to ASCII. */
+  ascii(): Promise<void> {
+    return new Promise<void>((resolve: any, reject: any) => {
+      this.ready().then(async () => {
+        this.ftp.ascii((error) => {
+          if (error) { reject(error); } else { resolve(); }
+        });
+      });
+    });
+  }
+
+  /** Sets the transfer data type to binary (default at time of connection). */
+  binary(): Promise<void> {
+    return new Promise<void>((resolve: any, reject: any) => {
+      this.ready().then(async () => {
+        this.ftp.binary((error) => {
+          if (error) { reject(error); } else { resolve(); }
+        });
+      });
+    });
+  }
+
+
   // ---------------------------------------------------------------------------------------------------
   //  helpers
   // ---------------------------------------------------------------------------------------------------
 
   /** Returns path with separators as `/`. */
-  normalize(resource: string) { return path.normalize(resource).replace(new RegExp('\\\\', 'g'), '/'); }
+  normalizeRemote(resource: string) { return path.normalize(resource).replace(new RegExp('\\\\', 'g'), '/'); }
+
+  /** Check if remote path is a directory. */
+  isRemoteDirectory(el: Client.ListingElement): boolean { return el.type === 'd' && el.name !== '.' && el.name !== '..'; }
+
+  /** Check if remote path is a file. */
+  isRemoteFile(el: Client.ListingElement): boolean { return el.type === '-'; }
 
   /** Check if local path is a directory. */
-  isDirectory(resource: string) { return fs.lstatSync(resource).isDirectory(); }
+  isLocalDirectory(resource: string) { return fs.lstatSync(resource).isDirectory(); }
 
   /** Check if local path is a file. */
-  isFile(resource: string) { return fs.lstatSync(resource).isFile(); }
+  isLocalFile(resource: string) { return fs.lstatSync(resource).isFile(); }
 
   protected verbose(text: string) {
     process.stdout.clearLine(0);

@@ -20,7 +20,10 @@ export declare class TypescriptParser {
         firstOnly?: boolean;
     }): ts.Node[];
     constructor(fullName: string, content?: string);
+    getPropertyValue(propertyPath: string): string | number | boolean | null | RegExp;
     replaceProperty(propertyPath: string, value: string | number | boolean | null | RegExp): void;
+    parsePropertyInitializer(value: ts.Expression): number | string | boolean | null | RegExp;
+    resolvePropertyPath(propertyPath: string): ts.PropertyAssignment;
     findIdentifier(name: string, parent: ts.Node, indent?: string): ts.Node;
     hasIdentifierChild(name: string, parent: ts.Node, indent?: string): boolean;
     getNodes(parent: ts.Node): ts.Node[];

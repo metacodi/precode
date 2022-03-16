@@ -86,7 +86,40 @@ class TypescriptParser {
         }
         return results;
     }
+    getPropertyValue(propertyPath) {
+        const property = this.resolvePropertyPath(propertyPath);
+        return this.parsePropertyInitializer(property.initializer);
+    }
     replaceProperty(propertyPath, value) {
+        const property = this.resolvePropertyPath(propertyPath);
+        const valid = [
+            typescript_1.default.SyntaxKind.StringLiteral,
+            typescript_1.default.SyntaxKind.NumericLiteral,
+            typescript_1.default.SyntaxKind.TrueKeyword,
+            typescript_1.default.SyntaxKind.FalseKeyword,
+            typescript_1.default.SyntaxKind.NullKeyword,
+            typescript_1.default.SyntaxKind.RegularExpressionLiteral,
+        ];
+        if (!valid.includes(property.initializer.kind)) {
+            throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPath)}' no és una expressió substituïble.`);
+        }
+        const propValue = property.initializer;
+        const text = typeof value === 'string' ? `'${value}'` : `${value}`;
+        const quotes = typescript_1.default.isStringLiteral(propValue) ? 2 : 0;
+        this.replacements.push({ start: propValue.end - propValue.text.length - quotes, end: propValue.end, text });
+    }
+    parsePropertyInitializer(value) {
+        switch (value.kind) {
+            case typescript_1.default.SyntaxKind.StringLiteral: return value.text;
+            case typescript_1.default.SyntaxKind.NumericLiteral: return +value.text;
+            case typescript_1.default.SyntaxKind.TrueKeyword: return true;
+            case typescript_1.default.SyntaxKind.FalseKeyword: return false;
+            case typescript_1.default.SyntaxKind.NullKeyword: return null;
+            case typescript_1.default.SyntaxKind.RegularExpressionLiteral: return value.text;
+            default: return value.getText();
+        }
+    }
+    resolvePropertyPath(propertyPath) {
         const path = propertyPath.split('.');
         let identifier;
         for (const prop of path) {
@@ -98,22 +131,7 @@ class TypescriptParser {
         if (identifier.kind !== typescript_1.default.SyntaxKind.PropertyAssignment) {
             throw Error(`La propietat '${chalk_1.default.bold(propertyPath)}' no és un node de tipus 'PropertyAssignment'.`);
         }
-        const initializer = identifier.initializer;
-        const valid = [
-            typescript_1.default.SyntaxKind.StringLiteral,
-            typescript_1.default.SyntaxKind.NumericLiteral,
-            typescript_1.default.SyntaxKind.TrueKeyword,
-            typescript_1.default.SyntaxKind.FalseKeyword,
-            typescript_1.default.SyntaxKind.NullKeyword,
-            typescript_1.default.SyntaxKind.RegularExpressionLiteral,
-        ];
-        if (!valid.includes(initializer.kind)) {
-            throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPath)}' no és una expressió substituïble.`);
-        }
-        const propValue = initializer;
-        const text = typeof value === 'string' ? `'${value}'` : `${value}`;
-        const quotes = typescript_1.default.isStringLiteral(propValue) ? 2 : 0;
-        this.replacements.push({ start: propValue.end - propValue.text.length - quotes, end: propValue.end, text });
+        return identifier;
     }
     findIdentifier(name, parent, indent = '') {
         indent += '  ';
@@ -136,6 +154,13 @@ class TypescriptParser {
                 if (child.text === name) {
                     return true;
                 }
+            }
+            else if (child.kind === typescript_1.default.SyntaxKind.FirstLiteralToken) {
+                if (child.text === name) {
+                    return true;
+                }
+            }
+            else if (child.text) {
             }
         }
         return false;

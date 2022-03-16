@@ -107,8 +107,8 @@ class FtpClient {
             const ignore = options.ignore === undefined ? undefined : options.ignore;
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
-                    remote = this.normalize(remote);
-                    if (this.isFile(local)) {
+                    remote = this.normalizeRemote(remote);
+                    if (this.isLocalFile(local)) {
                         if (verbose) {
                             this.verbose(`  uploading... ${chalk_1.default.green(remote)}`);
                         }
@@ -158,6 +158,92 @@ class FtpClient {
             }));
         });
     }
+    download(remote, local, options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const start = moment_1.default();
+            terminal_1.Terminal.log(`- Downloading ${chalk_1.default.green(remote)} to ${chalk_1.default.green(local)}`);
+            const result = yield this.downloadAll(remote, local, options);
+            const duration = moment_1.default.duration(moment_1.default().diff(start)).asSeconds();
+            terminal_1.Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration})`);
+        });
+    }
+    downloadAll(remote, local, options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!options) {
+                options = {};
+            }
+            const verbose = options.verbose === undefined ? false : options.verbose;
+            const element = options.element === undefined ? false : options.element;
+            if (!!options.ignore && typeof options.ignore === 'string') {
+                options.ignore = new RegExp(options.ignore);
+            }
+            if (!!options.filter && typeof options.filter === 'string') {
+                options.filter = new RegExp(options.filter);
+            }
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
+                    remote = this.normalizeRemote(remote);
+                    const filtered = !options.filter || options.filter.test(path.basename(remote));
+                    const accepted = !options.ignore || !options.ignore.test(path.basename(remote));
+                    if (filtered && accepted) {
+                        const isRemoteFile = element ? !this.isRemoteDirectory(element) : !!path.extname(remote);
+                        if (isRemoteFile) {
+                            if (verbose) {
+                                this.verbose(`  downloading... ${chalk_1.default.green(remote)}`);
+                            }
+                            try {
+                                fs.mkdirSync(path.dirname(local), { recursive: true });
+                                const filePath = fs.createWriteStream(local);
+                                const stream = yield this.get(remote);
+                                stream.pipe(filePath);
+                                filePath.on('finish', () => {
+                                    filePath.close();
+                                    resolve(true);
+                                }).on('error', error => {
+                                    filePath.close();
+                                    reject(error);
+                                });
+                            }
+                            catch (error) {
+                                if (options.continueOnError) {
+                                    terminal_1.Terminal.error(error, false);
+                                    resolve(false);
+                                }
+                                else {
+                                    reject(error);
+                                }
+                            }
+                        }
+                        else {
+                            if (verbose) {
+                                this.verbose(`  downloading... ${chalk_1.default.green(remote)}`);
+                            }
+                            try {
+                                fs.mkdirSync(local, { recursive: true });
+                                const resources = yield this.list(remote);
+                                for (const el of [...resources.filter(r => this.isRemoteDirectory(r)), ...resources.filter(r => this.isRemoteFile(r))]) {
+                                    yield this.downloadAll(path.join(remote, el.name), path.join(local, el.name), Object.assign(Object.assign({}, options), { element: el }));
+                                }
+                                resolve(true);
+                            }
+                            catch (error) {
+                                if (options.continueOnError) {
+                                    terminal_1.Terminal.error(error, false);
+                                    resolve(false);
+                                }
+                                else {
+                                    reject(error);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        resolve(false);
+                    }
+                }));
+            }));
+        });
+    }
     remove(remote, options) {
         return __awaiter(this, void 0, void 0, function* () {
             const start = moment_1.default();
@@ -177,7 +263,7 @@ class FtpClient {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
                     try {
-                        remote = this.normalize(remote);
+                        remote = this.normalizeRemote(remote);
                         const isFile = !!path.extname(remote);
                         if (isFile) {
                             if (verbose) {
@@ -222,7 +308,7 @@ class FtpClient {
         }
         return new Promise((resolve, reject) => {
             this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
-                remote = this.normalize(remote);
+                remote = this.normalizeRemote(remote);
                 if (remote === '/') {
                     resolve(false);
                 }
@@ -246,7 +332,7 @@ class FtpClient {
         const continueOnError = options.continueOnError === undefined ? false : options.continueOnError;
         return new Promise((resolve, reject) => {
             this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
-                remote = this.normalize(remote);
+                remote = this.normalizeRemote(remote);
                 if (remote === '/') {
                     resolve(false);
                 }
@@ -269,9 +355,22 @@ class FtpClient {
             }));
         });
     }
+    get(remote) {
+        return new Promise((resolve, reject) => {
+            remote = this.normalizeRemote(remote);
+            this.ftp.get(remote, (error, stream) => {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    resolve(stream);
+                }
+            });
+        });
+    }
     put(local, remote) {
         return new Promise((resolve, reject) => {
-            this.ftp.put(local, this.normalize(remote), error => {
+            this.ftp.put(local, this.normalizeRemote(remote), error => {
                 if (error) {
                     reject(error);
                 }
@@ -284,7 +383,7 @@ class FtpClient {
     delete(remote) {
         return new Promise((resolve, reject) => {
             this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
-                this.ftp.delete(this.normalize(remote), error => {
+                this.ftp.delete(this.normalizeRemote(remote), error => {
                     if (error) {
                         reject(error);
                     }
@@ -298,7 +397,7 @@ class FtpClient {
     list(remote) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
-                remote = this.normalize(remote);
+                remote = this.normalizeRemote(remote);
                 if (!remote) {
                     remote = yield this.pwd();
                 }
@@ -327,9 +426,53 @@ class FtpClient {
             }));
         });
     }
-    normalize(resource) { return path.normalize(resource).replace(new RegExp('\\\\', 'g'), '/'); }
-    isDirectory(resource) { return fs.lstatSync(resource).isDirectory(); }
-    isFile(resource) { return fs.lstatSync(resource).isFile(); }
+    abort() {
+        return new Promise((resolve, reject) => {
+            this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
+                this.ftp.abort((error) => {
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            }));
+        });
+    }
+    ascii() {
+        return new Promise((resolve, reject) => {
+            this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
+                this.ftp.ascii((error) => {
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            }));
+        });
+    }
+    binary() {
+        return new Promise((resolve, reject) => {
+            this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
+                this.ftp.binary((error) => {
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            }));
+        });
+    }
+    normalizeRemote(resource) { return path.normalize(resource).replace(new RegExp('\\\\', 'g'), '/'); }
+    isRemoteDirectory(el) { return el.type === 'd' && el.name !== '.' && el.name !== '..'; }
+    isRemoteFile(el) { return el.type === '-'; }
+    isLocalDirectory(resource) { return fs.lstatSync(resource).isDirectory(); }
+    isLocalFile(resource) { return fs.lstatSync(resource).isFile(); }
     verbose(text) {
         process.stdout.clearLine(0);
         process.stdout.cursorTo(0);

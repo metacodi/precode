@@ -83,17 +83,13 @@ export class TypescriptParser {
     this.source = ts.createSourceFile(fullName, this.content, ts.ScriptTarget.Latest);
   }
 
+  getPropertyValue(propertyPath: string): string | number | boolean | null | RegExp {
+    const property = this.resolvePropertyPath(propertyPath);
+    return this.parsePropertyInitializer(property.initializer);
+  }
+
   replaceProperty(propertyPath: string, value: string | number | boolean | null | RegExp) {
-    // console.log('replaceProperty =>', { propertyPath, value });
-    const path = propertyPath.split('.');
-    let identifier: ts.Node;
-    // Iterem larray per anar cercant recursivament dins dels nodes trobats.
-    for (const prop of path) {
-      identifier = this.findIdentifier(prop, identifier);
-      if (!identifier) { throw Error(`No s'ha trobat l'identificador '${chalk.bold(prop)}' cercant '${chalk.bold(propertyPath)}'`); }
-    }
-    if (identifier.kind !== ts.SyntaxKind.PropertyAssignment) { throw Error(`La propietat '${chalk.bold(propertyPath)}' no és un node de tipus 'PropertyAssignment'.`); }
-    const initializer = (identifier as ts.PropertyAssignment).initializer;
+    const property = this.resolvePropertyPath(propertyPath);
     const valid = [
       ts.SyntaxKind.StringLiteral,
       ts.SyntaxKind.NumericLiteral,
@@ -102,11 +98,35 @@ export class TypescriptParser {
       ts.SyntaxKind.NullKeyword,
       ts.SyntaxKind.RegularExpressionLiteral,
     ];
-    if (!valid.includes(initializer.kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPath)}' no és una expressió substituïble.`); }
-    const propValue = initializer as any as ts.LiteralLikeNode;
+    if (!valid.includes(property.initializer.kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPath)}' no és una expressió substituïble.`); }
+    const propValue = property.initializer as any as ts.LiteralLikeNode;
     const text = typeof value === 'string' ? `'${value}'` : `${value}`;
     const quotes = ts.isStringLiteral(propValue) ? 2 : 0;
     this.replacements.push({ start: propValue.end - propValue.text.length - quotes, end: propValue.end, text });
+  }
+
+  parsePropertyInitializer(value: ts.Expression): number | string | boolean | null | RegExp {
+    switch (value.kind) {
+      case ts.SyntaxKind.StringLiteral: return (value as ts.StringLiteral).text;
+      case ts.SyntaxKind.NumericLiteral: return +(value as ts.NumericLiteral).text;
+      case ts.SyntaxKind.TrueKeyword: return true;
+      case ts.SyntaxKind.FalseKeyword: return false;
+      case ts.SyntaxKind.NullKeyword: return null;
+      case ts.SyntaxKind.RegularExpressionLiteral: return (value as ts.RegularExpressionLiteral).text;
+      default: return value.getText();
+    }
+  }
+
+  resolvePropertyPath(propertyPath: string): ts.PropertyAssignment {
+    const path = propertyPath.split('.');
+    let identifier: ts.Node;
+    // Iterem l'array per anar cercant recursivament dins dels nodes trobats.
+    for (const prop of path) {
+      identifier = this.findIdentifier(prop, identifier);
+      if (!identifier) { throw Error(`No s'ha trobat l'identificador '${chalk.bold(prop)}' cercant '${chalk.bold(propertyPath)}'`); }
+    }
+    if (identifier.kind !== ts.SyntaxKind.PropertyAssignment) { throw Error(`La propietat '${chalk.bold(propertyPath)}' no és un node de tipus 'PropertyAssignment'.`); }
+    return identifier as ts.PropertyAssignment;
   }
 
   findIdentifier(name: string, parent: ts.Node, indent = ''): ts.Node {
@@ -130,6 +150,12 @@ export class TypescriptParser {
       if (child.kind === ts.SyntaxKind.Identifier) {
         // console.log(indent + 'identifier =>', { search: name, current: (child as ts.Identifier).text });
         if ((child as ts.Identifier).text === name) { return true; }
+      } else if (child.kind === ts.SyntaxKind.FirstLiteralToken) {
+        // NOTA: Si la propietat és un nombre o un literal el tipus es FirstLiteralToken.
+        // console.log(indent + 'literalToken =>', { search: name, current: (child as ts.LiteralToken).text });
+        if ((child as ts.LiteralToken).text === name) { return true; }
+      } else if ((child as any).text) {
+        // console.log((child as any).text, ts.SyntaxKind[child.kind]);
       }
     }
     return false;

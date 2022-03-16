@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import Client from 'ftp';
 export interface FtpUploadOptions {
     continueOnError?: boolean;
@@ -26,6 +27,13 @@ export declare class FtpClient {
         filter?: string | RegExp;
     }): Promise<void>;
     private uploadAll;
+    download(remote: string, local: string, options?: {
+        continueOnError?: boolean;
+        verbose?: boolean;
+        ignore?: string | RegExp;
+        filter?: string | RegExp;
+    }): Promise<void>;
+    private downloadAll;
     remove(remote: string, options?: {
         continueOnError?: boolean;
         verbose?: boolean;
@@ -37,13 +45,19 @@ export declare class FtpClient {
     rmdir(remote: string, recursive: boolean, options?: {
         continueOnError?: boolean;
     }): Promise<boolean>;
+    get(remote: string): Promise<NodeJS.ReadableStream>;
     put(local: string, remote: string): Promise<boolean>;
     delete(remote: string): Promise<boolean>;
     list(remote?: string): Promise<Client.ListingElement[]>;
     pwd(): Promise<string>;
-    normalize(resource: string): string;
-    isDirectory(resource: string): boolean;
-    isFile(resource: string): boolean;
+    abort(): Promise<void>;
+    ascii(): Promise<void>;
+    binary(): Promise<void>;
+    normalizeRemote(resource: string): string;
+    isRemoteDirectory(el: Client.ListingElement): boolean;
+    isRemoteFile(el: Client.ListingElement): boolean;
+    isLocalDirectory(resource: string): boolean;
+    isLocalFile(resource: string): boolean;
     protected verbose(text: string): void;
 }
 //# sourceMappingURL=ftp.d.ts.map

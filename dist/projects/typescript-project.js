@@ -238,64 +238,6 @@ class TypescriptProject extends code_project_1.CodeProject {
         }
         return classe;
     }
-    findVariableDeclaration(variable, source, throwError = true) {
-        if (typeof source === 'string') {
-            source = this.getSourceFile(source);
-        }
-        const variables = typescript_parser_1.TypescriptParser.filter(source.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false });
-        for (const node of variables) {
-            const found = node.declarationList.declarations.find(d => d.name.getText() === variable);
-            if (found) {
-                return found;
-            }
-        }
-    }
-    findPropertyAssignment(parent, name) {
-        const properties = typescript_parser_1.TypescriptParser.filter(parent, ts.SyntaxKind.PropertyAssignment, { recursive: true, firstOnly: false });
-        return properties.find(d => d.name.getText() === name);
-    }
-    getPropertyValue(parent, name) {
-        const props = name.split('.');
-        const found = props.reduce((prev, cur) => {
-            const prop = this.findPropertyAssignment(prev, cur);
-            if (!prop) {
-                throw Error(`No s'ha trobat la propietat ${chalk_1.default.bold(cur)} de ${chalk_1.default.bold(name)}`);
-            }
-            return prop;
-        }, parent);
-        return this.parsePropertyInitializer(found.initializer);
-    }
-    parsePropertyInitializer(value) {
-        switch (value.kind) {
-            case ts.SyntaxKind.StringLiteral: return value.text;
-            case ts.SyntaxKind.NumericLiteral: return +value.text;
-            case ts.SyntaxKind.TrueKeyword: return true;
-            case ts.SyntaxKind.FalseKeyword: return false;
-            case ts.SyntaxKind.NullKeyword: return null;
-            default: return value.getText();
-        }
-    }
-    parseDeclaration(fileName, variable) {
-        const sourceFile = typescript_parser_1.TypescriptParser.parse(fileName);
-        if (!sourceFile) {
-            throw Error(`No s'ha trobat l'arxiu '${fileName}' que s'havia de parsejar.`);
-        }
-        const found = typescript_parser_1.TypescriptParser.filter(sourceFile.statements, ts.SyntaxKind.VariableStatement, { firstOnly: false }).find((node) => {
-            const variableStatement = node;
-            return variableStatement.declarationList.declarations.find(d => {
-                return d.name.getText() === variable;
-            });
-        });
-        if (found) {
-            const text = found.getText();
-            const value = text.split('=')[1];
-            return value;
-        }
-        else {
-            throw Error(`No s'ha trobat la variable '${variable}' a l'arxiu '${fileName}'.`);
-        }
-    }
-    ;
     saveSourceFile(fileName, content) {
         const source = ts.createSourceFile(resource_1.Resource.normalize(fileName), content, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);
         const replacements = [];

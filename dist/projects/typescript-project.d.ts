@@ -23,11 +23,6 @@ export declare class TypescriptProject extends CodeProject {
     protected replaces(fileName: string, options: FileOptions): string;
     getSourceFile(fileName: string, content?: string): ts.SourceFile;
     findClassDeclaration(name: string, source: string | ts.SourceFile, throwError?: boolean): ts.ClassDeclaration;
-    findVariableDeclaration(variable: string, source: string | ts.SourceFile, throwError?: boolean): ts.VariableDeclaration;
-    findPropertyAssignment(parent: ts.Node, name: string): ts.PropertyAssignment;
-    getPropertyValue(parent: ts.Node, name: string): number | string | boolean | null;
-    parsePropertyInitializer(value: ts.Expression): number | string | boolean | null;
-    parseDeclaration(fileName: string, variable: string): string;
     saveSourceFile(fileName: string, content: string): void;
     private normalizeObjectLiteral;
     aplyReplacements(content: string, replacements: any[]): string;
