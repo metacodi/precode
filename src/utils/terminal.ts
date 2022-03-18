@@ -97,14 +97,29 @@ export class Terminal {
   // --------------------------------------------------------------------------------
 
   /** @category Log */
-  static log(message: string, data?: any): void {
+  static log(message: string, ...data: any): void {
     const indent = '  '.repeat(Terminal.indent);
     Terminal.clearLine();
     if (data === undefined) {
       console.log(indent + message);
     } else {
-      console.log(indent + message, data);
+      console.log(indent + message, ...data);
     }
+  }
+
+  /**
+   * Escriu a la consola sobrescrivint la línia actual.
+   *
+   * Al final del texte no s'hi afegeix cap retorn de línea.
+   *
+   * S'utilitza quan es vol evitar l'scroll a la consola i
+   * anar mostrant només el pas actual d'un procés, com per exemple
+   * els passos secondaris d'una instal·lació, o d'una llarga còpia d'arxius.
+   * @category Log
+   */
+   static logInline(text: string) {
+    Terminal.clearLine();
+    process.stdout.write(`${text}`);
   }
 
   /** @category Log */

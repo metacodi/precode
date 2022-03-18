@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import * as fs from 'fs';
+import { FilterPatternType } from './functions';
 export interface ResourceType {
     name: string;
     path: string;
@@ -29,21 +30,23 @@ export declare class Resource {
     static isWriteable(resource: string): boolean;
     static isReadOnly(resource: string): boolean;
     static discover(resource: string, options?: {
-        ignore?: string | RegExp;
-        filter?: string | RegExp;
+        ignore?: FilterPatternType;
+        filter?: FilterPatternType;
         recursive?: boolean;
     }, indent?: string): ResourceType | ResourceType[];
-    static copyFileSync(source: any, target: any, options?: {
-        indent?: string;
-        verbose?: boolean;
-    }): void;
-    static copyFolderSync(source: any, target: any, options?: {
-        filter?: string | ((resource: string) => boolean);
-        indent?: string;
+    static copy(source: string, target: string, options?: {
+        filter?: FilterPatternType;
         createFolderInTarget?: boolean;
         verbose?: boolean;
-    }): number;
-    static hasFiles(folder: string, filter?: any): boolean;
-    static applyFilter(file: string, filter: any): boolean;
+    }): void;
+    static copyFileSync(source: any, target: any, options?: {
+        verbose?: boolean;
+    }, indent?: string): void;
+    static copyFolderSync(source: any, target: any, options?: {
+        filter?: FilterPatternType;
+        createFolderInTarget?: boolean;
+        verbose?: boolean;
+    }, indent?: string): number;
+    static hasFilteredFiles(folder: string, filter?: FilterPatternType): boolean;
 }
 //# sourceMappingURL=resource.d.ts.map

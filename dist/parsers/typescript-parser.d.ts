@@ -1,10 +1,5 @@
 import ts from 'typescript';
-export interface TextReplacement {
-    start: number;
-    end: number;
-    text: string;
-    priority?: number;
-}
+import { TextReplacement } from './types';
 export declare class TypescriptParser {
     fullName: string;
     content: string;

@@ -5,16 +5,10 @@ import { Terminal } from '..';
 
 import { Resource } from '../utils/resource';
 
+import { TextReplacement } from './types';
 
-export interface TextReplacement {
-  start: number;
-  end: number;
-  text: string;
-  priority?: number;
-}
 
 export class TypescriptParser {
-
   /** Contingut de l'arxiu. */
   content: string;
   /** AST de l'arxiu. */

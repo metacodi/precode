@@ -1,6 +1,6 @@
 {
   "name": "@metacodi/precode",
-  "version": "1.0.57",
+  "version": "1.0.63",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,6 +28,7 @@
     "@ionic/angular": "^5.5.2",
     "@ngx-translate/core": "^13.0.0",
     "@ngx-translate/http-loader": "^6.0.0",
+    "@xml-tools/ast": "^5.0.5",
     "@xml-tools/parser": "^1.0.11",
     "commander": "^4.0.1",
     "ftp": "^0.3.10",
@@ -44,7 +45,6 @@
     "@types/ftp": "^0.3.33",
     "@types/mysql": "^2.15.14",
     "@types/node": "^12.12.27",
-    "@xml-tools/ast": "^4.2.1",
     "chalk": "^3.0.0",
     "codelyzer": "^5.2.0",
     "php-parser": "^3.0.1",

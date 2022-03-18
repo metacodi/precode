@@ -1,4 +1,23 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -11,10 +30,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Git = void 0;
 const terminal_1 = require("./terminal");
+const fs = __importStar(require("fs"));
 class Git {
     constructor() {
     }
-    foo() { return 'bar'; }
     static hasChanges(options) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!options) {
@@ -79,9 +98,9 @@ class Git {
                 const changes = (yield terminal_1.Terminal.run(`git diff --name-status --diff-filter=${filter} ${head}`, { verbose })).trim();
                 const lines = changes.split('\n');
                 const results = [];
-                lines.map((l) => {
-                    if (l.length > 2 && filter.includes(l.charAt(0)) && l.charAt(1) === '\t') {
-                        const parts = l.split('\t');
+                lines.map(line => {
+                    if (line.length > 2 && filter.includes(line.charAt(0)) && line.charAt(1) === '\t') {
+                        const parts = line.split('\t');
                         results.push({
                             filename: parts[1],
                             status: Git.codeToStatus(parts[0])
@@ -99,6 +118,17 @@ class Git {
                 }
                 resolve(results);
             }));
+        });
+    }
+    static discardChanges(resource) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const isDirectory = fs.lstatSync(resource).isDirectory();
+            if (isDirectory) {
+                return Promise.reject(`No s'ha implementat l'opció de descartar canvis per una carpeta '${resource}'`);
+            }
+            else {
+                return yield terminal_1.Terminal.run(`git restore ${resource}`);
+            }
         });
     }
     static publish(options) {
@@ -150,6 +180,7 @@ class Git {
         };
         return Object.keys(map).find(k => k === code);
     }
+    foo() { return 'bar'; }
 }
 exports.Git = Git;
 //# sourceMappingURL=git.js.map

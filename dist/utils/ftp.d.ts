@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import Client from 'ftp';
+import { FilterPatternType } from './functions';
 export interface FtpUploadOptions {
     continueOnError?: boolean;
     verbose?: boolean;
@@ -30,8 +31,8 @@ export declare class FtpClient {
     download(remote: string, local: string, options?: {
         continueOnError?: boolean;
         verbose?: boolean;
-        ignore?: string | RegExp;
-        filter?: string | RegExp;
+        ignore?: FilterPatternType;
+        filter?: FilterPatternType;
     }): Promise<void>;
     private downloadAll;
     remove(remote: string, options?: {
@@ -58,6 +59,5 @@ export declare class FtpClient {
     isRemoteFile(el: Client.ListingElement): boolean;
     isLocalDirectory(resource: string): boolean;
     isLocalFile(resource: string): boolean;
-    protected verbose(text: string): void;
 }
 //# sourceMappingURL=ftp.d.ts.map

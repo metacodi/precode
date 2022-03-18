@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <root>
+    <row>
+      <number>1</number>
+      <street>Mermaid <b>Bold</b> avenue</street>
+      <icon color="blue">gear</icon>
+    </row>
+    <other>
+      <empty></empty>
+    </other>
+    <row>
+      <number>2</number>
+      <street>Central park</street>
+      <img src="prova" />
+    </row>
+  </root>

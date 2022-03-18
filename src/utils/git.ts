@@ -1,12 +1,12 @@
+import { Resource } from './resource';
 import { Terminal, TerminalRunOptions } from './terminal';
+import * as fs from 'fs';
 
 export class Git {
 
   constructor() {
 
   }
-
-  foo() { return 'bar'; }
 
   /**
    * Comprova si hi ha canvis al repositori indicat o, s'hi no se n'indica cap, a l'actual.
@@ -87,9 +87,9 @@ export class Git {
       const lines = changes.split('\n');
 
       const results: any[] = [];
-      lines.map((l: string) => {
-        if (l.length > 2 && filter.includes(l.charAt(0)) && l.charAt(1) === '\t') {
-          const parts = l.split('\t');
+      lines.map(line => {
+        if (line.length > 2 && filter.includes(line.charAt(0)) && line.charAt(1) === '\t') {
+          const parts = line.split('\t');
           results.push({
             filename: parts[1] as string,
             status: Git.codeToStatus(parts[0])
@@ -104,6 +104,23 @@ export class Git {
 
       resolve(results);
     });
+  }
+
+  /**
+   * Desfà els canvis en l'arxiu indicat.
+   *
+   * ```bash
+   * git restore {{path/to/file}}
+   * ```
+   * {@link https://git-scm.com/docs/git-restore Git Restore}
+   */
+  static async discardChanges(resource?: string): Promise<any> {
+    const isDirectory = fs.lstatSync(resource).isDirectory();
+    if (isDirectory) {
+      return Promise.reject(`No s'ha implementat l'opció de descartar canvis per una carpeta '${resource}'`);
+    } else {
+      return await Terminal.run(`git restore ${resource}`);
+    }
   }
 
 
@@ -162,5 +179,7 @@ export class Git {
     };
     return Object.keys(map).find(k => k === code);
   }
+
+  foo() { return 'bar'; }
 
 }

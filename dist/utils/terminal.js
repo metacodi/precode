@@ -60,15 +60,19 @@ class Terminal {
             });
         });
     }
-    static log(message, data) {
+    static log(message, ...data) {
         const indent = '  '.repeat(Terminal.indent);
         Terminal.clearLine();
         if (data === undefined) {
             console.log(indent + message);
         }
         else {
-            console.log(indent + message, data);
+            console.log(indent + message, ...data);
         }
+    }
+    static logInline(text) {
+        Terminal.clearLine();
+        process.stdout.write(`${text}`);
     }
     static verbose(message, data) {
         if (Terminal.verboseEnabled) {

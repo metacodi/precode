@@ -39,6 +39,7 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const resource_1 = require("./resource");
 const terminal_1 = require("./terminal");
+const functions_1 = require("./functions");
 class FtpClient {
     constructor(options) {
         this.isReady = false;
@@ -110,7 +111,7 @@ class FtpClient {
                     remote = this.normalizeRemote(remote);
                     if (this.isLocalFile(local)) {
                         if (verbose) {
-                            this.verbose(`  uploading... ${chalk_1.default.green(remote)}`);
+                            terminal_1.Terminal.logInline(`  uploading... ${chalk_1.default.green(remote)}`);
                         }
                         try {
                             yield this.mkdir(path.dirname(remote), true);
@@ -129,7 +130,7 @@ class FtpClient {
                     }
                     else {
                         if (verbose) {
-                            this.verbose(`  uploading... ${chalk_1.default.green(remote)}`);
+                            terminal_1.Terminal.logInline(`  uploading... ${chalk_1.default.green(remote)}`);
                         }
                         try {
                             yield this.mkdir(remote, true);
@@ -161,10 +162,10 @@ class FtpClient {
     download(remote, local, options) {
         return __awaiter(this, void 0, void 0, function* () {
             const start = moment_1.default();
-            terminal_1.Terminal.log(`- Downloading ${chalk_1.default.green(remote)} to ${chalk_1.default.green(local)}`);
+            terminal_1.Terminal.logInline(`- Downloading ${chalk_1.default.green(remote)} to ${chalk_1.default.green(local)}`);
             const result = yield this.downloadAll(remote, local, options);
             const duration = moment_1.default.duration(moment_1.default().diff(start)).asSeconds();
-            terminal_1.Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration})`);
+            terminal_1.Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration}) ${chalk_1.default.green(remote)} to ${chalk_1.default.green(local)}`);
         });
     }
     downloadAll(remote, local, options) {
@@ -174,22 +175,16 @@ class FtpClient {
             }
             const verbose = options.verbose === undefined ? false : options.verbose;
             const element = options.element === undefined ? false : options.element;
-            if (!!options.ignore && typeof options.ignore === 'string') {
-                options.ignore = new RegExp(options.ignore);
-            }
-            if (!!options.filter && typeof options.filter === 'string') {
-                options.filter = new RegExp(options.filter);
-            }
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
                     remote = this.normalizeRemote(remote);
-                    const filtered = !options.filter || options.filter.test(path.basename(remote));
-                    const accepted = !options.ignore || !options.ignore.test(path.basename(remote));
-                    if (filtered && accepted) {
+                    const enabled = !options.ignore || !functions_1.applyFilterPattern(remote, options.ignore);
+                    const filtered = !options.filter || functions_1.applyFilterPattern(remote, options.filter);
+                    if (enabled && filtered) {
                         const isRemoteFile = element ? !this.isRemoteDirectory(element) : !!path.extname(remote);
                         if (isRemoteFile) {
                             if (verbose) {
-                                this.verbose(`  downloading... ${chalk_1.default.green(remote)}`);
+                                terminal_1.Terminal.logInline(`  downloading... ${chalk_1.default.green(remote)}`);
                             }
                             try {
                                 fs.mkdirSync(path.dirname(local), { recursive: true });
@@ -216,7 +211,7 @@ class FtpClient {
                         }
                         else {
                             if (verbose) {
-                                this.verbose(`  downloading... ${chalk_1.default.green(remote)}`);
+                                terminal_1.Terminal.logInline(`  downloading... ${chalk_1.default.green(remote)}`);
                             }
                             try {
                                 fs.mkdirSync(local, { recursive: true });
@@ -267,14 +262,14 @@ class FtpClient {
                         const isFile = !!path.extname(remote);
                         if (isFile) {
                             if (verbose) {
-                                this.verbose(`  deleting... ${chalk_1.default.green(remote)}`);
+                                terminal_1.Terminal.logInline(`  deleting... ${chalk_1.default.green(remote)}`);
                             }
                             yield this.delete(remote);
                             resolve(true);
                         }
                         else {
                             if (verbose) {
-                                this.verbose(`  deleting... ${chalk_1.default.green(remote)}`);
+                                terminal_1.Terminal.logInline(`  deleting... ${chalk_1.default.green(remote)}`);
                             }
                             const list = yield this.list(remote);
                             const directories = list.filter(r => r.type === 'd' && r.name !== '..' && r.name !== '.').map(r => path.posix.join(remote, r.name));
@@ -473,11 +468,6 @@ class FtpClient {
     isRemoteFile(el) { return el.type === '-'; }
     isLocalDirectory(resource) { return fs.lstatSync(resource).isDirectory(); }
     isLocalFile(resource) { return fs.lstatSync(resource).isFile(); }
-    verbose(text) {
-        process.stdout.clearLine(0);
-        process.stdout.cursorTo(0);
-        process.stdout.write(`${text}`);
-    }
 }
 exports.FtpClient = FtpClient;
 //# sourceMappingURL=ftp.js.map

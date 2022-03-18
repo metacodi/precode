@@ -27,6 +27,8 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const chalk_1 = __importDefault(require("chalk"));
 const terminal_1 = require("./terminal");
+const functions_1 = require("./functions");
+const moment_1 = __importDefault(require("moment"));
 class Resource {
     static concat(folder, fileName) {
         if (!folder) {
@@ -165,9 +167,9 @@ class Resource {
             const fullName = path.join(resource, name);
             try {
                 const accessible = Resource.isAccessible(fullName);
-                const filtered = !options.filter || options.filter.test(name);
-                const accepted = !options.ignore || !options.ignore.test(name);
-                if (accessible && accepted && filtered) {
+                const enabled = !options.ignore || !functions_1.applyFilterPattern(name, options.ignore);
+                const filtered = !options.filter || functions_1.applyFilterPattern(name, options.filter);
+                if (accessible && enabled && filtered) {
                     const stat = fs.statSync(fullName);
                     const info = {
                         name,
@@ -196,17 +198,27 @@ class Resource {
         }
         return content;
     }
-    static copyFileSync(source, target, options) {
+    static copy(source, target, options) {
+        const start = moment_1.default();
+        terminal_1.Terminal.logInline(`- Copying ${chalk_1.default.green(source)} to ${chalk_1.default.green(target)}`);
+        if (fs.lstatSync(source).isDirectory()) {
+            const duration = moment_1.default.duration(moment_1.default().diff(start)).asSeconds();
+            const result = Resource.copyFolderSync(source, target, options);
+            terminal_1.Terminal.success(`Copied ${result ? 'successfully' : 'with errors'} (${duration})`);
+        }
+        else {
+            Resource.copyFileSync(source, target, options);
+            terminal_1.Terminal.success(`Copied successfully ${chalk_1.default.green(target)}`);
+        }
+    }
+    static copyFileSync(source, target, options, indent = '') {
         if (!options) {
             options = {};
-        }
-        if (options.indent === undefined) {
-            options.indent = '';
         }
         const verbose = options.verbose === undefined ? terminal_1.Terminal.verboseEnabled : !!options.verbose;
         const file = path.basename(source);
         if (verbose) {
-            console.log(options.indent + chalk_1.default.green('√'), file);
+            terminal_1.Terminal.logInline(`  copying... ${chalk_1.default.green(file)}`);
         }
         let targetFile = target;
         if (fs.existsSync(target)) {
@@ -216,26 +228,19 @@ class Resource {
         }
         fs.writeFileSync(targetFile, fs.readFileSync(source));
     }
-    static copyFolderSync(source, target, options) {
+    static copyFolderSync(source, target, options, indent = '') {
         if (!options) {
             options = {};
-        }
-        if (options.indent === undefined) {
-            options.indent = '';
         }
         if (options.createFolderInTarget === undefined) {
             options.createFolderInTarget = true;
         }
         const verbose = options.verbose === undefined ? terminal_1.Terminal.verboseEnabled : !!options.verbose;
-        const indent = options.indent + '  ';
         const filter = options.filter;
         const files = [];
         const targetFolder = options.createFolderInTarget ? path.join(target, path.basename(source)) : target;
         if (!fs.existsSync(targetFolder)) {
             fs.mkdirSync(targetFolder);
-        }
-        if (verbose && options.createFolderInTarget) {
-            console.log(options.indent + '> ' + chalk_1.default.bold(path.basename(source)));
         }
         let copied = 0;
         if (fs.lstatSync(source).isDirectory()) {
@@ -243,61 +248,52 @@ class Resource {
             files.forEach((file) => {
                 const origin = path.join(source, file);
                 if (fs.lstatSync(origin).isDirectory()) {
-                    if (Resource.applyFilter(origin, options.filter) && Resource.hasFiles(origin, filter)) {
-                        copied += Resource.copyFolderSync(origin, targetFolder, { indent, verbose, filter });
+                    if (functions_1.applyFilterPattern(origin, options.filter) && Resource.hasFilteredFiles(origin, filter)) {
+                        if (verbose) {
+                            terminal_1.Terminal.logInline(`  copying... ${chalk_1.default.green(origin)}`);
+                        }
+                        copied += Resource.copyFolderSync(origin, targetFolder, { verbose, filter }, indent + '  ');
                     }
                     else {
+                        if (verbose) {
+                            terminal_1.Terminal.logInline(`  ignored... ${chalk_1.default.redBright(file)}`);
+                        }
                     }
                 }
             });
             files.forEach((file) => {
                 const origin = path.join(source, file);
                 if (!fs.lstatSync(origin).isDirectory()) {
-                    if (Resource.applyFilter(origin, options.filter)) {
-                        Resource.copyFileSync(origin, targetFolder, { indent, verbose });
+                    if (functions_1.applyFilterPattern(origin, options.filter)) {
+                        Resource.copyFileSync(origin, targetFolder, { verbose }, indent + '  ');
                         copied++;
                     }
                     else {
+                        if (verbose) {
+                            terminal_1.Terminal.logInline(`  ignored... ${chalk_1.default.redBright(file)}`);
+                        }
                     }
                 }
             });
         }
         return copied;
     }
-    static hasFiles(folder, filter) {
-        if (fs.lstatSync(folder).isDirectory()) {
-            for (const file of fs.readdirSync(folder)) {
-                const origin = path.join(folder, file);
-                if (fs.lstatSync(origin).isFile()) {
-                    if (Resource.applyFilter(origin, filter)) {
-                        return true;
-                    }
-                }
-                else {
-                    if (Resource.applyFilter(origin, filter) && Resource.hasFiles(origin, filter)) {
-                        return true;
-                    }
+    static hasFilteredFiles(folder, filter) {
+        if (!fs.lstatSync(folder).isDirectory()) {
+            return false;
+        }
+        for (const file of fs.readdirSync(folder)) {
+            const origin = path.join(folder, file);
+            if (fs.lstatSync(origin).isFile()) {
+                if (functions_1.applyFilterPattern(origin, filter)) {
+                    return true;
                 }
             }
-        }
-        return false;
-    }
-    static applyFilter(file, filter) {
-        if (!filter) {
-            return true;
-        }
-        if (typeof filter === 'string') {
-            const tester = new RegExp(filter);
-            return tester.test(file);
-        }
-        else if (typeof filter === 'object' && typeof filter.test === 'function') {
-            return filter.test(file);
-        }
-        else if (typeof filter === 'function') {
-            return filter(file);
-        }
-        else {
-            return true;
+            else {
+                if (functions_1.applyFilterPattern(origin, filter) && Resource.hasFilteredFiles(origin, filter)) {
+                    return true;
+                }
+            }
         }
     }
 }

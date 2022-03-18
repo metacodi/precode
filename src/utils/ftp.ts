@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { Resource, ResourceType } from './resource';
 import { Terminal } from './terminal';
+import { applyFilterPattern, FilterPatternType } from './functions';
 
 
 export interface FtpUploadOptions {
@@ -131,7 +132,7 @@ export class FtpClient {
       this.ready().then(async () => {
         remote = this.normalizeRemote(remote);
         if (this.isLocalFile(local)) {
-          if (verbose) { this.verbose(`  uploading... ${chalk.green(remote)}`); }
+          if (verbose) { Terminal.logInline(`  uploading... ${chalk.green(remote)}`); }
           try {
             await this.mkdir(path.dirname(remote), true);
             await this.put(local, remote);
@@ -140,7 +141,7 @@ export class FtpClient {
             if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
           }
         } else {
-          if (verbose) { this.verbose(`  uploading... ${chalk.green(remote)}`); }
+          if (verbose) { Terminal.logInline(`  uploading... ${chalk.green(remote)}`); }
           try {
             await this.mkdir(remote, true);
             const resources = Resource.discover(local, { ignore, filter }) as ResourceType[];
@@ -158,29 +159,29 @@ export class FtpClient {
   }
 
   /** Downloads file or directory recursively. */
-  async download(remote: string, local: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; }) {
+  async download(remote: string, local: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: FilterPatternType; filter?: FilterPatternType; }) {
     const start = moment();
-    Terminal.log(`- Downloading ${chalk.green(remote)} to ${chalk.green(local)}`);
+    // Terminal.log(`- Downloading ${chalk.green(remote)} to ${chalk.green(local)}`);
+    Terminal.logInline(`- Downloading ${chalk.green(remote)} to ${chalk.green(local)}`);
     const result = await this.downloadAll(remote, local, options);
     const duration = moment.duration(moment().diff(start)).asSeconds();
-    Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration})`);
+    // Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration})`);
+    Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration}) ${chalk.green(remote)} to ${chalk.green(local)}`);
   }
 
-  private async downloadAll(remote: string, local: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: string | RegExp; filter?: string | RegExp; element?: Client.ListingElement; }) {
+  private async downloadAll(remote: string, local: string, options?: { continueOnError?: boolean; verbose?: boolean; ignore?: FilterPatternType; filter?: FilterPatternType; element?: Client.ListingElement; }) {
     if (!options) { options = {}; }
     const verbose = options.verbose === undefined ? false : options.verbose;
     const element = options.element === undefined ? false : options.element;
-    if (!!options.ignore && typeof options.ignore === 'string') { options.ignore = new RegExp(options.ignore); }
-    if (!!options.filter && typeof options.filter === 'string') { options.filter = new RegExp(options.filter); }
     return new Promise<any>(async (resolve: any, reject: any) => {
       this.ready().then(async () => {
         remote = this.normalizeRemote(remote);
-        const filtered = !options.filter || (options.filter as RegExp).test(path.basename(remote));
-        const accepted = !options.ignore || !(options.ignore as RegExp).test(path.basename(remote));
-        if (filtered && accepted) {
+        const enabled = !options.ignore || !applyFilterPattern(remote, options.ignore);
+        const filtered = !options.filter || applyFilterPattern(remote, options.filter);
+        if (enabled && filtered) {
           const isRemoteFile = element ? !this.isRemoteDirectory(element) : !!path.extname(remote);
           if (isRemoteFile) {
-            if (verbose) { this.verbose(`  downloading... ${chalk.green(remote)}`); }
+            if (verbose) { Terminal.logInline(`  downloading... ${chalk.green(remote)}`); }
             try {
               fs.mkdirSync(path.dirname(local), { recursive: true });
               // TODO: Apply overwriting options if file exists.
@@ -199,7 +200,7 @@ export class FtpClient {
               if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
             }
           } else {
-            if (verbose) { this.verbose(`  downloading... ${chalk.green(remote)}`); }
+            if (verbose) { Terminal.logInline(`  downloading... ${chalk.green(remote)}`); }
             try {
               fs.mkdirSync(local, { recursive: true });
               const resources = await this.list(remote);
@@ -237,11 +238,11 @@ export class FtpClient {
           remote = this.normalizeRemote(remote);
           const isFile = !!path.extname(remote);
           if (isFile) {
-            if (verbose) { this.verbose(`  deleting... ${chalk.green(remote)}`); }
+            if (verbose) { Terminal.logInline(`  deleting... ${chalk.green(remote)}`); }
             await this.delete(remote);
             resolve(true);
           } else {
-            if (verbose) { this.verbose(`  deleting... ${chalk.green(remote)}`); }
+            if (verbose) { Terminal.logInline(`  deleting... ${chalk.green(remote)}`); }
             const list = await this.list(remote);
             const directories = list.filter(r => r.type === 'd' && r.name !== '..' && r.name !== '.').map(r => path.posix.join(remote, r.name));
             const files = list.filter(r => r.type !== 'd').map(r => path.posix.join(remote, r.name));
@@ -411,11 +412,5 @@ export class FtpClient {
 
   /** Check if local path is a file. */
   isLocalFile(resource: string) { return fs.lstatSync(resource).isFile(); }
-
-  protected verbose(text: string) {
-    process.stdout.clearLine(0);
-    process.stdout.cursorTo(0);
-    process.stdout.write(`${text}`);
-  }
 
 }

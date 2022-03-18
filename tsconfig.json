@@ -26,6 +26,6 @@
     "test",
     "prova",
     "node_modules",
-    "scripts/*/**",
+    "scripts",
   ]
 }

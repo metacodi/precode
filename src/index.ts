@@ -5,10 +5,11 @@
 //  Parsers
 // ---------------------------------------------------------------------------------------------------
 
+export { TextReplacement } from './parsers/types';
 // export * from './parsers/java-parser';
 // export * from './parsers/php-parser';
-export { TypescriptParser, TextReplacement } from './parsers/typescript-parser';
-// export * from './parsers/xml-parser';
+export { TypescriptParser } from './parsers/typescript-parser';
+export * from './parsers/xml-parser';
 
 
 // ---------------------------------------------------------------------------------------------------

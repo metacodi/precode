@@ -22,7 +22,8 @@ export declare class Terminal {
     static verboseEnabled: boolean;
     static indent: number;
     static run(command: string, options?: TerminalRunOptions): Promise<any>;
-    static log(message: string, data?: any): void;
+    static log(message: string, ...data: any): void;
+    static logInline(text: string): void;
     static verbose(message: string, data?: any): void;
     static blob(content: any): void;
     static warning(message: string): void;
