@@ -92,13 +92,16 @@ project.initialize().then(async () => {
   // const tag = XmlParser.find(doc, ((n: any) => n.name === 'icon'), { recursive: true });
   // console.log('result =', tag);
 
-  const parser = new XmlParser(`result.xml`, content);
+  const parser = new XmlParser(`scripts/parsers/test-result.xml`, content);
   // parser.replaceName(`root>row[1]>icon color`, 'name');
-  parser.replaceValue(`root>row[1]>icon color`, 'value');
+  // parser.replaceValue(`root>row[1]>icon color`, 'value');
+  // parser.replaceValue(`row[1]>icon color`, 'value');
+  parser.replaceValue(`row>icon color`, 'value');
   // parser.replaceValue(`root>row[1]>icon`, 'pp');
   // parser.replaceName(`root>row[1]>icon`, 'img');
   // parser.replaceNode(`root>row[1]>icon`, '<img src="prova" />');
   // parser.replaceValue(`root>[1]>empty`, 'value');
+  parser.replaceValue(`root>[0]>[0]`, 'value');
 
   // const tag = parser.resolvePath(`root>row[1]>icon color`);
   // const tag: XMLAstNode = XmlParser.find(parser.document, ((n: any) => n.name === 'icon'), { recursive: true });

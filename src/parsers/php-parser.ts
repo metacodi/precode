@@ -1,13 +1,14 @@
 import fs from 'fs';
-import php, { Program, Node } from 'php-parser';
+import { Engine, Program, Node } from 'php-parser';
 
 
+/** {@link https://www.npmjs.com/package/php-parser PHP Parser} */
 export class PhpParser {
 
   static parse(fullName: string, content?: string): Program {
     if (!content && !fs.existsSync(fullName)) { return undefined; }
-    const parser = new php({ ast: { withPositions: true }});
-    return parser.parseCode(content || fs.readFileSync(fullName, 'utf-8'));
+    const parser = new Engine({ ast: { withPositions: true }});
+    return parser.parseEval(content || fs.readFileSync(fullName, 'utf-8'));
   }
 
   static find(nodes: any, filter: string | string[] | ((node: Node | Program) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): Node {
@@ -26,7 +27,7 @@ export class PhpParser {
     if (options.recursive === undefined) { options.recursive = false; }
     if (options.firstOnly === undefined) { options.firstOnly = true; }
 
-    const results: Node[] = [];
+    const results: any[] = [];
 
     for (const node of nodes) {
       if (!results.length || !options.firstOnly) {

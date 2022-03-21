@@ -1,13 +1,13 @@
 import fs from 'fs';
 
-import { parse as parser, DocumentCstNode } from '@xml-tools/parser';
+import { parse as phpParseFn, DocumentCstNode } from '@xml-tools/parser';
 import { buildAst, accept, XMLDocument, XMLAstNode, XMLElement, XMLAttribute, XMLTextContent } from '@xml-tools/ast';
 
 import { Resource } from '../utils/resource';
 
 import { TextReplacement } from './types';
 
-/** <https://www.npmjs.com/package/@xml-tools/ast> */
+/** {@link https://www.npmjs.com/package/@xml-tools/ast XML AST} */
 export class XmlParser {
   /** Contingut de l'arxiu. */
   content: string;
@@ -18,7 +18,7 @@ export class XmlParser {
 
   static parse(fullName: string, content?: string): XMLDocument {
     if (!content && !fs.existsSync(fullName)) { return undefined; }
-    const { cst, tokenVector } = parser(content || fs.readFileSync(fullName, 'utf-8'));
+    const { cst, tokenVector } = phpParseFn(content || fs.readFileSync(fullName, 'utf-8'));
     return buildAst(cst as DocumentCstNode, tokenVector);
   }
 
@@ -78,7 +78,7 @@ export class XmlParser {
       this.content = fs.readFileSync(fullName, 'utf-8');
       // console.log('contingut =>', this.content);
     }
-    const { cst, tokenVector } = parser(this.content);
+    const { cst, tokenVector } = phpParseFn(this.content);
     this.document = buildAst(cst as DocumentCstNode, tokenVector);
   }
 
@@ -90,7 +90,7 @@ export class XmlParser {
     return XmlParser.find(nodes, match, options);
   }
 
-  filter(nodes: any, match: string | string[] | ((node: any) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): any {
+  filter(nodes: any, match: string | string[] | ((node: any) => boolean), options?: { recursive?: boolean, firstOnly?: boolean }): any[] {
     if (!options) { options = {}; }
     if (options.recursive === undefined) { options.recursive = false; }
     if (options.firstOnly === undefined) { options.firstOnly = false; }
@@ -102,32 +102,46 @@ export class XmlParser {
    * Retorna el node indicat.
    *
    * Sintaxis:
-   * - `>` separa els elements anidats per descriure una branca del document.
-   * - `[0]` indica la posició (zero-based) de l'element en la col·lecció de fills.
-   * - ` attr` indica l'atribut de l'element actual.
+   * - `>` separa els elements anidats d'una branca del document.
+   * - `[0]` indica la posició (zero-based) de l'element en la col·lecció.
+   * - ` attr` (amb un espai al davant) indica un atribut de l'element actual.
    *
    * ```typescript
-   * // Retorna l'atribut `color` de l'element `icon` fill del tercer element `person` fill de `people`.
+   * // Retorna l'atribut `color` de l'element `icon`, fill del tercer element `person`, fill de l'element `people`.
    * const node = resolvePath(`people>person[2]>icon color`)
+   * // Camins relatius (el camí no comença per l'element root)
+   * // Primer element <person> trobat
+   * `person>icon color`
+   * // Tercer element <person> trobat.
+   * `person[2]>icon color`
+   * // Tercer element fill de people.
+   * `people>[2]>icon color`
    * ```
    */
-  resolvePath(path: string): XMLElement | XMLAttribute {
+  resolvePath(path: string, options?: { parent?: XMLElement }): XMLElement | XMLAttribute | XMLTextContent {
+    if (!options) { options = {}; }
+    const root = options.parent === undefined ? this.document.rootElement : options.parent;
     const elements = path.split('>');
     const resolved = [];
-    const root = this.document.rootElement;
     let found: XMLElement;
     while (elements.length) {
       const segment = elements.shift();
+      const { el, idx, attr } = this.parsePathSegment(segment);
       resolved.push(segment);
       if (!found) {
-        if (segment === root.name) {
+        if (el === root.name) {
           found = root;
         } else {
-          found = root.subElements.find(sub => sub.name === segment);
+          // Cerquem l'element en l'arbre sintàctic.
+          if (idx > -1) {
+            const filtered = this.filter(root.subElements, (node: XMLElement) => node.name === el, { recursive: true, firstOnly: false });
+            if (idx < filtered.length) { found = filtered[idx]; }
+          } else {
+            found = this.find(root.subElements, (node: XMLElement) => node.name === el, { recursive: true, firstOnly: true });
+          }
           if (!found) { throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`); }
         }
       } else {
-        const { el, idx, attr } = this.parsePathSegment(segment);
         const children = found.subElements.filter(sub => !el || sub.name === el);
         if (!children.length) { throw Error(`No s'ha trobat cap fill '${el}' de '${resolved.join('>')}'`); }
         if (idx > -1) {
@@ -155,36 +169,36 @@ export class XmlParser {
     return { el, idx, attr };
   }
 
-  replaceName(node: string | XMLAstNode, text: string) {
+  replaceName(node: string | XMLElement | XMLAttribute | XMLTextContent, text: string) {
     if (typeof node === 'string') { node = this.resolvePath(node); }
     // console.log(node);
-    if (node.type === 'XMLTextContent') {
-      this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
-    } else if (node.type === 'XMLAttribute') {
-      const attribute = node as XMLAttribute;
-      this.replacements.push({ start: attribute.syntax.key.startOffset, end: attribute.syntax.key.endOffset + 1, text });
-    } else if (node.type === 'XMLElement') {
+    if (node.type === 'XMLElement') {
       const element = node as XMLElement;
       this.replacements.push({ start: element.syntax.openName.startOffset, end: element.syntax.openName.endOffset + 1, text });
       this.replacements.push({ start: element.syntax.closeName.startOffset, end: element.syntax.closeBody.endOffset, text });
+    } else if (node.type === 'XMLAttribute') {
+      const attribute = node as XMLAttribute;
+      this.replacements.push({ start: attribute.syntax.key.startOffset, end: attribute.syntax.key.endOffset + 1, text });
+    } else if (node.type === 'XMLTextContent') {
+      this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
     }
   }
 
-  replaceValue(node: string | XMLAstNode, text: string) {
+  replaceValue(node: string | XMLElement | XMLAttribute | XMLTextContent, text: string) {
     if (typeof node === 'string') { node = this.resolvePath(node); }
     // console.log(node);
-    if (node.type === 'XMLTextContent') {
-      this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
+    if (node.type === 'XMLElement') {
+      const element = node as XMLElement;
+      this.replacements.push({ start: element.syntax.openBody.endOffset + 1, end: element.syntax.closeBody.startOffset, text });
     } else if (node.type === 'XMLAttribute') {
       const attribute = node as XMLAttribute;
       this.replacements.push({ start: attribute.syntax.value.startOffset + 1, end: attribute.syntax.value.endOffset, text });
-    } else if (node.type === 'XMLElement') {
-      const element = node as XMLElement;
-      this.replacements.push({ start: element.syntax.openBody.endOffset + 1, end: element.syntax.closeBody.startOffset, text });
+    } else if (node.type === 'XMLTextContent') {
+      this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
     }
   }
 
-  replaceNode(node: string | XMLAstNode, text: string) {
+  replaceNode(node: string | XMLElement | XMLAttribute | XMLTextContent, text: string) {
     if (typeof node === 'string') { node = this.resolvePath(node); }
     // console.log(node);
     this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });

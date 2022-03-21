@@ -15,6 +15,7 @@ import php, { Program, Node } from 'php-parser';
 
 import { Terminal } from '../../src/utils/terminal';
 
+import { PhpParser } from '../../src/parsers/php-parser';
 import { PhpProject } from '../../src/projects/php-project';
 import { XmlParser } from '../../src/parsers/xml-parser';
 import { I18n } from '../../src/deployments/angular/i18n';
@@ -42,7 +43,7 @@ if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt
 
 
 // --------------------------------------------------------------------------------
-//  Test Deployments
+//  PhpProject
 // --------------------------------------------------------------------------------
 
 const project = new PhpProject(Prompt.directory || __dirname);
@@ -52,28 +53,10 @@ project.initialize().then(async () => {
   // const program = project.getSourceFile(project.rootPath('api.php'));
   // const classe = project.findClassDeclaration('api', program);
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<note>
-  <from>Un</from>
-  <move>
-    <in>
-      <deepth>
-        deppest
-      </deepth>
-    </in>
-  </move>
-  <to>Bill</to>
-  <from>Tim</from>
-</note>`;
-
-  const tree = XmlParser.parse(undefined, xml);
-  // console.log('root element = ', tree.rootElement.position);
-
-  const result = XmlParser.find(tree, ((n: any) => {
-    if (n.name === 'note') { return n; }
-  }), { recursive: true });
-  console.log('result =', result.name);
-
+  const program = PhpParser.parse(project.rootPath('api.php'));
+  // console.log('program =', (program as any));
+  const classe = project.findClassDeclaration('api', program);
+  if (classe !== undefined) { console.log('classe =', (classe as any).name.name); }
 
   Terminal.line();
 });
