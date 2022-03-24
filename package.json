@@ -1,6 +1,6 @@
 {
   "name": "@metacodi/precode",
-  "version": "1.0.69",
+  "version": "1.0.73",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

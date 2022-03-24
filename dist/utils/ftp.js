@@ -155,7 +155,15 @@ class FtpClient {
                             }
                         }
                     }
-                }));
+                })).catch(error => {
+                    if (options.continueOnError) {
+                        terminal_1.Terminal.error(error, false);
+                        resolve(false);
+                    }
+                    else {
+                        reject(error);
+                    }
+                });
             }));
         });
     }

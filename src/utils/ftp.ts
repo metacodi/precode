@@ -154,6 +154,8 @@ export class FtpClient {
             if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
           }
         }
+      }).catch(error => {
+        if (options.continueOnError) { Terminal.error(error, false); resolve(false); } else { reject(error); }
       })
     });
   }

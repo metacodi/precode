@@ -368,8 +368,8 @@ export class Resource {
     const maxRetries = options.maxRetries === undefined ? 0 : options.maxRetries;
     const retryDelay = options.retryDelay === undefined ? 100 : options.retryDelay;
     const verbose = options.verbose === undefined ? false : options.verbose;
-    if (verbose) { Terminal.log(`Eliminant ${Resource.isFile(resource) ? `l'arxiu` : `la carpeta`} ${chalk.green(`dist`)}.`); }
-    fs.rmSync(`dist`, { recursive, force, maxRetries, retryDelay });
+    if (verbose) { Terminal.log(`Eliminant ${Resource.isFile(resource) ? `l'arxiu` : `la carpeta`} ${chalk.green(resource)}.`); }
+    if (Resource.exists(resource)) { fs.rmSync(resource, { recursive, force, maxRetries, retryDelay }); }
   }
 
 

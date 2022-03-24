@@ -290,9 +290,9 @@ class Resource {
         const retryDelay = options.retryDelay === undefined ? 100 : options.retryDelay;
         const verbose = options.verbose === undefined ? false : options.verbose;
         if (verbose) {
-            terminal_1.Terminal.log(`Eliminant ${Resource.isFile(resource) ? `l'arxiu` : `la carpeta`} ${chalk_1.default.green(`dist`)}.`);
+            terminal_1.Terminal.log(`Eliminant ${Resource.isFile(resource) ? `l'arxiu` : `la carpeta`} ${chalk_1.default.green(resource)}.`);
         }
-        fs.rmSync(`dist`, { recursive, force, maxRetries, retryDelay });
+        fs.rmSync(resource, { recursive, force, maxRetries, retryDelay });
     }
     static hasFilteredFiles(folder, filter) {
         if (!fs.lstatSync(folder).isDirectory()) {
