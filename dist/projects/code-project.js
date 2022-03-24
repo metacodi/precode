@@ -38,7 +38,7 @@ const path = __importStar(require("path"));
 const chalk_1 = __importDefault(require("chalk"));
 const child_process_1 = require("child_process");
 const rxjs_1 = require("rxjs");
-const mysql = __importStar(require("mysql"));
+const mysql = __importStar(require("mysql2"));
 const terminal_1 = require("../utils/terminal");
 const resource_1 = require("../utils/resource");
 class CodeProject {
@@ -349,11 +349,11 @@ class CodeProject {
             });
         });
     }
-    query(sql) {
+    query(sql, data) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
                 if (this.connection) {
-                    this.connection.query(sql, (err, results) => {
+                    this.connection.query(sql, data, (err, results) => {
                         if (err) {
                             reject(err);
                         }
@@ -370,8 +370,9 @@ class CodeProject {
     }
     closeConnection() {
         return __awaiter(this, void 0, void 0, function* () {
+            const con = this.connection;
             if (this.connection) {
-                if (typeof this.connection.release === 'function') {
+                if (typeof this.connection.end === 'function') {
                     this.connection.release();
                     terminal_1.Terminal.verbose('MySQL connection closed!');
                 }

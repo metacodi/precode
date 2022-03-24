@@ -3,13 +3,13 @@
 //  applyFilterPattern . FilterPatternType
 // ---------------------------------------------------------------------------------------------------
 
-export type FilterPatternType = string | RegExp | ((pattern: string) => boolean) | { test: RegExp | ((pattern: string) => boolean) };
+export type FilterPatternType = string | RegExp | ((text: string) => boolean) | { test: RegExp | ((text: string) => boolean) };
 
 /**
  * Comprova si el texte compleix el patró de filtre indicat.
  * @returns Retorna `true` quan el texte compleix amb el patró de filtre o si no se n'indica cap.
  * ```typescript
- * type FilterPatternType = string | RegExp | ((pattern: string) => boolean) | { test: (pattern: string) => boolean };
+ * type FilterPatternType = string | RegExp | ((text: string) => boolean) | { test: (text: string) => boolean };
  * ```
  */
 export function applyFilterPattern(text: string, pattern?: FilterPatternType): boolean {
@@ -34,8 +34,8 @@ export function applyFilterPattern(text: string, pattern?: FilterPatternType): b
       return tester.test(text);
 
     } else if (typeof pattern.test === 'function') {
-      const tester: (pattern: string) => boolean = pattern.test;
-      return tester(text);
+      const test: (text: string) => boolean = pattern.test;
+      return test(text);
     }
 
   } else {

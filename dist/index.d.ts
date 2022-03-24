@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 export { TextReplacement } from './parsers/types';
 export { TypescriptParser } from './parsers/typescript-parser';
-export * from './parsers/xml-parser';
+export { XmlParser } from './parsers/xml-parser';
 export { CodeProject } from './projects/code-project';
 export { TypescriptProject } from './projects/typescript-project';
 export { AngularProject } from './projects/angular-project';
@@ -22,4 +22,5 @@ export { Resource, ResourceType } from './utils/resource';
 export { Terminal, ChalkColor } from './utils/terminal';
 export { Git } from './utils/git';
 export { FtpClient, FtpUploadOptions } from './utils/ftp';
+export { FilterPatternType, applyFilterPattern, capitalize } from './utils/functions';
 //# sourceMappingURL=index.d.ts.map

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
+import * as mysql from 'mysql2';
 import { FileOptions, FolderOptions, CloneOptions, CurlOptions } from './types';
-import * as mysql from 'mysql';
 export declare class CodeProject {
     name: string;
     projectPath: string;
@@ -23,8 +23,8 @@ export declare class CodeProject {
     execute(command: string): Promise<any>;
     rootPath(fileName: string, folder?: string): string;
     relativePath(fileName: string): string;
-    connect(config: string | mysql.ConnectionConfig | mysql.PoolConfig): Promise<mysql.Connection | mysql.PoolConnection>;
-    query(sql: string): Promise<any>;
+    connect(config: mysql.PoolOptions): Promise<mysql.Connection | mysql.PoolConnection>;
+    query(sql: string, data?: any): Promise<any>;
     closeConnection(): Promise<void>;
 }
 //# sourceMappingURL=code-project.d.ts.map

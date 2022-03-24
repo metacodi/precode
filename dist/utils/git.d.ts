@@ -6,7 +6,23 @@ export declare class Git {
         filter?: string;
         verbose?: boolean;
     }): Promise<boolean>;
-    static getChanges(options?: {
+    static getPendingChanges(options?: {
+        folder?: string;
+        filter?: string;
+        verbose?: boolean;
+    }): Promise<{
+        filename: string;
+        status: string;
+    }[]>;
+    static getChangesSince(date: string, options?: {
+        folder?: string;
+        filter?: string;
+        verbose?: boolean;
+    }): Promise<{
+        filename: string;
+        status: string;
+    }[]>;
+    static getCommitChanges(head: string, options?: {
         folder?: string;
         filter?: string;
         verbose?: boolean;

@@ -1,4 +1,4 @@
-import { XMLDocument, XMLAstNode, XMLElement, XMLAttribute } from '@xml-tools/ast';
+import { XMLDocument, XMLElement, XMLAttribute, XMLTextContent } from '@xml-tools/ast';
 import { TextReplacement } from './types';
 export declare class XmlParser {
     fullName: string;
@@ -22,12 +22,14 @@ export declare class XmlParser {
     filter(nodes: any, match: string | string[] | ((node: any) => boolean), options?: {
         recursive?: boolean;
         firstOnly?: boolean;
-    }): any;
-    resolvePath(path: string): XMLElement | XMLAttribute;
+    }): any[];
+    resolvePath(path: string, options?: {
+        parent?: XMLElement;
+    }): XMLElement | XMLAttribute | XMLTextContent;
     private parsePathSegment;
-    replaceName(node: string | XMLAstNode, text: string): void;
-    replaceValue(node: string | XMLAstNode, text: string): void;
-    replaceNode(node: string | XMLAstNode, text: string): void;
+    replaceName(node: string | XMLElement | XMLAttribute | XMLTextContent, text: string): void;
+    replaceValue(node: string | XMLElement | XMLAttribute | XMLTextContent, text: string): void;
+    replaceNode(node: string | XMLElement | XMLAttribute | XMLTextContent, text: string): void;
     save(): void;
 }
 //# sourceMappingURL=xml-parser.d.ts.map

@@ -137,6 +137,8 @@ class Resource {
     static isReadOnly(resource) {
         return this.isAccessible(resource) && this.isReadable(resource) && !this.isWriteable(resource);
     }
+    static isDirectory(resource) { return fs.lstatSync(resource).isDirectory(); }
+    static isFile(resource) { return fs.lstatSync(resource).isFile(); }
     static discover(resource, options, indent = '') {
         if (!options) {
             options = {};
@@ -277,6 +279,20 @@ class Resource {
             });
         }
         return copied;
+    }
+    static removeSync(resource, options) {
+        if (!options) {
+            options = {};
+        }
+        const recursive = options.recursive === undefined ? true : options.recursive;
+        const force = options.force === undefined ? true : options.force;
+        const maxRetries = options.maxRetries === undefined ? 0 : options.maxRetries;
+        const retryDelay = options.retryDelay === undefined ? 100 : options.retryDelay;
+        const verbose = options.verbose === undefined ? false : options.verbose;
+        if (verbose) {
+            terminal_1.Terminal.log(`Eliminant ${Resource.isFile(resource) ? `l'arxiu` : `la carpeta`} ${chalk_1.default.green(`dist`)}.`);
+        }
+        fs.rmSync(`dist`, { recursive, force, maxRetries, retryDelay });
     }
     static hasFilteredFiles(folder, filter) {
         if (!fs.lstatSync(folder).isDirectory()) {

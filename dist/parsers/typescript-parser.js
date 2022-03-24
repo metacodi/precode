@@ -175,6 +175,8 @@ class TypescriptParser {
         });
         return nodes;
     }
+    insertBefore(node, text) { this.replacements.push({ start: node.pos, end: node.pos, text }); }
+    insertAfter(node, text) { this.replacements.push({ start: node.end + 1, end: node.end + 1, text }); }
     save() {
         this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
         fs_1.default.writeFileSync(resource_1.Resource.normalize(this.fullName), this.content);

@@ -22,8 +22,8 @@ function applyFilterPattern(text, pattern) {
             return tester.test(text);
         }
         else if (typeof pattern.test === 'function') {
-            const tester = pattern.test;
-            return tester(text);
+            const test = pattern.test;
+            return test(text);
         }
     }
     else {

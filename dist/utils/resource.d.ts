@@ -29,6 +29,8 @@ export declare class Resource {
     static isReadable(resource: string): boolean;
     static isWriteable(resource: string): boolean;
     static isReadOnly(resource: string): boolean;
+    static isDirectory(resource: string): boolean;
+    static isFile(resource: string): boolean;
     static discover(resource: string, options?: {
         ignore?: FilterPatternType;
         filter?: FilterPatternType;
@@ -39,14 +41,21 @@ export declare class Resource {
         createFolderInTarget?: boolean;
         verbose?: boolean;
     }): void;
-    static copyFileSync(source: any, target: any, options?: {
+    static copyFileSync(source: string, target: string, options?: {
         verbose?: boolean;
     }, indent?: string): void;
-    static copyFolderSync(source: any, target: any, options?: {
+    static copyFolderSync(source: string, target: string, options?: {
         filter?: FilterPatternType;
         createFolderInTarget?: boolean;
         verbose?: boolean;
     }, indent?: string): number;
+    static removeSync(resource: string, options?: {
+        recursive?: boolean | undefined;
+        force?: boolean | undefined;
+        maxRetries?: number | undefined;
+        retryDelay?: number | undefined;
+        verbose?: boolean;
+    }): void;
     static hasFilteredFiles(folder: string, filter?: FilterPatternType): boolean;
 }
 //# sourceMappingURL=resource.d.ts.map

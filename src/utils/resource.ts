@@ -148,6 +148,12 @@ export class Resource {
     return this.isAccessible(resource) && this.isReadable(resource) && !this.isWriteable(resource);
   }
 
+  /** Check if local path is a directory. */
+  static isDirectory(resource: string) { return fs.lstatSync(resource).isDirectory(); }
+
+  /** Check if local path is a file. */
+  static isFile(resource: string) { return fs.lstatSync(resource).isFile(); }
+
   /**
    * Obté informació detallada de les carpetes i els arxius del directori actual.
    * ```typescript
@@ -248,7 +254,7 @@ export class Resource {
    * @param target Carpeta de destí de la còpia. Veure com li afecta el paràmetr d'opció `createFolderInTarget`.
    * @param options.verbose Indica si s'imprimirà informació del procés per la consola del terminal.
    */
-  static copyFileSync(source: any, target: any, options?: { verbose?: boolean }, indent = ''): void {
+  static copyFileSync(source: string, target: string, options?: { verbose?: boolean }, indent = ''): void {
     if (!options) { options = {}; }
     // if (options.verbose === undefined) { options.verbose = false; }
     const verbose = options.verbose === undefined ? Terminal.verboseEnabled : !!options.verbose;
@@ -282,7 +288,7 @@ export class Resource {
    * @param options.createFolderInTarget Indica si es crearà la carpeta al destí o bé s'hi copiarà només el seu contingut. Per defecte és `true`.
    * @param options.verbose Indica si s'imprimirà informació del procés per la consola del terminal.
    */
-  static copyFolderSync(source: any, target: any, options?: { filter?: FilterPatternType, createFolderInTarget?: boolean, verbose?: boolean }, indent = ''): number {
+  static copyFolderSync(source: string, target: string, options?: { filter?: FilterPatternType, createFolderInTarget?: boolean, verbose?: boolean }, indent = ''): number {
     if (!options) { options = {}; }
     if (options.createFolderInTarget === undefined) { options.createFolderInTarget = true; }
     // if (options.verbose === undefined) { options.verbose = false; }
@@ -331,6 +337,41 @@ export class Resource {
     }
     return copied;
   }
+
+  /** Elimina un arxiu o una carpeta i tot el seu contingut.
+   *
+   * ```typescript
+   * interface fs.RmOptions {
+   *    recursive?: boolean | undefined;
+   *    force?: boolean | undefined;
+   *    maxRetries?: number | undefined;
+   *    retryDelay?: number | undefined;
+   * };
+   * ```
+   * @param resource Arxiu o carpeta que s'eliminarà.
+   * @param options.recursive If `true`, perform a recursive directory removal. In recursive mode, operations are retried on failure. default `true`.
+   * @param options.force When `true`, exceptions will be ignored if `path` does not exist. default `true`.
+   * @param options.maxRetries This option is ignored if the `recursive` option is not `true`. default `0`.
+   * @param options.retryDelay The amount of time in milliseconds to wait between retries. This option is ignored if the `recursive` option is not `true`. default `100`.
+   * @param options.verbose Indica si s'imprimirà informació del procés per la consola del terminal.
+   */
+  static removeSync(resource: string, options?: {
+    recursive?: boolean | undefined;
+    force?: boolean | undefined;
+    maxRetries?: number | undefined;
+    retryDelay?: number | undefined;
+    verbose?: boolean;
+  }) {
+    if (!options) { options = {}; }
+    const recursive = options.recursive === undefined ? true : options.recursive;
+    const force = options.force === undefined ? true : options.force;
+    const maxRetries = options.maxRetries === undefined ? 0 : options.maxRetries;
+    const retryDelay = options.retryDelay === undefined ? 100 : options.retryDelay;
+    const verbose = options.verbose === undefined ? false : options.verbose;
+    if (verbose) { Terminal.log(`Eliminant ${Resource.isFile(resource) ? `l'arxiu` : `la carpeta`} ${chalk.green(`dist`)}.`); }
+    fs.rmSync(`dist`, { recursive, force, maxRetries, retryDelay });
+  }
+
 
   /** Comprova si la carpeta conté arxius per copiar (que hagin superat el filtre). */
   static hasFilteredFiles(folder: string, filter?: FilterPatternType): boolean {

@@ -2,6 +2,7 @@
 import chalk from 'chalk';
 import Prompt from 'commander';
 import Client from 'ftp';
+import * as fs from 'fs';
 
 /**
  * **Usage**
@@ -30,6 +31,11 @@ const project: TypescriptProject = new TypescriptProject();
 project.initialize().then(async () => {
 
   project.incrementPackageVersion();
+
+  if (Resource.exists(`dist`)) {
+    Terminal.log(`Eliminant la carpeta de distribució ${chalk.bold(`dist`)}.`);
+    Resource.removeSync(`dist`);
+  }
 
   Terminal.log(chalk.bold(`Compilant projecte typescript`));
   await Terminal.run(`tsc`);

@@ -7,6 +7,7 @@ import { Resource } from '../utils/resource';
 
 import { TextReplacement } from './types';
 
+
 /** {@link https://www.npmjs.com/package/@xml-tools/ast XML AST} */
 export class XmlParser {
   /** Contingut de l'arxiu. */

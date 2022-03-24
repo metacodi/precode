@@ -123,7 +123,7 @@ export class TypescriptParser {
     return identifier as ts.PropertyAssignment;
   }
 
-  findIdentifier(name: string, parent: ts.Node, indent = ''): ts.Node {
+  findIdentifier(name: string, parent?: ts.Node, indent = ''): ts.Node {
     indent += '  ';
     // console.log(indent + 'findIdentifier =>', { parent: this.syntaxKindToName(parent?.kind) });
     const nodes = this.getNodes(parent || this.source);
@@ -164,6 +164,10 @@ export class TypescriptParser {
     });
     return nodes;
   }
+
+  insertBefore(node: ts.Node, text: string) { this.replacements.push({ start: node.pos, end: node.pos, text }); }
+
+  insertAfter(node: ts.Node, text: string) { this.replacements.push({ start: node.end + 1, end: node.end + 1, text }); }
 
   save() {
     this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));

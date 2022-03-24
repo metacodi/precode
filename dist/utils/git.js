@@ -72,7 +72,65 @@ class Git {
             }));
         });
     }
-    static getChanges(options) {
+    static getPendingChanges(options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!options) {
+                options = {};
+            }
+            if (options.filter === undefined) {
+                options.filter = 'ACDMRTUXB';
+            }
+            if (options.verbose === undefined) {
+                options.verbose = false;
+            }
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                const verbose = options.verbose;
+                const cwd = process.cwd();
+                const diffDir = !!options.folder && options.folder !== cwd;
+                if (diffDir) {
+                    process.chdir(options.folder);
+                }
+                const head = (yield terminal_1.Terminal.run(`git rev-parse --verify HEAD`, { verbose })).trim();
+                if (!!verbose) {
+                    console.log('head =>', head);
+                }
+                const results = yield Git.getCommitChanges(head, options);
+                if (diffDir) {
+                    process.chdir(cwd);
+                }
+                resolve(results);
+            }));
+        });
+    }
+    static getChangesSince(date, options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!options) {
+                options = {};
+            }
+            const filter = options.filter === undefined ? 'ACDMRTUXB' : options.filter;
+            const verbose = options.verbose === undefined ? false : options.verbose;
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                const results = yield Git.getPendingChanges(options);
+                const cwd = process.cwd();
+                const diffDir = !!options.folder && options.folder !== cwd;
+                if (diffDir) {
+                    process.chdir(options.folder);
+                }
+                const log = yield terminal_1.Terminal.run(`git log --since=${date.replace(' ', 'T')} --format=oneline`, { verbose });
+                const commits = log.split('\n').filter(l => !!l);
+                for (const commit of commits) {
+                    const head = commit.split(' ')[0];
+                    const changes = yield Git.getCommitChanges(head, options);
+                    results.push(...changes.filter(c => !results.find(r => r.filename === c.filename)));
+                }
+                if (diffDir) {
+                    process.chdir(cwd);
+                }
+                resolve(results.sort((a, b) => a.filename > b.filename ? 1 : -1));
+            }));
+        });
+    }
+    static getCommitChanges(head, options) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!options) {
                 options = {};
@@ -86,15 +144,6 @@ class Git {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 const filter = options.filter;
                 const verbose = options.verbose;
-                const cwd = process.cwd();
-                const diffDir = !!options.folder && options.folder !== cwd;
-                if (diffDir) {
-                    process.chdir(options.folder);
-                }
-                const head = (yield terminal_1.Terminal.run(`git rev-parse --verify HEAD`, { verbose })).trim();
-                if (!!verbose) {
-                    console.log('head => ', head);
-                }
                 const changes = (yield terminal_1.Terminal.run(`git diff --name-status --diff-filter=${filter} ${head}`, { verbose })).trim();
                 const lines = changes.split('\n');
                 const results = [];
@@ -112,9 +161,6 @@ class Git {
                 }
                 if (verbose) {
                     console.log('');
-                }
-                if (diffDir) {
-                    process.chdir(cwd);
                 }
                 resolve(results);
             }));

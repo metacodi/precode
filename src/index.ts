@@ -9,7 +9,7 @@ export { TextReplacement } from './parsers/types';
 // export * from './parsers/java-parser';
 // export * from './parsers/php-parser';
 export { TypescriptParser } from './parsers/typescript-parser';
-export * from './parsers/xml-parser';
+export { XmlParser } from './parsers/xml-parser';
 
 
 // ---------------------------------------------------------------------------------------------------
@@ -58,3 +58,4 @@ export { Terminal, ChalkColor } from './utils/terminal';
 // export { TextReplacer } from './utils/text-replacer';
 export { Git } from './utils/git';
 export { FtpClient, FtpUploadOptions } from './utils/ftp';
+export { FilterPatternType, applyFilterPattern, capitalize } from './utils/functions';

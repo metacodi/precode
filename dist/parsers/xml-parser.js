@@ -120,27 +120,38 @@ class XmlParser {
         }
         return XmlParser.filter(nodes, match, options);
     }
-    resolvePath(path) {
+    resolvePath(path, options) {
+        if (!options) {
+            options = {};
+        }
+        const root = options.parent === undefined ? this.document.rootElement : options.parent;
         const elements = path.split('>');
         const resolved = [];
-        const root = this.document.rootElement;
         let found;
         while (elements.length) {
             const segment = elements.shift();
+            const { el, idx, attr } = this.parsePathSegment(segment);
             resolved.push(segment);
             if (!found) {
-                if (segment === root.name) {
+                if (el === root.name) {
                     found = root;
                 }
                 else {
-                    found = root.subElements.find(sub => sub.name === segment);
+                    if (idx > -1) {
+                        const filtered = this.filter(root.subElements, (node) => node.name === el, { recursive: true, firstOnly: false });
+                        if (idx < filtered.length) {
+                            found = filtered[idx];
+                        }
+                    }
+                    else {
+                        found = this.find(root.subElements, (node) => node.name === el, { recursive: true, firstOnly: true });
+                    }
                     if (!found) {
                         throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`);
                     }
                 }
             }
             else {
-                const { el, idx, attr } = this.parsePathSegment(segment);
                 const children = found.subElements.filter(sub => !el || sub.name === el);
                 if (!children.length) {
                     throw Error(`No s'ha trobat cap fill '${el}' de '${resolved.join('>')}'`);
@@ -181,33 +192,33 @@ class XmlParser {
         if (typeof node === 'string') {
             node = this.resolvePath(node);
         }
-        if (node.type === 'XMLTextContent') {
-            this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
+        if (node.type === 'XMLElement') {
+            const element = node;
+            this.replacements.push({ start: element.syntax.openName.startOffset, end: element.syntax.openName.endOffset + 1, text });
+            this.replacements.push({ start: element.syntax.closeName.startOffset, end: element.syntax.closeBody.endOffset, text });
         }
         else if (node.type === 'XMLAttribute') {
             const attribute = node;
             this.replacements.push({ start: attribute.syntax.key.startOffset, end: attribute.syntax.key.endOffset + 1, text });
         }
-        else if (node.type === 'XMLElement') {
-            const element = node;
-            this.replacements.push({ start: element.syntax.openName.startOffset, end: element.syntax.openName.endOffset + 1, text });
-            this.replacements.push({ start: element.syntax.closeName.startOffset, end: element.syntax.closeBody.endOffset, text });
+        else if (node.type === 'XMLTextContent') {
+            this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
         }
     }
     replaceValue(node, text) {
         if (typeof node === 'string') {
             node = this.resolvePath(node);
         }
-        if (node.type === 'XMLTextContent') {
-            this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
+        if (node.type === 'XMLElement') {
+            const element = node;
+            this.replacements.push({ start: element.syntax.openBody.endOffset + 1, end: element.syntax.closeBody.startOffset, text });
         }
         else if (node.type === 'XMLAttribute') {
             const attribute = node;
             this.replacements.push({ start: attribute.syntax.value.startOffset + 1, end: attribute.syntax.value.endOffset, text });
         }
-        else if (node.type === 'XMLElement') {
-            const element = node;
-            this.replacements.push({ start: element.syntax.openBody.endOffset + 1, end: element.syntax.closeBody.startOffset, text });
+        else if (node.type === 'XMLTextContent') {
+            this.replacements.push({ start: node.position.startOffset, end: node.position.endOffset + 1, text });
         }
     }
     replaceNode(node, text) {

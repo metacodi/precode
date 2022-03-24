@@ -4,12 +4,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
 import { exec, ExecException } from 'child_process';
-import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions } from './types';
 import { of } from 'rxjs';
-import * as mysql from 'mysql';
+import * as mysql from 'mysql2';
+
+import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions } from './types';
 import { Terminal } from '../utils/terminal';
 import { Resource, ResourceType } from '../utils/resource';
-import { CodeDeployment } from '../deployments/abstract/code-deployment';
 
 
 
@@ -657,10 +657,10 @@ export class CodeProject {
    * con.release();
    * ```
    */
-  async connect(config: string | mysql.ConnectionConfig | mysql.PoolConfig): Promise<mysql.Connection | mysql.PoolConnection> {
+  async connect(config: mysql.PoolOptions): Promise<mysql.Connection | mysql.PoolConnection> {
     return new Promise<any>((resolve: any, reject: any) => {
       const pool: mysql.Pool = mysql.createPool(config);
-      pool.getConnection(async (err: mysql.MysqlError, connection: mysql.PoolConnection) => {
+      pool.getConnection(async (err: NodeJS.ErrnoException, connection: mysql.PoolConnection) => {
         if (err) { reject(err); }
         // Referenciamos la conexión para ejecutar futuras consultas.
         this.connection = connection;
@@ -671,10 +671,10 @@ export class CodeProject {
   }
 
   /** Executa una consulta a través de la connexió actual.  */
-  async query(sql: string): Promise<any> {
+  async query(sql: string, data?: any, ): Promise<any> {
     return new Promise<any>((resolve: any, reject: any) => {
       if (this.connection) {
-        this.connection.query(sql, (err, results) => {
+        this.connection.query(sql, data, (err: mysql.QueryError, results) => {
           if (err) { reject(err); }
           resolve(results);
         });
@@ -689,8 +689,10 @@ export class CodeProject {
 
   /** Tanca la connexió actual. */
   async closeConnection() {
+    const con = this.connection as mysql.PoolConnection;
     if (this.connection) {
-      if (typeof (this.connection as any).release === 'function') {
+      if (typeof this.connection.end === 'function') {
+      // if (typeof (this.connection as any).release === 'function') {
         (this.connection as mysql.PoolConnection).release();
         Terminal.verbose('MySQL connection closed!');
       } else if (typeof (this.connection as any).end === 'function') {

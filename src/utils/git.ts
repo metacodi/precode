@@ -59,20 +59,21 @@ export class Git {
    * Si no s'indica cap filtre es cerquen tots els arxius que han canviat respecte del darrer commit (`'ACDMRTUXB'`).
    *
    * ```bash
-   * git dif --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]
+   * git rev-parse --verify HEAD
    * ```
+   * {@link https://git-scm.com/docs/git-rev-parse Pick out and massage parameters}
+   *
    * Select only files that are Added (A), Copied (C), Deleted (D), Modified (M), Renamed (R), have their type (i.e. regular
    * file, symlink, submodule, ...) changed (T), are Unmerged (U), are Unknown (X), or have had their pairing Broken (B). Any
    * combination of the filter characters (including none) can be used. When * (All-or-none) is added to the combination, all
    * paths are selected if there is any file that matches other criteria in the comparison; if there is no file that matches
    * other criteria, nothing is selected.
    */
-  static async getChanges(options?: { folder?: string, filter?: string, verbose?: boolean }): Promise<{ filename: string, status: string }[]> {
+  static async getPendingChanges(options?: { folder?: string, filter?: string, verbose?: boolean }): Promise<{ filename: string, status: string }[]> {
     if (!options) { options = {}; }
     if (options.filter === undefined) { options.filter = 'ACDMRTUXB'; }
     if (options.verbose === undefined) { options.verbose = false; }
     return new Promise<{ filename: string, status: string }[]>(async (resolve: any, reject: any) => {
-      const filter = options.filter;
       const verbose = options.verbose;
       const cwd = process.cwd();
       const diffDir = !!options.folder && options.folder !== cwd;
@@ -80,8 +81,76 @@ export class Git {
       // Esstablim el directori del repositori.
       if (diffDir) { process.chdir(options.folder); }
 
+      // Obtenim el hash dels canvis pendents.
       const head = (await Terminal.run(`git rev-parse --verify HEAD`, { verbose }) as string).trim();
-      if (!!verbose) { console.log('head => ', head); }
+      if (!!verbose) { console.log('head =>', head); }
+      // Obtenim els canvis del commit obtingut.
+      const results = await Git.getCommitChanges(head, options);
+
+      // Restablim l'anterior carpeta de treball.
+      if (diffDir) { process.chdir(cwd); }
+
+      resolve(results);
+    });
+  }
+
+  /** Obté una llista amb tots els canvis de tots els commits des de la data indicada. */
+  static async getChangesSince(date: string, options?: { folder?: string, filter?: string, verbose?: boolean }): Promise<{ filename: string, status: string }[]> {
+    if (!options) { options = {}; }
+    const filter = options.filter === undefined ? 'ACDMRTUXB' : options.filter;
+    const verbose = options.verbose === undefined ? false : options.verbose;
+    return new Promise<{ filename: string, status: string }[]>(async (resolve: any, reject: any) => {
+
+      // Obtenim els canvis actuals.
+      const results: any[] = await Git.getPendingChanges(options);
+
+      // Esstablim el directori del repositori.
+      const cwd = process.cwd();
+      const diffDir = !!options.folder && options.folder !== cwd;
+      if (diffDir) { process.chdir(options.folder); }
+
+      // Obtenim l'historial de commits fins a la data indicada.
+      const log: string = await Terminal.run(`git log --since=${date.replace(' ', 'T')} --format=oneline`, { verbose });
+      const commits = log.split('\n').filter(l => !!l);
+      // NOTA: Evitem utilitzar map o reduce pq dins de la iteració s'ha de cridar a una funció asíncrona.
+      for (const commit of commits) {
+        const head = commit.split(' ')[0];
+        const changes = await Git.getCommitChanges(head, options);
+        // NOTA: Com que els commits s'obtenen en ordre descendent (el més recent primer) obtindrem l'estat més recent de l'arxiu.
+        results.push(...changes.filter(c => !results.find(r => r.filename === c.filename)));
+      }
+
+      // Restablim l'anterior carpeta de treball.
+      if (diffDir) { process.chdir(cwd); }
+
+      resolve(results.sort((a, b) => a.filename > b.filename ? 1 : -1));
+    });
+  }
+
+  /**
+   * Obté una llista dels arxius del repositori indicat o, s'hi no se n'indica cap, de l'actual.
+   *
+   * Si no s'indica cap filtre es cerquen tots els arxius del commit indicat (`'ACDMRTUXB'`).
+   *
+   * ```bash
+   * git diff --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]
+   * ```
+   * {@link https://git-scm.com/docs/git-diff Show changes between commits}
+   *
+   * Select only files that are Added (A), Copied (C), Deleted (D), Modified (M), Renamed (R), have their type (i.e. regular
+   * file, symlink, submodule, ...) changed (T), are Unmerged (U), are Unknown (X), or have had their pairing Broken (B). Any
+   * combination of the filter characters (including none) can be used. When * (All-or-none) is added to the combination, all
+   * paths are selected if there is any file that matches other criteria in the comparison; if there is no file that matches
+   * other criteria, nothing is selected.
+   */
+   static async getCommitChanges(head: string, options?: { folder?: string, filter?: string, verbose?: boolean }): Promise<{ filename: string, status: string }[]> {
+    if (!options) { options = {}; }
+    if (options.filter === undefined) { options.filter = 'ACDMRTUXB'; }
+    if (options.verbose === undefined) { options.verbose = false; }
+    return new Promise<{ filename: string, status: string }[]>(async (resolve: any, reject: any) => {
+      const filter = options.filter;
+      const verbose = options.verbose;
+
       const changes = (await Terminal.run(`git diff --name-status --diff-filter=${filter} ${head}`, { verbose }) as string).trim();
       // if (!!verbose) { console.log('changes =>', changes); }
       const lines = changes.split('\n');
@@ -98,9 +167,6 @@ export class Git {
       });
       if (verbose) { console.log(results); }
       if (verbose) { console.log(''); }
-
-      // Restablim l'anterior carpeta de treball.
-      if (diffDir) { process.chdir(cwd); }
 
       resolve(results);
     });
@@ -122,7 +188,6 @@ export class Git {
       return await Terminal.run(`git restore ${resource}`);
     }
   }
-
 
   /**
    * Publica el repositori indicat o, s'hi no se n'indica cap, el de la carpeta de treball l'actual `cwd`.
