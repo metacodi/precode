@@ -292,7 +292,21 @@ class Resource {
         if (verbose) {
             terminal_1.Terminal.log(`Eliminant ${Resource.isFile(resource) ? `l'arxiu` : `la carpeta`} ${chalk_1.default.green(resource)}.`);
         }
-        fs.rmSync(resource, { recursive, force, maxRetries, retryDelay });
+        if (Resource.exists(resource)) {
+            fs.rmSync(resource, { recursive, force, maxRetries, retryDelay });
+        }
+    }
+    static rename(oldName, newName) {
+        return new Promise((resolve, reject) => {
+            fs.rename(oldName, newName, (error) => {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    resolve(true);
+                }
+            });
+        });
     }
     static hasFilteredFiles(folder, filter) {
         if (!fs.lstatSync(folder).isDirectory()) {

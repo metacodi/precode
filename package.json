@@ -1,6 +1,6 @@
 {
   "name": "@metacodi/precode",
-  "version": "1.0.73",
+  "version": "1.0.77",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,6 +33,7 @@
     "commander": "^4.0.1",
     "ftp": "^0.3.10",
     "glob": "^7.1.6",
+    "java-ast": "^0.3.0",
     "mysql2": "^2.3.3",
     "ng2-charts": "^2.4.2",
     "php-parser": "^3.0.3",

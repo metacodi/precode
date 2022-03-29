@@ -146,9 +146,6 @@ class XmlParser {
                     else {
                         found = this.find(root.subElements, (node) => node.name === el, { recursive: true, firstOnly: true });
                     }
-                    if (!found) {
-                        throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`);
-                    }
                 }
             }
             else {
@@ -165,19 +162,19 @@ class XmlParser {
                 else {
                     found = children[0];
                 }
-                if (!found) {
-                    throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`);
+            }
+            if (!found) {
+                throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`);
+            }
+            if (attr) {
+                if (!found.attributes.length) {
+                    throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`);
                 }
-                if (attr) {
-                    if (!found.attributes.length) {
-                        throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`);
-                    }
-                    const foundAttr = found.attributes.find(a => a.key === attr);
-                    if (!foundAttr) {
-                        throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`);
-                    }
-                    return foundAttr;
+                const foundAttr = found.attributes.find(a => a.key === attr);
+                if (!foundAttr) {
+                    throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`);
                 }
+                return foundAttr;
             }
         }
         return found;

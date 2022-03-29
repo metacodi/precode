@@ -1,11 +1,17 @@
 import fs from 'fs';
+import { parse as javaParseFn, ParseTree, createVisitor } from 'java-ast';
+
+import { Resource } from '../utils/resource';
+import { TextReplacement } from './types';
 
 
 export class JavaParser {
-
-  constructor() {
-
-  }
+  /** Contingut de l'arxiu. */
+  content: string;
+  /** AST de l'arxiu. */
+  document: ParseTree;
+  /** Substitucions del contingut que s'aplicaran al guardar l'arxiu. */
+  replacements: TextReplacement[] = [];
 
   static parse(fullName: string, content?: string): any {
     // if (!content && !fs.existsSync(fullName)) { return undefined; }
@@ -26,8 +32,8 @@ export class JavaParser {
     if (!Array.isArray(nodes)) { nodes = [nodes]; }
     if (typeof match !== 'function' && !Array.isArray(match)) { match = [match]; }
     if (!options) { options = {}; }
-    if (options.recursive === undefined) { options.recursive = false; }
-    if (options.firstOnly === undefined) { options.firstOnly = true; }
+    if (options.recursive === undefined) { options.recursive = true; }
+    if (options.firstOnly === undefined) { options.firstOnly = false; }
 
     const results: Node[] = [];
 
@@ -55,6 +61,28 @@ export class JavaParser {
     return results;
   }
 
-  foo() { return 'bar'; }
+  constructor(
+    public fullName: string,
+    content?: string,
+  ) {
+    fullName = Resource.normalize(fullName);
+    if (content) {
+      this.content = content;
+    } else {
+      // console.log('Sense contingut');
+      if (!fs.existsSync(fullName)) { throw Error(`No s'ha trobat l'arxiu '${fullName}'.`); }
+      // console.log('L\'arxiu existeix');
+      this.content = fs.readFileSync(fullName, 'utf-8');
+      // console.log('contingut =>', this.content);
+    }
+    this.document = javaParseFn(this.content);
+    console.log(this.document);
+  }
+
+
+  save() {
+    this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
+    fs.writeFileSync(Resource.normalize(this.fullName), this.content);
+  }
 }
 

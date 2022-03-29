@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { parse as phpParseFn, DocumentCstNode } from '@xml-tools/parser';
+import { parse as xmlParseFn, DocumentCstNode } from '@xml-tools/parser';
 import { buildAst, accept, XMLDocument, XMLAstNode, XMLElement, XMLAttribute, XMLTextContent } from '@xml-tools/ast';
 
 import { Resource } from '../utils/resource';
@@ -19,7 +19,7 @@ export class XmlParser {
 
   static parse(fullName: string, content?: string): XMLDocument {
     if (!content && !fs.existsSync(fullName)) { return undefined; }
-    const { cst, tokenVector } = phpParseFn(content || fs.readFileSync(fullName, 'utf-8'));
+    const { cst, tokenVector } = xmlParseFn(content || fs.readFileSync(fullName, 'utf-8'));
     return buildAst(cst as DocumentCstNode, tokenVector);
   }
 
@@ -79,7 +79,7 @@ export class XmlParser {
       this.content = fs.readFileSync(fullName, 'utf-8');
       // console.log('contingut =>', this.content);
     }
-    const { cst, tokenVector } = phpParseFn(this.content);
+    const { cst, tokenVector } = xmlParseFn(this.content);
     this.document = buildAst(cst as DocumentCstNode, tokenVector);
   }
 
@@ -128,6 +128,7 @@ export class XmlParser {
     while (elements.length) {
       const segment = elements.shift();
       const { el, idx, attr } = this.parsePathSegment(segment);
+      // console.log({ el, idx, attr });
       resolved.push(segment);
       if (!found) {
         if (el === root.name) {
@@ -140,7 +141,6 @@ export class XmlParser {
           } else {
             found = this.find(root.subElements, (node: XMLElement) => node.name === el, { recursive: true, firstOnly: true });
           }
-          if (!found) { throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`); }
         }
       } else {
         const children = found.subElements.filter(sub => !el || sub.name === el);
@@ -151,13 +151,14 @@ export class XmlParser {
         } else {
           found = children[0];
         }
-        if (!found) { throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`); }
-        if (attr) {
-          if (!found.attributes.length) { throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`); }
-          const foundAttr = found.attributes.find(a => a.key === attr);
-          if (!foundAttr) { throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`); }
-          return foundAttr;
-        }
+      }
+      if (!found) { throw Error(`No s'ha trobat l'element '${resolved.join('>')}'`); }
+
+      if (attr) {
+        if (!found.attributes.length) { throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`); }
+        const foundAttr = found.attributes.find(a => a.key === attr);
+        if (!foundAttr) { throw Error(`No s'ha trobat l'atribut '${attr}' de '${resolved.join('>')}'`); }
+        return foundAttr;
       }
     }
     return found;

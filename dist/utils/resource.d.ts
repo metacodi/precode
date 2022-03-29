@@ -56,6 +56,7 @@ export declare class Resource {
         retryDelay?: number | undefined;
         verbose?: boolean;
     }): void;
+    static rename(oldName: string, newName: string): Promise<boolean>;
     static hasFilteredFiles(folder: string, filter?: FilterPatternType): boolean;
 }
 //# sourceMappingURL=resource.d.ts.map

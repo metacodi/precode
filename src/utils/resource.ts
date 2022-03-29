@@ -372,6 +372,15 @@ export class Resource {
     if (Resource.exists(resource)) { fs.rmSync(resource, { recursive, force, maxRetries, retryDelay }); }
   }
 
+  /** Renombra un arxiu o carpeta. */
+  static rename(oldName: string, newName: string): Promise<boolean> {
+    return new Promise<boolean>((resolve: any, reject: any) => {
+      fs.rename(oldName, newName, (error) => {
+        if (error) { reject(error); } else { resolve(true); }
+      });
+    });
+  }
+
 
   /** Comprova si la carpeta conté arxius per copiar (que hagin superat el filtre). */
   static hasFilteredFiles(folder: string, filter?: FilterPatternType): boolean {

@@ -88,20 +88,33 @@ project.initialize().then(async () => {
     </row>
   </root>`;
 
+  const content2 = `<?xml version='1.0' encoding='utf-8'?>
+  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.exceltaxisantcugat.user">
+    <application>
+    </application>
+  </manifest>
+  `;
+
   // const doc = XmlParser.parse(undefined, content);
   // const tag = XmlParser.find(doc, ((n: any) => n.name === 'icon'), { recursive: true });
   // console.log('result =', tag);
 
   const parser = new XmlParser(`scripts/parsers/test-result.xml`, content);
+  // console.log(parser.resolvePath(`resources>string`));
+  // console.log(parser.filter(undefined, node => node.type === 'XMLElement' && node.name === 'string'));
+
+  // parser.replaceValue(`manifest package`, 'com.clickmoveapp.app');
+
   // parser.replaceName(`root>row[1]>icon color`, 'name');
   // parser.replaceValue(`root>row[1]>icon color`, 'value');
-  // parser.replaceValue(`row[1]>icon color`, 'value');
-  parser.replaceValue(`row>icon color`, 'value');
+  parser.replaceValue(`row[1]>icon color`, 'value');
+  // parser.replaceValue(`row>icon color`, 'value');
   // parser.replaceValue(`root>row[1]>icon`, 'pp');
   // parser.replaceName(`root>row[1]>icon`, 'img');
   // parser.replaceNode(`root>row[1]>icon`, '<img src="prova" />');
   // parser.replaceValue(`root>[1]>empty`, 'value');
-  parser.replaceValue(`root>[0]>[0]`, 'value');
+  // parser.replaceValue(`root>[0]>[0]`, 'value');
 
   // const tag = parser.resolvePath(`root>row[1]>icon color`);
   // const tag: XMLAstNode = XmlParser.find(parser.document, ((n: any) => n.name === 'icon'), { recursive: true });

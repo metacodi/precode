@@ -310,7 +310,7 @@ export class FtpClient {
 
   /** Retrieves a file at path from the server. useCompression defaults to false. */
   get(remote: string): Promise<NodeJS.ReadableStream> {
-    return new Promise<any>((resolve: any, reject: any) => {
+    return new Promise<NodeJS.ReadableStream>((resolve: any, reject: any) => {
       remote = this.normalizeRemote(remote);
       this.ftp.get(remote, (error, stream) => {
         if (error) { reject(error); } else { resolve(stream); }
@@ -320,7 +320,7 @@ export class FtpClient {
 
   /** Sends data to the server to be stored as destPath. */
   put(local: string, remote: string): Promise<boolean> {
-    return new Promise<any>((resolve: any, reject: any) => {
+    return new Promise<boolean>((resolve: any, reject: any) => {
       this.ftp.put(local, this.normalizeRemote(remote), error => {
         if (error) { reject(error); } else { resolve(true); }
       });

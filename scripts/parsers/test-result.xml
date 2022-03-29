@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
   <root>
     <row>
-      <number>value</number>
+      <number>1</number>
       <street>Mermaid <b>Bold</b> avenue</street>
-      <icon color="value">gear</icon>
+      <icon color="blue">gear</icon>
     </row>
     <other>
       <empty></empty>
@@ -11,6 +11,6 @@
     <row>
       <number>2</number>
       <street>Central park</street>
-      <icon color="red">alert</icon>
+      <icon color="value">alert</icon>
     </row>
   </root>
