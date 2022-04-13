@@ -123,6 +123,18 @@ export class TypescriptParser {
     return identifier as ts.PropertyAssignment;
   }
 
+  existsPropertyPath(propertyPath: string): boolean {
+    const path = propertyPath.split('.');
+    let identifier: ts.Node;
+    // Iterem l'array per anar cercant recursivament dins dels nodes trobats.
+    for (const prop of path) {
+      identifier = this.findIdentifier(prop, identifier);
+      if (!identifier) { return false }
+    }
+    if (identifier.kind !== ts.SyntaxKind.PropertyAssignment) { return false; }
+    return true;
+  }
+
   findIdentifier(name: string, parent?: ts.Node, indent = ''): ts.Node {
     indent += '  ';
     // console.log(indent + 'findIdentifier =>', { parent: this.syntaxKindToName(parent?.kind) });

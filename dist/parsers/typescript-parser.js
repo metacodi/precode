@@ -133,6 +133,20 @@ class TypescriptParser {
         }
         return identifier;
     }
+    existsPropertyPath(propertyPath) {
+        const path = propertyPath.split('.');
+        let identifier;
+        for (const prop of path) {
+            identifier = this.findIdentifier(prop, identifier);
+            if (!identifier) {
+                return false;
+            }
+        }
+        if (identifier.kind !== typescript_1.default.SyntaxKind.PropertyAssignment) {
+            return false;
+        }
+        return true;
+    }
     findIdentifier(name, parent, indent = '') {
         indent += '  ';
         const nodes = this.getNodes(parent || this.source);
