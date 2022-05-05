@@ -54,3 +54,29 @@ export function capitalize(text: string): string {
   if (text.length < 2) { return text.toUpperCase(); }
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 }
+
+
+// ---------------------------------------------------------------------------------------------------
+//  package.json
+// ---------------------------------------------------------------------------------------------------
+
+export const upgradePatchVersion = (version: string): string => {
+  const newVersion: string[] = version.split('.');
+  newVersion[2] = `${+newVersion[2] + 1}`;
+  return newVersion.join('.');
+}
+
+export const upgradeMinorVersion = (version: string): string => {
+  const newVersion: string[] = version.split('.');
+  newVersion[1] = `${+newVersion[1] + 1}`;
+  newVersion[2] = '0';
+  return newVersion.join('.');
+}
+
+export const upgradeMajorVersion = (version: string): string => {
+  const newVersion: string[] = version.split('.');
+  newVersion[0] = `${+newVersion[0] + 1}`;
+  newVersion[1] = '0';
+  newVersion[2] = '0';
+  return newVersion.join('.');
+}

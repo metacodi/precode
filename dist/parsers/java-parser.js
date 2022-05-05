@@ -21,7 +21,7 @@ class JavaParser {
             }
             this.content = fs_1.default.readFileSync(fullName, 'utf-8');
         }
-        this.document = java_ast_1.parse(this.content);
+        this.document = (0, java_ast_1.parse)(this.content);
         console.log(this.document);
     }
     static parse(fullName, content) {

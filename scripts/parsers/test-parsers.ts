@@ -10,17 +10,13 @@
 
 import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
-import * as fs from 'fs';
-import php, { Program, Node } from 'php-parser';
 
 import { Terminal } from '../../src/utils/terminal';
 
 // import { PhpProject } from '../../src/projects/php-project';
 import { XmlParser } from '../../src/parsers/xml-parser';
 // import { PhpParser } from '../../src/parsers/php-parser';
-import { I18n } from '../../src/deployments/angular/i18n';
 import { CodeProject } from '../../src';
-import { XMLAstNode } from '@xml-tools/ast';
 
 
 // --------------------------------------------------------------------------------

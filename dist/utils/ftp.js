@@ -91,10 +91,10 @@ class FtpClient {
     }
     upload(local, remote, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            const start = moment_1.default();
+            const start = (0, moment_1.default)();
             terminal_1.Terminal.log(`- Uploading ${chalk_1.default.green(local)} to ${chalk_1.default.green(remote)}`);
             const result = yield this.uploadAll(local, remote, options);
-            const duration = moment_1.default.duration(moment_1.default().diff(start)).asSeconds();
+            const duration = moment_1.default.duration((0, moment_1.default)().diff(start)).asSeconds();
             terminal_1.Terminal.success(`Uploaded ${result ? 'successfully' : 'with errors'} (${duration})`);
         });
     }
@@ -169,10 +169,10 @@ class FtpClient {
     }
     download(remote, local, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            const start = moment_1.default();
+            const start = (0, moment_1.default)();
             terminal_1.Terminal.logInline(`- Downloading ${chalk_1.default.green(remote)} to ${chalk_1.default.green(local)}`);
             const result = yield this.downloadAll(remote, local, options);
-            const duration = moment_1.default.duration(moment_1.default().diff(start)).asSeconds();
+            const duration = moment_1.default.duration((0, moment_1.default)().diff(start)).asSeconds();
             terminal_1.Terminal.success(`Downloaded ${result ? 'successfully' : 'with errors'} (${duration}) ${chalk_1.default.green(remote)} to ${chalk_1.default.green(local)}`);
         });
     }
@@ -186,8 +186,8 @@ class FtpClient {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 this.ready().then(() => __awaiter(this, void 0, void 0, function* () {
                     remote = this.normalizeRemote(remote);
-                    const enabled = !options.ignore || !functions_1.applyFilterPattern(remote, options.ignore);
-                    const filtered = !options.filter || functions_1.applyFilterPattern(remote, options.filter);
+                    const enabled = !options.ignore || !(0, functions_1.applyFilterPattern)(remote, options.ignore);
+                    const filtered = !options.filter || (0, functions_1.applyFilterPattern)(remote, options.filter);
                     if (enabled && filtered) {
                         const isRemoteFile = element ? !this.isRemoteDirectory(element) : !!path.extname(remote);
                         if (isRemoteFile) {
@@ -249,10 +249,10 @@ class FtpClient {
     }
     remove(remote, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            const start = moment_1.default();
+            const start = (0, moment_1.default)();
             terminal_1.Terminal.log(`- Deleting ${chalk_1.default.green('www/app/')} from server`);
             const result = yield this.removeAll(remote, options);
-            const duration = moment_1.default.duration(moment_1.default().diff(start)).asSeconds();
+            const duration = moment_1.default.duration((0, moment_1.default)().diff(start)).asSeconds();
             terminal_1.Terminal.success(`Deleted ${result ? 'successfully' : 'with errors'} (${duration})`);
         });
     }

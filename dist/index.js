@@ -11,7 +11,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.capitalize = exports.applyFilterPattern = exports.FtpClient = exports.Git = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = exports.XmlParser = exports.TypescriptParser = void 0;
+exports.FtpClient = exports.Git = exports.Terminal = exports.Resource = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = exports.XmlParser = exports.TypescriptParser = void 0;
 var typescript_parser_1 = require("./parsers/typescript-parser");
 Object.defineProperty(exports, "TypescriptParser", { enumerable: true, get: function () { return typescript_parser_1.TypescriptParser; } });
 var xml_parser_1 = require("./parsers/xml-parser");
@@ -51,11 +51,10 @@ var resource_1 = require("./utils/resource");
 Object.defineProperty(exports, "Resource", { enumerable: true, get: function () { return resource_1.Resource; } });
 var terminal_1 = require("./utils/terminal");
 Object.defineProperty(exports, "Terminal", { enumerable: true, get: function () { return terminal_1.Terminal; } });
+__exportStar(require("./utils/mysql"), exports);
 var git_1 = require("./utils/git");
 Object.defineProperty(exports, "Git", { enumerable: true, get: function () { return git_1.Git; } });
 var ftp_1 = require("./utils/ftp");
 Object.defineProperty(exports, "FtpClient", { enumerable: true, get: function () { return ftp_1.FtpClient; } });
-var functions_1 = require("./utils/functions");
-Object.defineProperty(exports, "applyFilterPattern", { enumerable: true, get: function () { return functions_1.applyFilterPattern; } });
-Object.defineProperty(exports, "capitalize", { enumerable: true, get: function () { return functions_1.capitalize; } });
+__exportStar(require("./utils/functions"), exports);
 //# sourceMappingURL=index.js.map

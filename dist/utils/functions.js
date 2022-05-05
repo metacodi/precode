@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.capitalize = exports.applyFilterPattern = void 0;
+exports.upgradeMajorVersion = exports.upgradeMinorVersion = exports.upgradePatchVersion = exports.capitalize = exports.applyFilterPattern = void 0;
 function applyFilterPattern(text, pattern) {
     if (!pattern || !text) {
         return true;
@@ -41,4 +41,25 @@ function capitalize(text) {
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 }
 exports.capitalize = capitalize;
+const upgradePatchVersion = (version) => {
+    const newVersion = version.split('.');
+    newVersion[2] = `${+newVersion[2] + 1}`;
+    return newVersion.join('.');
+};
+exports.upgradePatchVersion = upgradePatchVersion;
+const upgradeMinorVersion = (version) => {
+    const newVersion = version.split('.');
+    newVersion[1] = `${+newVersion[1] + 1}`;
+    newVersion[2] = '0';
+    return newVersion.join('.');
+};
+exports.upgradeMinorVersion = upgradeMinorVersion;
+const upgradeMajorVersion = (version) => {
+    const newVersion = version.split('.');
+    newVersion[0] = `${+newVersion[0] + 1}`;
+    newVersion[1] = '0';
+    newVersion[2] = '0';
+    return newVersion.join('.');
+};
+exports.upgradeMajorVersion = upgradeMajorVersion;
 //# sourceMappingURL=functions.js.map

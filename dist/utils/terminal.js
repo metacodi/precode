@@ -29,7 +29,7 @@ class Terminal {
                     Terminal.renderChalk(command, { color, bold: true });
                     const parts = command.split(' ');
                     const args = parts.slice(1);
-                    const proc = child_process_1.spawn(parts[0], args, { stdio, shell: true });
+                    const proc = (0, child_process_1.spawn)(parts[0], args, { stdio, shell: true });
                     let stdout = '';
                     if (proc.stdout) {
                         proc.stdout.on('data', (data) => { stdout += data.toString(); process.stdout.write(chalk_1.default.green(data.toString())); });
@@ -48,7 +48,7 @@ class Terminal {
                     });
                 }
                 else {
-                    child_process_1.exec(command, (error, stdout, stderr) => {
+                    (0, child_process_1.exec)(command, (error, stdout, stderr) => {
                         if (!!error && !!error.code && !!stderr) {
                             reject(stderr);
                         }

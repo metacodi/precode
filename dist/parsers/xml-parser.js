@@ -22,15 +22,15 @@ class XmlParser {
             }
             this.content = fs_1.default.readFileSync(fullName, 'utf-8');
         }
-        const { cst, tokenVector } = parser_1.parse(this.content);
-        this.document = ast_1.buildAst(cst, tokenVector);
+        const { cst, tokenVector } = (0, parser_1.parse)(this.content);
+        this.document = (0, ast_1.buildAst)(cst, tokenVector);
     }
     static parse(fullName, content) {
         if (!content && !fs_1.default.existsSync(fullName)) {
             return undefined;
         }
-        const { cst, tokenVector } = parser_1.parse(content || fs_1.default.readFileSync(fullName, 'utf-8'));
-        return ast_1.buildAst(cst, tokenVector);
+        const { cst, tokenVector } = (0, parser_1.parse)(content || fs_1.default.readFileSync(fullName, 'utf-8'));
+        return (0, ast_1.buildAst)(cst, tokenVector);
     }
     static find(nodes, match, options) {
         if (!options) {

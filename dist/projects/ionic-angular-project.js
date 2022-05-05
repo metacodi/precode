@@ -77,7 +77,7 @@ class IonicAngularProject extends angular_project_1.AngularProject {
         });
     }
     sanitizeEntity(entity) {
-        return entity.split('-').map(s => functions_1.capitalize(s)).join('');
+        return entity.split('-').map(s => (0, functions_1.capitalize)(s)).join('');
     }
     generateSchema(folder, entity) {
         return __awaiter(this, void 0, void 0, function* () {

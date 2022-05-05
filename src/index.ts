@@ -56,6 +56,7 @@ export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacito
 export { Resource, ResourceType } from './utils/resource';
 export { Terminal, ChalkColor } from './utils/terminal';
 // export { TextReplacer } from './utils/text-replacer';
+export * from './utils/mysql';
 export { Git } from './utils/git';
 export { FtpClient, FtpUploadOptions } from './utils/ftp';
-export { FilterPatternType, applyFilterPattern, capitalize } from './utils/functions';
+export * from './utils/functions';

@@ -169,8 +169,8 @@ class Resource {
             const fullName = path.join(resource, name);
             try {
                 const accessible = Resource.isAccessible(fullName);
-                const enabled = !options.ignore || !functions_1.applyFilterPattern(name, options.ignore);
-                const filtered = !options.filter || functions_1.applyFilterPattern(name, options.filter);
+                const enabled = !options.ignore || !(0, functions_1.applyFilterPattern)(name, options.ignore);
+                const filtered = !options.filter || (0, functions_1.applyFilterPattern)(name, options.filter);
                 if (accessible && enabled && filtered) {
                     const stat = fs.statSync(fullName);
                     const info = {
@@ -201,10 +201,10 @@ class Resource {
         return content;
     }
     static copy(source, target, options) {
-        const start = moment_1.default();
+        const start = (0, moment_1.default)();
         terminal_1.Terminal.logInline(`- Copying ${chalk_1.default.green(source)} to ${chalk_1.default.green(target)}`);
         if (fs.lstatSync(source).isDirectory()) {
-            const duration = moment_1.default.duration(moment_1.default().diff(start)).asSeconds();
+            const duration = moment_1.default.duration((0, moment_1.default)().diff(start)).asSeconds();
             const result = Resource.copyFolderSync(source, target, options);
             terminal_1.Terminal.success(`Copied ${result ? 'successfully' : 'with errors'} (${duration})`);
         }
@@ -250,7 +250,7 @@ class Resource {
             files.forEach((file) => {
                 const origin = path.join(source, file);
                 if (fs.lstatSync(origin).isDirectory()) {
-                    if (functions_1.applyFilterPattern(origin, options.filter) && Resource.hasFilteredFiles(origin, filter)) {
+                    if ((0, functions_1.applyFilterPattern)(origin, options.filter) && Resource.hasFilteredFiles(origin, filter)) {
                         if (verbose) {
                             terminal_1.Terminal.logInline(`  copying... ${chalk_1.default.green(origin)}`);
                         }
@@ -266,7 +266,7 @@ class Resource {
             files.forEach((file) => {
                 const origin = path.join(source, file);
                 if (!fs.lstatSync(origin).isDirectory()) {
-                    if (functions_1.applyFilterPattern(origin, options.filter)) {
+                    if ((0, functions_1.applyFilterPattern)(origin, options.filter)) {
                         Resource.copyFileSync(origin, targetFolder, { verbose }, indent + '  ');
                         copied++;
                     }
@@ -315,12 +315,12 @@ class Resource {
         for (const file of fs.readdirSync(folder)) {
             const origin = path.join(folder, file);
             if (fs.lstatSync(origin).isFile()) {
-                if (functions_1.applyFilterPattern(origin, filter)) {
+                if ((0, functions_1.applyFilterPattern)(origin, filter)) {
                     return true;
                 }
             }
             else {
-                if (functions_1.applyFilterPattern(origin, filter) && Resource.hasFilteredFiles(origin, filter)) {
+                if ((0, functions_1.applyFilterPattern)(origin, filter) && Resource.hasFilteredFiles(origin, filter)) {
                     return true;
                 }
             }
