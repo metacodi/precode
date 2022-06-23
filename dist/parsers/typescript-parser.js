@@ -105,8 +105,7 @@ class TypescriptParser {
         }
         const propValue = property.initializer;
         const text = typeof value === 'string' ? `'${value}'` : `${value}`;
-        const quotes = typescript_1.default.isStringLiteral(propValue) ? 2 : 0;
-        this.replacements.push({ start: propValue.end - propValue.text.length - quotes, end: propValue.end, text });
+        this.replacements.push({ start: propValue.pos + 1, end: propValue.end, text });
     }
     parsePropertyInitializer(value) {
         switch (value.kind) {

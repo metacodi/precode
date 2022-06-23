@@ -95,8 +95,7 @@ export class TypescriptParser {
     if (!valid.includes(property.initializer.kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPath)}' no és una expressió substituïble.`); }
     const propValue = property.initializer as any as ts.LiteralLikeNode;
     const text = typeof value === 'string' ? `'${value}'` : `${value}`;
-    const quotes = ts.isStringLiteral(propValue) ? 2 : 0;
-    this.replacements.push({ start: propValue.end - propValue.text.length - quotes, end: propValue.end, text });
+    this.replacements.push({ start: propValue.pos + 1, end: propValue.end, text });
   }
 
   parsePropertyInitializer(value: ts.Expression): number | string | boolean | null | RegExp {

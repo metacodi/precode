@@ -5,6 +5,9 @@ export const AppConfig = {
 
   app: {
     name: /^3/g,
+    regex: true,
+    nulo: null,
+    text: 'text',
     package: 'com.exceltaxisantcugat.user',
     id: 1,
   },
@@ -12,7 +15,7 @@ export const AppConfig = {
   gateways: {
     foo: 'bar',
     // visa
-    10: true,
+    10: '10',
     // mastercard
     11: true,
     // amex
