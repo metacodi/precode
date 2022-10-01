@@ -1,7 +1,8 @@
 import fs from 'fs';
 import { parse as javaParseFn, ParseTree, createVisitor } from 'java-ast';
 
-import { Resource } from '../utils/resource';
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
+
 import { TextReplacement } from './types';
 
 

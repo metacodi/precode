@@ -7,12 +7,12 @@ exports.TypescriptParser = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const fs_1 = __importDefault(require("fs"));
 const typescript_1 = __importDefault(require("typescript"));
-const resource_1 = require("../utils/resource");
+const node_utils_1 = require("@metacodi/node-utils");
 class TypescriptParser {
     constructor(fullName, content) {
         this.fullName = fullName;
         this.replacements = [];
-        fullName = resource_1.Resource.normalize(fullName);
+        fullName = node_utils_1.Resource.normalize(fullName);
         if (!content) {
             if (!fs_1.default.existsSync(fullName)) {
                 throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
@@ -192,7 +192,7 @@ class TypescriptParser {
     insertAfter(node, text) { this.replacements.push({ start: node.end + 1, end: node.end + 1, text }); }
     save() {
         this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
-        fs_1.default.writeFileSync(resource_1.Resource.normalize(this.fullName), this.content);
+        fs_1.default.writeFileSync(node_utils_1.Resource.normalize(this.fullName), this.content);
     }
 }
 exports.TypescriptParser = TypescriptParser;

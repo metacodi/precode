@@ -1,5 +1,5 @@
 import { CodeProject } from './code-project';
-import * as ts from 'typescript';
+import ts from 'typescript';
 import { FileOptions, TypescriptImportType } from './types';
 export declare class TypescriptProject extends CodeProject {
     tsconfig: any;

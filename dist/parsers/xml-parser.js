@@ -7,12 +7,12 @@ exports.XmlParser = void 0;
 const fs_1 = __importDefault(require("fs"));
 const parser_1 = require("@xml-tools/parser");
 const ast_1 = require("@xml-tools/ast");
-const resource_1 = require("../utils/resource");
+const node_utils_1 = require("@metacodi/node-utils");
 class XmlParser {
     constructor(fullName, content) {
         this.fullName = fullName;
         this.replacements = [];
-        fullName = resource_1.Resource.normalize(fullName);
+        fullName = node_utils_1.Resource.normalize(fullName);
         if (content) {
             this.content = content;
         }
@@ -226,7 +226,7 @@ class XmlParser {
     }
     save() {
         this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
-        fs_1.default.writeFileSync(resource_1.Resource.normalize(this.fullName), this.content);
+        fs_1.default.writeFileSync(node_utils_1.Resource.normalize(this.fullName), this.content);
     }
 }
 exports.XmlParser = XmlParser;

@@ -14,13 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PhpProject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
-const terminal_1 = require("../utils/terminal");
-const resource_1 = require("../utils/resource");
+const node_utils_1 = require("@metacodi/node-utils");
 const code_project_1 = require("../projects/code-project");
 const php_parser_1 = require("../parsers/php-parser");
 class PhpProject extends code_project_1.CodeProject {
     static isProjectFolder(folder) {
-        const resources = resource_1.Resource.discover(folder);
+        const resources = node_utils_1.Resource.discover(folder);
         return !!resources.filter(d => d.extension === '.php').length;
     }
     static createProject(folder) {
@@ -35,13 +34,13 @@ class PhpProject extends code_project_1.CodeProject {
                 try {
                     _super.initialize.call(this).then(value => {
                         if (!PhpProject.isProjectFolder(this.projectPath)) {
-                            terminal_1.Terminal.error(`La carpeta ${terminal_1.Terminal.file(this.projectPath)} no és d'un projecte ${chalk_1.default.bold('php')}`);
+                            node_utils_1.Terminal.error(`La carpeta ${node_utils_1.Terminal.file(this.projectPath)} no és d'un projecte ${chalk_1.default.bold('php')}`);
                         }
                         resolve(true);
                     }).catch(error => reject(error));
                 }
                 catch (error) {
-                    terminal_1.Terminal.error(error);
+                    node_utils_1.Terminal.error(error);
                     reject(error);
                 }
             });
@@ -51,7 +50,7 @@ class PhpProject extends code_project_1.CodeProject {
         const fullName = this.rootPath(fileName);
         const result = php_parser_1.PhpParser.parse(fullName, content);
         if (!result) {
-            terminal_1.Terminal.error(`No existeix l'arxiu ${terminal_1.Terminal.file(fileName)}`);
+            node_utils_1.Terminal.error(`No existeix l'arxiu ${node_utils_1.Terminal.file(fileName)}`);
             return undefined;
         }
         return result;
@@ -59,7 +58,7 @@ class PhpProject extends code_project_1.CodeProject {
     findClassDeclaration(name, source, throwError = true) {
         const classe = php_parser_1.PhpParser.find(source, (node) => node.kind === 'class' && node.name && node.name.name === name);
         if (!classe && throwError) {
-            terminal_1.Terminal.error(`No s'ha trobat la classe '${chalk_1.default.bold(name)}'.`, false);
+            node_utils_1.Terminal.error(`No s'ha trobat la classe '${chalk_1.default.bold(name)}'.`, false);
             return undefined;
         }
         return classe;

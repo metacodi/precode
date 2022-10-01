@@ -1,11 +1,12 @@
 import chalk from 'chalk';
 import path from 'path';
 
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
+
 import { CodeDeployment } from '../abstract/code-deployment';
 import { CodeProject } from '../../projects/code-project';
 import { DeploymentOptions, FileExistsType } from '../../projects/types';
-import { Terminal } from '../../utils/terminal';
-import { Resource } from '../../utils/resource';
+
 
 /**
  * Classe de desplegament de codi de baix nivell que comproba si existeix u arxiu.

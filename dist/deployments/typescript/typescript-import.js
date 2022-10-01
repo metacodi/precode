@@ -15,8 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TypescriptImport = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const path_1 = __importDefault(require("path"));
-const terminal_1 = require("../../utils/terminal");
-const resource_1 = require("../../utils/resource");
+const node_utils_1 = require("@metacodi/node-utils");
 const code_deployment_1 = require("../abstract/code-deployment");
 const typescript_deployment_1 = require("../abstract/typescript-deployment");
 class TypescriptImport extends typescript_deployment_1.TypescriptDeployment {
@@ -41,21 +40,21 @@ class TypescriptImport extends typescript_deployment_1.TypescriptDeployment {
                 if (!imports.find(i => i.from === `'${from}'` && i.imports.includes(specifier))) {
                     if (options.onlyTest) {
                         if (options.echo) {
-                            terminal_1.Terminal.fail(`Falta importació ${chalk_1.default.bold(specifier)} a l'arxiu ${terminal_1.Terminal.file(fileName)}.`);
+                            node_utils_1.Terminal.fail(`Falta importació ${chalk_1.default.bold(specifier)} a l'arxiu ${node_utils_1.Terminal.file(fileName)}.`);
                         }
                         resolve(false);
                     }
                     else {
                         if (options.echo) {
-                            terminal_1.Terminal.success(`Instal·lant importació ${chalk_1.default.bold(specifier)} a l'arxiu ${terminal_1.Terminal.file(fileName)}.`);
+                            node_utils_1.Terminal.success(`Instal·lant importació ${chalk_1.default.bold(specifier)} a l'arxiu ${node_utils_1.Terminal.file(fileName)}.`);
                         }
                         const content = project.fileImports(file.fileName, [{ import: specifier, from }]);
-                        resolve(resource_1.Resource.save(file.fileName, content));
+                        resolve(node_utils_1.Resource.save(file.fileName, content));
                     }
                 }
                 else {
                     if (options.verbose) {
-                        terminal_1.Terminal.success(`Importació correcta de ${chalk_1.default.bold(specifier)} a l'arxiu ${terminal_1.Terminal.file(fileName)}.`);
+                        node_utils_1.Terminal.success(`Importació correcta de ${chalk_1.default.bold(specifier)} a l'arxiu ${node_utils_1.Terminal.file(fileName)}.`);
                     }
                     resolve(true);
                 }

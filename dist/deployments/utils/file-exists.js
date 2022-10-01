@@ -14,9 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileExists = void 0;
 const path_1 = __importDefault(require("path"));
+const node_utils_1 = require("@metacodi/node-utils");
 const code_deployment_1 = require("../abstract/code-deployment");
-const terminal_1 = require("../../utils/terminal");
-const resource_1 = require("../../utils/resource");
 class FileExists extends code_deployment_1.CodeDeployment {
     constructor(data, project, options) {
         super(data, project, options);
@@ -35,18 +34,18 @@ class FileExists extends code_deployment_1.CodeDeployment {
                 const relativeTo = data.relativeTo || '';
                 const fileName = path_1.default.relative(relativeTo, fullName);
                 const help = data.help;
-                if (!resource_1.Resource.isAccessible(fullName)) {
+                if (!node_utils_1.Resource.isAccessible(fullName)) {
                     if (options.echo) {
-                        terminal_1.Terminal.fail(`Falta l'arxiu ${terminal_1.Terminal.file(fileName, relativeTo)}.`);
+                        node_utils_1.Terminal.fail(`Falta l'arxiu ${node_utils_1.Terminal.file(fileName, relativeTo)}.`);
                     }
                     if (help) {
-                        terminal_1.Terminal.log(help);
+                        node_utils_1.Terminal.log(help);
                     }
                     resolve(false);
                 }
                 else {
                     if (options.echo) {
-                        terminal_1.Terminal.success(`Existeix l'arxiu ${terminal_1.Terminal.file(fileName, relativeTo)}.`);
+                        node_utils_1.Terminal.success(`Existeix l'arxiu ${node_utils_1.Terminal.file(fileName, relativeTo)}.`);
                     }
                     resolve(true);
                 }

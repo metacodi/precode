@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CodeDeployment = void 0;
 const chalk_1 = __importDefault(require("chalk"));
-const terminal_1 = require("../../utils/terminal");
+const node_utils_1 = require("@metacodi/node-utils");
 class CodeDeployment {
     constructor(data, project, options) {
         this.project = project;
@@ -56,7 +56,7 @@ class CodeDeployment {
                         }
                     }
                     else {
-                        terminal_1.Terminal.error(`No es reconeix la tasca com un desplegament de codi vàlid.`);
+                        node_utils_1.Terminal.error(`No es reconeix la tasca com un desplegament de codi vàlid.`);
                         console.log(chalk_1.default.red(task));
                     }
                 }

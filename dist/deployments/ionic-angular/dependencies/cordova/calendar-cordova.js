@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CalendarCordova = void 0;
 const chalk_1 = __importDefault(require("chalk"));
-const terminal_1 = require("../../../../utils/terminal");
+const node_utils_1 = require("@metacodi/node-utils");
 const code_deployment_1 = require("../../../abstract/code-deployment");
 const typescript_deployment_1 = require("../../../abstract/typescript-deployment");
 const typescript_dependency_1 = require("../../../typescript/typescript-dependency");
@@ -38,7 +38,7 @@ class CalendarCordova extends typescript_deployment_1.TypescriptDeployment {
                     data = this.data;
                 }
                 if (data && data.showTitle) {
-                    terminal_1.Terminal.title(this.title);
+                    node_utils_1.Terminal.title(this.title);
                 }
                 const appModule = project.getSourceFile('src/app/app.module.ts');
                 const tasks = [
@@ -53,7 +53,7 @@ class CalendarCordova extends typescript_deployment_1.TypescriptDeployment {
                 ];
                 resolve(yield this.run(tasks, project, options));
                 if (data && data.showTitle) {
-                    terminal_1.Terminal.line();
+                    node_utils_1.Terminal.line();
                 }
                 resolve(true);
             }));

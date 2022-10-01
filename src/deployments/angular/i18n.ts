@@ -2,7 +2,6 @@ import chalk from 'chalk'; // const chalk = require('chalk');
 import * as ts from 'typescript';
 import * as fs from 'fs';
 
-import { TextReplacer } from '../../utils/text-replacer';
 import { CodeDeployment } from '../abstract/code-deployment';
 import { DeploymentOptions } from '../../projects/types';
 import { AngularProject } from '../../projects/angular-project';
@@ -10,8 +9,6 @@ import { AngularDeployment } from '../abstract/angular-deployment';
 import { TypescriptDependency } from '../typescript/typescript-dependency';
 import { TypescriptImport } from '../typescript/typescript-import';
 import { AngularNgModule } from './ngModule';
-import { TypescriptDeployment } from '../abstract/typescript-deployment';
-import { PushCapacitor } from '../ionic-angular/dependencies/capacitor/push-capacitor';
 import { CustomDeployment } from '../utils/custom-deployment';
 
 

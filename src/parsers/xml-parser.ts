@@ -3,7 +3,7 @@ import fs from 'fs';
 import { parse as xmlParseFn, DocumentCstNode } from '@xml-tools/parser';
 import { buildAst, accept, XMLDocument, XMLAstNode, XMLElement, XMLAttribute, XMLTextContent } from '@xml-tools/ast';
 
-import { Resource } from '../utils/resource';
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
 
 import { TextReplacement } from './types';
 

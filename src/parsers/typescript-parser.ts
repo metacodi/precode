@@ -1,9 +1,8 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import ts, { RegularExpressionLiteral } from 'typescript';
-import { Terminal } from '..';
 
-import { Resource } from '../utils/resource';
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
 
 import { TextReplacement } from './types';
 

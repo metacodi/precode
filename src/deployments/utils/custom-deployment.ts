@@ -1,14 +1,9 @@
-import chalk from 'chalk';
-import path from 'path';
-import ts from 'typescript';
-
-import { Terminal } from '../../utils/terminal';
-import { Resource } from '../../utils/resource';
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
 
 import { CodeDeployment } from '../abstract/code-deployment';
 import { CodeProject } from '../../projects/code-project';
 import { DeploymentOptions, CustomDeploymentType } from '../../projects/types';
-import { TextReplacer } from '../../utils/text-replacer';
+
 
 /** Executa una funció personalitzada contra un arxiu de codi del projecte. */
 export class CustomDeployment extends CodeDeployment {

@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IonicAngularAppCore = void 0;
-const terminal_1 = require("../../../utils/terminal");
+const node_utils_1 = require("@metacodi/node-utils");
 const ionic_angular_deployment_1 = require("../../abstract/ionic-angular-deployment");
 const code_deployment_1 = require("../../abstract/code-deployment");
 const typescript_dependency_1 = require("../../typescript/typescript-dependency");
@@ -26,7 +26,7 @@ class IonicAngularAppCore extends ionic_angular_deployment_1.IonicAngularDeploym
         return __awaiter(this, void 0, void 0, function* () {
             const instance = new IonicAngularAppCore(data || {}, project, options);
             if (instance.title) {
-                terminal_1.Terminal.title(instance.title);
+                node_utils_1.Terminal.title(instance.title);
             }
             return instance.deploy();
         });

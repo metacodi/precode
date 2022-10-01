@@ -1,12 +1,12 @@
 import { CodeProject } from './code-project';
 import chalk from 'chalk'; // const chalk = require('chalk');
-import * as ts from 'typescript';
+import ts from 'typescript';
 import * as fs from 'fs';
-import * as path from 'path';
+
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
+
+import { FileOptions, TypescriptImportType } from './types';
 import { TextReplacer } from '../utils/text-replacer';
-import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions, TypescriptImportType } from './types';
-import { Terminal } from '../utils/terminal';
-import { Resource, ResourceType } from '../utils/resource';
 import { TypescriptParser } from '../parsers/typescript-parser';
 
 

@@ -14,9 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AngularNgModule = void 0;
 const chalk_1 = __importDefault(require("chalk"));
+const node_utils_1 = require("@metacodi/node-utils");
 const code_deployment_1 = require("../abstract/code-deployment");
-const resource_1 = require("../../utils/resource");
-const terminal_1 = require("../../utils/terminal");
 const angular_deployment_1 = require("../abstract/angular-deployment");
 const text_replacer_1 = require("../../utils/text-replacer");
 class AngularNgModule extends angular_deployment_1.AngularDeployment {
@@ -45,25 +44,25 @@ class AngularNgModule extends angular_deployment_1.AngularDeployment {
                 if (!value.elements.find(e => test(e))) {
                     if (options.onlyTest) {
                         if (options.echo) {
-                            terminal_1.Terminal.fail(`Falta la importació ${chalk_1.default.bold(element)} al decorador ${chalk_1.default.bold('@NgModule')}.`);
+                            node_utils_1.Terminal.fail(`Falta la importació ${chalk_1.default.bold(element)} al decorador ${chalk_1.default.bold('@NgModule')}.`);
                         }
                         resolve(false);
                     }
                     else {
                         if (options.echo) {
-                            terminal_1.Terminal.success(`Afegint la importació ${chalk_1.default.bold(element)} al decorador ${chalk_1.default.bold('@NgModule')}...`);
+                            node_utils_1.Terminal.success(`Afegint la importació ${chalk_1.default.bold(element)} al decorador ${chalk_1.default.bold('@NgModule')}...`);
                         }
                         const pos = value.end - 1;
                         const comma = value.getText() === '[]' ? '' : ', ';
-                        const content = resource_1.Resource.open(file.fileName);
+                        const content = node_utils_1.Resource.open(file.fileName);
                         const replacer = new text_replacer_1.TextReplacer(content);
                         replacer.insert(pos, `${comma}${text}`);
-                        resolve(resource_1.Resource.save(file.fileName, replacer.apply()));
+                        resolve(node_utils_1.Resource.save(file.fileName, replacer.apply()));
                     }
                 }
                 else {
                     if (options.echo) {
-                        terminal_1.Terminal.success(`Importació correcta de ${chalk_1.default.bold(element)} al decorador ${chalk_1.default.bold('@NgModule')}.`);
+                        node_utils_1.Terminal.success(`Importació correcta de ${chalk_1.default.bold(element)} al decorador ${chalk_1.default.bold('@NgModule')}.`);
                     }
                     resolve(true);
                 }

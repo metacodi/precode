@@ -39,8 +39,7 @@ const chalk_1 = __importDefault(require("chalk"));
 const child_process_1 = require("child_process");
 const rxjs_1 = require("rxjs");
 const mysql = __importStar(require("mysql2"));
-const terminal_1 = require("../utils/terminal");
-const resource_1 = require("../utils/resource");
+const node_utils_1 = require("@metacodi/node-utils");
 class CodeProject {
     constructor(projectPath) {
         this.projectPath = projectPath || process.cwd();
@@ -49,18 +48,18 @@ class CodeProject {
     static execute(command) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                terminal_1.Terminal.log(`${chalk_1.default.blue(command)}`);
+                node_utils_1.Terminal.log(`${chalk_1.default.blue(command)}`);
                 (0, child_process_1.exec)(command, (error, stdout, stderr) => {
                     if (error) {
-                        terminal_1.Terminal.error(error);
+                        node_utils_1.Terminal.error(error);
                         reject(false);
                     }
                     else {
                         if (stdout) {
-                            terminal_1.Terminal.log(stdout);
+                            node_utils_1.Terminal.log(stdout);
                         }
                         if (stderr) {
-                            terminal_1.Terminal.log(chalk_1.default.yellow(`${stderr}`));
+                            node_utils_1.Terminal.log(chalk_1.default.yellow(`${stderr}`));
                         }
                         resolve(true);
                     }
@@ -86,14 +85,14 @@ class CodeProject {
             return new Promise((resolve, reject) => {
                 try {
                     if (!fs.existsSync(this.projectPath)) {
-                        terminal_1.Terminal.error(`No s'ha trobat la carpeta del projecte ${chalk_1.default.bold(this.projectPath)}`);
+                        node_utils_1.Terminal.error(`No s'ha trobat la carpeta del projecte ${chalk_1.default.bold(this.projectPath)}`);
                         reject();
                     }
-                    terminal_1.Terminal.log(chalk_1.default.bold('Directori del projecte: ') + terminal_1.Terminal.file(this.projectPath));
+                    node_utils_1.Terminal.log(chalk_1.default.bold('Directori del projecte: ') + node_utils_1.Terminal.file(this.projectPath));
                     resolve(true);
                 }
                 catch (error) {
-                    terminal_1.Terminal.error(error);
+                    node_utils_1.Terminal.error(error);
                     reject(error);
                 }
             });
@@ -107,11 +106,11 @@ class CodeProject {
     read(fileName, fromPath) {
         return __awaiter(this, void 0, void 0, function* () {
             const fullName = this.rootPath(fileName, this.projectPath);
-            if (!resource_1.Resource.exists(fullName)) {
-                terminal_1.Terminal.error(`No s'ha trobat l'arxiu '${terminal_1.Terminal.file(fullName)}'...`);
+            if (!node_utils_1.Resource.exists(fullName)) {
+                node_utils_1.Terminal.error(`No s'ha trobat l'arxiu '${node_utils_1.Terminal.file(fullName)}'...`);
             }
             else {
-                return resource_1.Resource.open(fullName, { parseJsonFile: false });
+                return node_utils_1.Resource.open(fullName, { parseJsonFile: false });
             }
         });
     }
@@ -132,42 +131,42 @@ class CodeProject {
             }
             const fullName = this.rootPath(fileName);
             try {
-                if (!resource_1.Resource.exists(fullName)) {
-                    terminal_1.Terminal.success(`Creant arxiu '${terminal_1.Terminal.file(fileName)}'.`);
+                if (!node_utils_1.Resource.exists(fullName)) {
+                    node_utils_1.Terminal.success(`Creant arxiu '${node_utils_1.Terminal.file(fileName)}'.`);
                 }
                 else {
                     if (!options.content) {
-                        terminal_1.Terminal.verbose(`Llegint arxiu '${terminal_1.Terminal.file(fileName)}'.`);
-                        options.content = yield resource_1.Resource.open(fullName);
+                        node_utils_1.Terminal.verbose(`Llegint arxiu '${node_utils_1.Terminal.file(fileName)}'.`);
+                        options.content = yield node_utils_1.Resource.open(fullName);
                     }
                     else {
-                        terminal_1.Terminal.success(`Actualitzant arxiu '${terminal_1.Terminal.file(fileName)}'.`);
+                        node_utils_1.Terminal.success(`Actualitzant arxiu '${node_utils_1.Terminal.file(fileName)}'.`);
                         if (options.appendRatherThanOverwrite) {
-                            const content = (yield resource_1.Resource.open(fullName)) || '';
+                            const content = (yield node_utils_1.Resource.open(fullName)) || '';
                             options.content = content + '\n' + options.content;
                         }
                     }
                 }
                 options.content = this.replaces(fileName, options);
                 if (options.copy) {
-                    terminal_1.Terminal.success(`Copiant arxiu a '${terminal_1.Terminal.file(options.copy)}'.`);
-                    fs.writeFileSync(resource_1.Resource.concat(this.projectPath, options.copy), options.content);
+                    node_utils_1.Terminal.success(`Copiant arxiu a '${node_utils_1.Terminal.file(options.copy)}'.`);
+                    fs.writeFileSync(node_utils_1.Resource.concat(this.projectPath, options.copy), options.content);
                 }
                 fs.writeFileSync(fullName, options.content);
-                terminal_1.Terminal.blob(chalk_1.default.grey(options.content));
+                node_utils_1.Terminal.blob(chalk_1.default.grey(options.content));
                 return options.content;
             }
             catch (error) {
-                terminal_1.Terminal.error(error);
+                node_utils_1.Terminal.error(error);
             }
         });
     }
     exists(fileName) {
-        return resource_1.Resource.isAccessible(this.rootPath(fileName));
+        return node_utils_1.Resource.isAccessible(this.rootPath(fileName));
     }
     replaces(fileName, options) {
         if (options.replaces && options.replaces.length) {
-            terminal_1.Terminal.log(`Actualitzant codi de l'arxiu '${terminal_1.Terminal.file(fileName)}'.`);
+            node_utils_1.Terminal.log(`Actualitzant codi de l'arxiu '${node_utils_1.Terminal.file(fileName)}'.`);
             for (const action of options.replaces) {
                 let descartado = false;
                 if (!!action.skip) {
@@ -176,7 +175,7 @@ class CodeProject {
                     }
                     if (action.skip.test(options.content)) {
                         descartado = true;
-                        terminal_1.Terminal.verbose(`- S'ha descartat substituir l'expressió perquè ja existeix.`);
+                        node_utils_1.Terminal.verbose(`- S'ha descartat substituir l'expressió perquè ja existeix.`);
                     }
                 }
                 if (!descartado) {
@@ -190,7 +189,7 @@ class CodeProject {
                             action.insensitive = false;
                         }
                         const flags = [action.global ? 'g' : '', action.insensitive ? 'i' : ''].filter(s => !!s).join('');
-                        terminal_1.Terminal.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk_1.default.grey(action.match.toString()) + ' (flags:' + flags + ')');
+                        node_utils_1.Terminal.log(action.description ? '- ' + action.description : `- Substituint l'expressió: ` + chalk_1.default.grey(action.match.toString()) + ' (flags:' + flags + ')');
                         options.content = options.content.replace(new RegExp(action.match, flags), action.replace || '');
                     }
                 }
@@ -209,29 +208,29 @@ class CodeProject {
                 options.action = 'add';
             }
             const fullName = this.rootPath(folderName);
-            if (resource_1.Resource.exists(fullName)) {
+            if (node_utils_1.Resource.exists(fullName)) {
                 if (options.action === 'remove') {
-                    terminal_1.Terminal.success(`  Eliminant la carpeta '${terminal_1.Terminal.file(folderName)}'.`);
+                    node_utils_1.Terminal.success(`  Eliminant la carpeta '${node_utils_1.Terminal.file(folderName)}'.`);
                     const command = process.platform === 'win32' ? `rmdir /S /Q "${fullName}"` : `rm -Rf ${fullName}`;
                     return yield this.execute(command);
                 }
                 else {
-                    terminal_1.Terminal.verbose(`- Ja existeix la carpeta '${terminal_1.Terminal.file(folderName)}'`);
+                    node_utils_1.Terminal.verbose(`- Ja existeix la carpeta '${node_utils_1.Terminal.file(folderName)}'`);
                     return true;
                 }
             }
             else {
                 if (options.action === 'add') {
-                    terminal_1.Terminal.success(`  Creant la carpeta '${terminal_1.Terminal.file(folderName)}'.`);
+                    node_utils_1.Terminal.success(`  Creant la carpeta '${node_utils_1.Terminal.file(folderName)}'.`);
                     const command = process.platform === 'win32' ? `mkdir "${fullName}"` : `mkdir ${fullName}`;
                     return yield this.execute(command);
                 }
                 else if (options.action === 'remove') {
-                    terminal_1.Terminal.success(`  La carpeta ja estava eliminada '${terminal_1.Terminal.file(folderName)}'`);
+                    node_utils_1.Terminal.success(`  La carpeta ja estava eliminada '${node_utils_1.Terminal.file(folderName)}'`);
                     return true;
                 }
                 else {
-                    terminal_1.Terminal.warning(`- No es reconeix el tipus d'acció '${options.action}' per la carpeta '${terminal_1.Terminal.file(folderName)}'`);
+                    node_utils_1.Terminal.warning(`- No es reconeix el tipus d'acció '${options.action}' per la carpeta '${node_utils_1.Terminal.file(folderName)}'`);
                     return false;
                 }
             }
@@ -245,11 +244,11 @@ class CodeProject {
             if (options.removePreviousFolder === undefined) {
                 options.removePreviousFolder = true;
             }
-            if (options.removePreviousFolder && resource_1.Resource.exists(to)) {
+            if (options.removePreviousFolder && node_utils_1.Resource.exists(to)) {
                 yield this.remove(options.to);
             }
             const command = `git clone ${from} ${to}`;
-            terminal_1.Terminal.log(`Clonant repositori '${terminal_1.Terminal.file(from.replace(`gitlab-ci-token:${git.token}@`, ''))}'...`);
+            node_utils_1.Terminal.log(`Clonant repositori '${node_utils_1.Terminal.file(from.replace(`gitlab-ci-token:${git.token}@`, ''))}'...`);
             return yield this.execute(command);
         });
     }
@@ -264,7 +263,7 @@ class CodeProject {
             const url = options.url || '';
             const to = this.rootPath(options.to);
             const command = `curl -sb --request ${method} ${headers} ${url} ${to}`;
-            terminal_1.Terminal.log(`Curl ${method} '${terminal_1.Terminal.file(url.replace(`--header 'PRIVATE-TOKEN: ${token}`, ''))}'...`);
+            node_utils_1.Terminal.log(`Curl ${method} '${node_utils_1.Terminal.file(url.replace(`--header 'PRIVATE-TOKEN: ${token}`, ''))}'...`);
             return yield this.execute(command);
         });
     }
@@ -272,17 +271,17 @@ class CodeProject {
         return __awaiter(this, void 0, void 0, function* () {
             const from = this.rootPath(fromPath);
             const to = this.rootPath(toPath);
-            if (!resource_1.Resource.exists(from)) {
-                if (!resource_1.Resource.exists(to)) {
-                    terminal_1.Terminal.warning(`No s'ha trobat la carpeta d'origen '${terminal_1.Terminal.file(fromPath)}'.`);
+            if (!node_utils_1.Resource.exists(from)) {
+                if (!node_utils_1.Resource.exists(to)) {
+                    node_utils_1.Terminal.warning(`No s'ha trobat la carpeta d'origen '${node_utils_1.Terminal.file(fromPath)}'.`);
                 }
                 else {
-                    terminal_1.Terminal.verbose(`La carpeta ja estava moguda a '${terminal_1.Terminal.file(fromPath)}'.`);
+                    node_utils_1.Terminal.verbose(`La carpeta ja estava moguda a '${node_utils_1.Terminal.file(fromPath)}'.`);
                 }
             }
             else {
                 const command = process.platform === 'win32' ? `move "${from}" "${to}"` : `mv ${from} ${to}`;
-                terminal_1.Terminal.log(`Movent de '${terminal_1.Terminal.file(fromPath, toPath)}' fins a ${terminal_1.Terminal.file(toPath, fromPath)}'...`);
+                node_utils_1.Terminal.log(`Movent de '${node_utils_1.Terminal.file(fromPath, toPath)}' fins a ${node_utils_1.Terminal.file(toPath, fromPath)}'...`);
                 return yield this.execute(command);
             }
         });
@@ -290,21 +289,21 @@ class CodeProject {
     remove(name) {
         return __awaiter(this, void 0, void 0, function* () {
             const fullName = this.rootPath(name);
-            if (resource_1.Resource.exists(fullName)) {
+            if (node_utils_1.Resource.exists(fullName)) {
                 const stat = fs.lstatSync(fullName);
                 if (stat.isFile()) {
                     const command = process.platform === 'win32' ? `del "${fullName}"` : `rm -Rf ${fullName}`;
-                    terminal_1.Terminal.log(`Eliminant '${terminal_1.Terminal.file(name)}'...`);
+                    node_utils_1.Terminal.log(`Eliminant '${node_utils_1.Terminal.file(name)}'...`);
                     return yield CodeProject.execute(command);
                 }
                 else {
                     const command = process.platform === 'win32' ? `rmdir /Q /S "${fullName}"` : `rm -Rf ${fullName}`;
-                    terminal_1.Terminal.log(`Eliminant '${terminal_1.Terminal.file(name)}'...`);
+                    node_utils_1.Terminal.log(`Eliminant '${node_utils_1.Terminal.file(name)}'...`);
                     return yield CodeProject.execute(command);
                 }
             }
             else {
-                terminal_1.Terminal.verbose(`La carpeta no existeix '${terminal_1.Terminal.file(fullName)}'.`);
+                node_utils_1.Terminal.verbose(`La carpeta no existeix '${node_utils_1.Terminal.file(fullName)}'.`);
                 return yield (0, rxjs_1.of)().toPromise();
             }
         });
@@ -320,9 +319,9 @@ class CodeProject {
         }
         else {
             if (folder) {
-                fileName = resource_1.Resource.normalize(path.join(folder, fileName));
+                fileName = node_utils_1.Resource.normalize(path.join(folder, fileName));
             }
-            return resource_1.Resource.normalize(resource_1.Resource.concat(this.projectPath, fileName));
+            return node_utils_1.Resource.normalize(node_utils_1.Resource.concat(this.projectPath, fileName));
         }
     }
     relativePath(fileName) {
@@ -343,7 +342,7 @@ class CodeProject {
                         reject(err);
                     }
                     this.connection = connection;
-                    terminal_1.Terminal.verbose('MySQL connected!');
+                    node_utils_1.Terminal.verbose('MySQL connected!');
                     resolve(connection);
                 }));
             });
@@ -362,7 +361,7 @@ class CodeProject {
                 }
                 else {
                     const error = 'No hi ha cap connexió oberta disponible.';
-                    terminal_1.Terminal.error(error);
+                    node_utils_1.Terminal.error(error);
                     reject(error);
                 }
             });
@@ -374,11 +373,11 @@ class CodeProject {
             if (this.connection) {
                 if (typeof this.connection.end === 'function') {
                     this.connection.release();
-                    terminal_1.Terminal.verbose('MySQL connection closed!');
+                    node_utils_1.Terminal.verbose('MySQL connection closed!');
                 }
                 else if (typeof this.connection.end === 'function') {
                     this.connection.end();
-                    terminal_1.Terminal.verbose('MySQL connection closed!');
+                    node_utils_1.Terminal.verbose('MySQL connection closed!');
                 }
             }
         });

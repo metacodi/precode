@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TypescriptDependency = void 0;
 const chalk_1 = __importDefault(require("chalk"));
+const node_utils_1 = require("@metacodi/node-utils");
 const code_deployment_1 = require("../abstract/code-deployment");
 const typescript_deployment_1 = require("../abstract/typescript-deployment");
-const terminal_1 = require("../../utils/terminal");
 class TypescriptDependency extends typescript_deployment_1.TypescriptDeployment {
     constructor(data, project, options) {
         super(data, project, options);
@@ -39,13 +39,13 @@ class TypescriptDependency extends typescript_deployment_1.TypescriptDeployment 
                     if (!has) {
                         if (options.onlyTest) {
                             if (options.echo) {
-                                terminal_1.Terminal.fail(`Falta la dependència ${chalk_1.default.bold(name)}.`);
+                                node_utils_1.Terminal.fail(`Falta la dependència ${chalk_1.default.bold(name)}.`);
                             }
                             resolve(false);
                         }
                         else {
                             if (options.echo) {
-                                terminal_1.Terminal.success(`Instal·lant dependència ${chalk_1.default.bold(name)}...`);
+                                node_utils_1.Terminal.success(`Instal·lant dependència ${chalk_1.default.bold(name)}...`);
                             }
                             yield project.install([`npm ${action} ${name} ${type}`]);
                             resolve(true);
@@ -53,13 +53,13 @@ class TypescriptDependency extends typescript_deployment_1.TypescriptDeployment 
                     }
                     else {
                         if (options.echo) {
-                            terminal_1.Terminal.success(`Dependència instal·lada ${chalk_1.default.bold(name)}.`);
+                            node_utils_1.Terminal.success(`Dependència instal·lada ${chalk_1.default.bold(name)}.`);
                         }
                         resolve(true);
                     }
                 }
                 else if (action === 'uninstall') {
-                    terminal_1.Terminal.error(`Not implemented ${chalk_1.default.bold('uninstall')} action for ${chalk_1.default.bold('TypescriptDependency')}`);
+                    node_utils_1.Terminal.error(`Not implemented ${chalk_1.default.bold('uninstall')} action for ${chalk_1.default.bold('TypescriptDependency')}`);
                 }
             }));
         });

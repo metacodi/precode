@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import * as ts from 'typescript';
+import ts from 'typescript';
 import { TextReplacer } from '../utils/text-replacer';
 export declare type EditActionType = 'add' | 'remove';
 export declare type ProjectType = 'typescript' | 'angular' | 'php';

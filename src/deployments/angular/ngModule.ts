@@ -1,19 +1,14 @@
 import chalk from 'chalk';
-import path from 'path';
-import fs from 'fs';
+import ts from 'typescript';
+
+import { ResourceType, Resource, Terminal } from '@metacodi/node-utils';
 
 import { CodeDeployment } from '../abstract/code-deployment';
-import { TypescriptProject } from '../../projects/typescript-project';
-import { ResourceType, Resource } from '../../utils/resource';
 import { DeploymentOptions, AngularNgModuleType } from '../../projects/types';
-import { TypescriptDeployment } from '../abstract/typescript-deployment';
-import { CodeProject } from '../../projects/code-project';
-import { Terminal } from '../../utils/terminal';
-import ts from 'typescript';
-import { fstat } from 'fs';
 import { AngularProject } from '../../projects/angular-project';
 import { AngularDeployment } from '../abstract/angular-deployment';
 import { TextReplacer } from '../../utils/text-replacer';
+
 
 /** Afegeix una expressió de codi a una de les propietats del decorador `ngModule` de la classe indicada. */
 export class AngularNgModule extends AngularDeployment {

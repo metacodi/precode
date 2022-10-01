@@ -1,8 +1,6 @@
 import chalk from 'chalk';
-import * as ts from 'typescript';
 
-import { Terminal } from '../../../../utils/terminal';
-import { Resource, ResourceType } from '../../../../utils/resource';
+import { Terminal } from '@metacodi/node-utils';
 
 import { CodeDeployment } from '../../../abstract/code-deployment';
 import { DeploymentOptions } from '../../../../projects/types';

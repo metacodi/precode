@@ -18,10 +18,4 @@ export { AngularNgModule } from './deployments/angular/ngModule';
 export { I18n } from './deployments/angular/i18n';
 export { IonicAngularAppCore } from './deployments/ionic-angular/dependencies/ionic-angular-app-core';
 export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacitor/push-capacitor';
-export { Resource, ResourceType } from './utils/resource';
-export { Terminal, ChalkColor } from './utils/terminal';
-export * from './utils/mysql';
-export { Git } from './utils/git';
-export { FtpClient, FtpUploadOptions } from './utils/ftp';
-export * from './utils/functions';
 //# sourceMappingURL=index.d.ts.map

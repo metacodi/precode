@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
 import Prompt from 'commander';
-import Client from 'ftp';
-import * as fs from 'fs';
+
+import { Terminal, Resource, Git } from '@metacodi/node-utils';
+
+import { TypescriptProject } from '../src/';
+
 
 /**
  * **Usage**
@@ -12,7 +15,6 @@ import * as fs from 'fs';
  * ```
  */
 
-import { TypescriptProject, Terminal, Resource, Git } from '../src/';
 
 Terminal.title('PUBLISH');
 
@@ -20,7 +22,7 @@ Prompt
   // .requiredOption('-f, --folder <folder>', 'Ruta absoluta de la carpeta i nom del component.')
   // .option('-c, --commit <dir>', 'Descripció pel commit')
   .option('-v, --verbose', 'Log verbose')
-  ;
+;
 Prompt.parse(process.argv);
 
 if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }

@@ -1,7 +1,6 @@
 import ts from 'typescript';
 
-import { Resource } from '../../../utils/resource';
-import { Terminal } from '../../../utils/terminal';
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
 
 import { IonicAngularDeployment } from '../../abstract/ionic-angular-deployment';
 import { IonicAngularProject } from '../../../projects/ionic-angular-project';

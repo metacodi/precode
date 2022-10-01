@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { Terminal } from '../../utils/terminal';
+import { Terminal } from '@metacodi/node-utils';
 
 import { CodeProject } from '../../projects/code-project';
 import { DeploymentOptions } from '../../projects/types';

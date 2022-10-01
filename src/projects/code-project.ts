@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
@@ -7,9 +6,9 @@ import { exec, ExecException } from 'child_process';
 import { of } from 'rxjs';
 import * as mysql from 'mysql2';
 
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
+
 import { FileOptions, FolderOptions, CloneOptions, CurlOptions, DeploymentOptions } from './types';
-import { Terminal } from '../utils/terminal';
-import { Resource, ResourceType } from '../utils/resource';
 
 
 

@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomDeployment = void 0;
-const terminal_1 = require("../../utils/terminal");
+const node_utils_1 = require("@metacodi/node-utils");
 const code_deployment_1 = require("../abstract/code-deployment");
 class CustomDeployment extends code_deployment_1.CodeDeployment {
     constructor(data, project, options) {
@@ -30,14 +30,14 @@ class CustomDeployment extends code_deployment_1.CodeDeployment {
                 const description = data.description;
                 const args = data.arguments || [];
                 if (typeof fn !== 'function') {
-                    terminal_1.Terminal.error(`No s'ha suministrat cap funció vàlida pel desplegament de codi.`);
+                    node_utils_1.Terminal.error(`No s'ha suministrat cap funció vàlida pel desplegament de codi.`);
                     resolve(false);
                 }
                 else {
-                    terminal_1.Terminal.success(description ? description : `Executant funció personalitzada.`);
-                    terminal_1.Terminal.indent += 1;
+                    node_utils_1.Terminal.success(description ? description : `Executant funció personalitzada.`);
+                    node_utils_1.Terminal.indent += 1;
                     const result = yield fn(...args);
-                    terminal_1.Terminal.indent -= 1;
+                    node_utils_1.Terminal.indent -= 1;
                     resolve(result);
                 }
             }));

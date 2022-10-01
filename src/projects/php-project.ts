@@ -1,17 +1,9 @@
 import chalk from 'chalk'; // const chalk = require('chalk');
-// import ts from 'typescript';
-import fs from 'fs';
-import path from 'path';
 import php, { Program, Node } from 'php-parser';
-import Engine from 'php-parser';
 
-import { Terminal } from '../utils/terminal';
-import { Resource, ResourceType } from '../utils/resource';
-import { TextReplacer } from '../utils/text-replacer';
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
 
 import { CodeProject } from '../projects/code-project';
-import { CodeDeployment } from '../deployments/abstract/code-deployment';
-import { TypescriptParser } from '../parsers/typescript-parser';
 import { PhpParser } from '../parsers/php-parser';
 
 

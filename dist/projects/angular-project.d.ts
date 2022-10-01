@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import { TypescriptProject } from './typescript-project';
 export declare class AngularProject extends TypescriptProject {
     angular: any;

@@ -1,10 +1,12 @@
 import chalk from 'chalk';
 
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
+
 import { CodeDeployment } from '../abstract/code-deployment';
 import { TypescriptProject } from '../../projects/typescript-project';
 import { DeploymentOptions, TypescriptDependencyType } from '../../projects/types';
 import { TypescriptDeployment } from '../abstract/typescript-deployment';
-import { Terminal } from '../../utils/terminal';
+
 
 /**
  * Classe abstracta que s'utilitza per definir un procés de desplagament de codi en projectes `typescript`.

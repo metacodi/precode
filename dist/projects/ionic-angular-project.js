@@ -34,16 +34,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.IonicAngularProject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const path = __importStar(require("path"));
-const terminal_1 = require("../utils/terminal");
-const resource_1 = require("../utils/resource");
+const node_utils_1 = require("@metacodi/node-utils");
 const code_project_1 = require("./code-project");
 const angular_project_1 = require("./angular-project");
-const functions_1 = require("../utils/functions");
 const generate_1 = require("./resources/generate/generate");
 class IonicAngularProject extends angular_project_1.AngularProject {
     constructor(folder) { super(folder); }
     static isProjectFolder(folder) {
-        const resources = resource_1.Resource.discover(folder);
+        const resources = node_utils_1.Resource.discover(folder);
         return angular_project_1.AngularProject.isProjectFolder(folder)
             && !!resources.find(d => d.name === 'tsconfig.json')
             && !!resources.find(d => d.name === 'angular.json')
@@ -62,22 +60,22 @@ class IonicAngularProject extends angular_project_1.AngularProject {
                 try {
                     _super.initialize.call(this).then(value => {
                         if (!angular_project_1.AngularProject.isProjectFolder(this.projectPath)) {
-                            terminal_1.Terminal.error(`La carpeta ${terminal_1.Terminal.file(this.projectPath)} no és d'un projecte ${chalk_1.default.bold('ionic angular')}`);
+                            node_utils_1.Terminal.error(`La carpeta ${node_utils_1.Terminal.file(this.projectPath)} no és d'un projecte ${chalk_1.default.bold('ionic angular')}`);
                         }
-                        terminal_1.Terminal.verbose(`Carregant arxiu ${terminal_1.Terminal.file(chalk_1.default.bold('ionic.config.json'))} de configuració...`);
-                        this.ionic = resource_1.Resource.open(this.rootPath('ionic.config.json'));
+                        node_utils_1.Terminal.verbose(`Carregant arxiu ${node_utils_1.Terminal.file(chalk_1.default.bold('ionic.config.json'))} de configuració...`);
+                        this.ionic = node_utils_1.Resource.open(this.rootPath('ionic.config.json'));
                         resolve(true);
                     }).catch(error => reject(error));
                 }
                 catch (error) {
-                    terminal_1.Terminal.error(error);
+                    node_utils_1.Terminal.error(error);
                     reject(error);
                 }
             });
         });
     }
     sanitizeEntity(entity) {
-        return entity.split('-').map(s => (0, functions_1.capitalize)(s)).join('');
+        return entity.split('-').map(s => (0, node_utils_1.capitalize)(s)).join('');
     }
     generateSchema(folder, entity) {
         return __awaiter(this, void 0, void 0, function* () {

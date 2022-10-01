@@ -14,13 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AngularProject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
-const terminal_1 = require("../utils/terminal");
-const resource_1 = require("../utils/resource");
+const node_utils_1 = require("@metacodi/node-utils");
 const typescript_project_1 = require("./typescript-project");
 class AngularProject extends typescript_project_1.TypescriptProject {
     constructor(folder) { super(folder); }
     static isProjectFolder(folder) {
-        const resources = resource_1.Resource.discover(folder);
+        const resources = node_utils_1.Resource.discover(folder);
         return typescript_project_1.TypescriptProject.isProjectFolder(folder)
             && !!resources.find(d => d.name === 'tsconfig.json')
             && !!resources.find(d => d.name === 'angular.json');
@@ -36,15 +35,15 @@ class AngularProject extends typescript_project_1.TypescriptProject {
                 try {
                     _super.initialize.call(this).then(value => {
                         if (!typescript_project_1.TypescriptProject.isProjectFolder(this.projectPath)) {
-                            terminal_1.Terminal.error(`La carpeta ${terminal_1.Terminal.file(this.projectPath)} no és d'un projecte ${chalk_1.default.bold('angular typescript')}`);
+                            node_utils_1.Terminal.error(`La carpeta ${node_utils_1.Terminal.file(this.projectPath)} no és d'un projecte ${chalk_1.default.bold('angular typescript')}`);
                         }
-                        terminal_1.Terminal.verbose(`Carregant arxiu ${terminal_1.Terminal.file(chalk_1.default.bold('angular.json'))} de configuració...`);
-                        this.angular = resource_1.Resource.open(this.rootPath('angular.json'));
+                        node_utils_1.Terminal.verbose(`Carregant arxiu ${node_utils_1.Terminal.file(chalk_1.default.bold('angular.json'))} de configuració...`);
+                        this.angular = node_utils_1.Resource.open(this.rootPath('angular.json'));
                         resolve(true);
                     }).catch(error => reject(error));
                 }
                 catch (error) {
-                    terminal_1.Terminal.error(error);
+                    node_utils_1.Terminal.error(error);
                     reject(error);
                 }
             });
@@ -54,7 +53,7 @@ class AngularProject extends typescript_project_1.TypescriptProject {
         const deco = classe.decorators.find(d => d.expression.expression.text === 'NgModule');
         if (!deco) {
             if (throwError) {
-                terminal_1.Terminal.error(`No s'ha trobat el decorador de classe '${chalk_1.default.bold('@NgModule')}'.`, false);
+                node_utils_1.Terminal.error(`No s'ha trobat el decorador de classe '${chalk_1.default.bold('@NgModule')}'.`, false);
             }
             return undefined;
         }
@@ -62,7 +61,7 @@ class AngularProject extends typescript_project_1.TypescriptProject {
         const prop = obj.properties.find((p) => p.name.getText() === propName);
         if (!prop) {
             if (throwError) {
-                terminal_1.Terminal.error(`No s'ha trobat la propietat '${chalk_1.default.bold(propName)}' al decorador de classe '${chalk_1.default.bold('@NgModule')}'.`, false);
+                node_utils_1.Terminal.error(`No s'ha trobat la propietat '${chalk_1.default.bold(propName)}' al decorador de classe '${chalk_1.default.bold('@NgModule')}'.`, false);
             }
             return undefined;
         }

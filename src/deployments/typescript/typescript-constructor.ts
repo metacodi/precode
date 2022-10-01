@@ -1,9 +1,7 @@
 import chalk from 'chalk';
-import path from 'path';
 import ts from 'typescript';
 
-import { Terminal } from '../../utils/terminal';
-import { Resource } from '../../utils/resource';
+import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
 
 import { CodeDeployment } from '../abstract/code-deployment';
 import { TypescriptProject } from '../../projects/typescript-project';
@@ -11,6 +9,7 @@ import { TypescriptDeployment } from '../abstract/typescript-deployment';
 import { DeploymentOptions, TypescriptConstructorType } from '../../projects/types';
 import { TypescriptParser } from '../../parsers/typescript-parser';
 import { TextReplacer } from '../../utils/text-replacer';
+
 
 /** Afegeix o treu una declaració del constructor de la classe. */
 export class TypescriptConstructor extends TypescriptDeployment {

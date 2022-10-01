@@ -1,10 +1,3 @@
-import chalk from 'chalk';
-import path from 'path';
-import ts from 'typescript';
-
-import { Terminal } from '../../../../utils/terminal';
-import { Resource } from '../../../../utils/resource';
-
 import { CodeDeployment } from '../../../abstract/code-deployment';
 import { TypescriptProject } from '../../../../projects/typescript-project';
 import { TypescriptDeployment } from '../../../abstract/typescript-deployment';
