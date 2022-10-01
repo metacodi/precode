@@ -27,5 +27,6 @@
     "prova",
     "node_modules",
     "scripts",
+    "publish",
   ]
 }

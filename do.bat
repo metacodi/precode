@@ -1,6 +1,6 @@
 
 if [%1]==[pub] (
-  npx ts-node scripts\publish.ts %*
+  npx ts-node publish/publish.ts %*
 )
 
 if [%1]==[docs] (
