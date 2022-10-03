@@ -2,9 +2,9 @@
 import chalk from 'chalk';
 import Prompt from 'commander';
 
-import { Terminal, Resource, Git } from '@metacodi/node-utils';
+import { Terminal, Resource, Git, upgradeDependency } from '@metacodi/node-utils';
 
-import { TypescriptProject } from '../src/';
+import { TypescriptProject } from '../src';
 
 
 /**
@@ -38,6 +38,9 @@ project.initialize().then(async () => {
     Terminal.log(`Eliminant la carpeta de distribució ${chalk.bold(`dist`)}.`);
     Resource.removeSync(`dist`);
   }
+
+  Terminal.log(`Actualitzant dependències de ${chalk.bold(`@metacodi`)}`);
+  await upgradeDependency(`@metacodi/node-utils`, '--save-peer');
 
   Terminal.log(chalk.bold(`Compilant projecte typescript`));
   await Terminal.run(`tsc`);

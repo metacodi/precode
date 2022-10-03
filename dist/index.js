@@ -2,7 +2,11 @@
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -11,7 +15,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = exports.XmlParser = exports.TypescriptParser = void 0;
+exports.TextReplacer = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = exports.XmlParser = exports.TypescriptParser = void 0;
 var typescript_parser_1 = require("./parsers/typescript-parser");
 Object.defineProperty(exports, "TypescriptParser", { enumerable: true, get: function () { return typescript_parser_1.TypescriptParser; } });
 var xml_parser_1 = require("./parsers/xml-parser");
@@ -47,4 +51,6 @@ var ionic_angular_app_core_1 = require("./deployments/ionic-angular/dependencies
 Object.defineProperty(exports, "IonicAngularAppCore", { enumerable: true, get: function () { return ionic_angular_app_core_1.IonicAngularAppCore; } });
 var push_capacitor_1 = require("./deployments/ionic-angular/dependencies/capacitor/push-capacitor");
 Object.defineProperty(exports, "PushCapacitor", { enumerable: true, get: function () { return push_capacitor_1.PushCapacitor; } });
+var text_replacer_1 = require("./utils/text-replacer");
+Object.defineProperty(exports, "TextReplacer", { enumerable: true, get: function () { return text_replacer_1.TextReplacer; } });
 //# sourceMappingURL=index.js.map
