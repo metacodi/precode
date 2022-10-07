@@ -1,6 +1,6 @@
 {
   "name": "@metacodi/precode",
-  "version": "1.0.99",
+  "version": "1.0.101",
   "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,14 +27,14 @@
   "author": "",
   "license": "ISC",
   "peerDependencies": {
-    "@angular/common": "^14.0.0",
-    "@angular/core": "^14.0.0",
-    "@angular/forms": "^14.0.0",
-    "@angular/router": "^14.0.0",
+    "@angular/common": "~13.2.2",
+    "@angular/core": "~13.2.2",
+    "@angular/forms": "~13.2.2",
+    "@angular/router": "~13.2.2",
     "@ionic/angular": "^6.1.9",
-    "@metacodi/node-utils": "^1.0.15",
-    "@ngx-translate/core": "^13.0.0",
-    "@ngx-translate/http-loader": "^6.0.0",
+    "@metacodi/node-utils": "^1.0.16",
+    "@ngx-translate/core": "^14.0.0",
+    "@ngx-translate/http-loader": "^7.0.0",
     "@xml-tools/ast": "^5.0.5",
     "@xml-tools/parser": "^1.0.11",
     "chalk": "^4.0.0",
@@ -47,7 +47,7 @@
     "php-parser": "^3.0.3",
     "qs": "^6.10.3",
     "rxjs": "~6.6.0",
-    "zone.js": "^0.11.5"
+    "zone.js": "^0.11.7"
   },
   "devDependencies": {
     "@types/ftp": "^0.3.33",
