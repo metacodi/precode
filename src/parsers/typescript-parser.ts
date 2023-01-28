@@ -7,6 +7,14 @@ import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
 import { TextReplacement } from './types';
 
 
+export type PrimitiveType = BasicPrimitiveType | ComplexPrimitiveType;
+
+export type BasicPrimitiveType = string | number | boolean | null | RegExp;
+
+export type ComplexPrimitiveType = object | Array<PrimitiveType>;
+
+export type EmptyPrimitiveType = undefined | never | unknown | void;
+
 export class TypescriptParser {
   /** Contingut de l'arxiu. */
   content: string;
@@ -76,13 +84,14 @@ export class TypescriptParser {
     this.source = ts.createSourceFile(fullName, this.content, ts.ScriptTarget.Latest);
   }
 
-  getPropertyValue(propertyPath: string): string | number | boolean | null | RegExp {
+  getPropertyValue(propertyPath: string): PrimitiveType  {
     const property = this.resolvePropertyPath(propertyPath);
     return this.parsePropertyInitializer(property.initializer);
   }
 
-  replaceProperty(propertyPath: string, value: string | number | boolean | null | RegExp) {
+  replaceProperty(propertyPath: string, value: PrimitiveType) {
     const property = this.resolvePropertyPath(propertyPath);
+    const kind = property.initializer.kind;
     const valid = [
       ts.SyntaxKind.StringLiteral,
       ts.SyntaxKind.NumericLiteral,
@@ -90,23 +99,74 @@ export class TypescriptParser {
       ts.SyntaxKind.FalseKeyword,
       ts.SyntaxKind.NullKeyword,
       ts.SyntaxKind.RegularExpressionLiteral,
+      ts.SyntaxKind.ArrayLiteralExpression,
+      ts.SyntaxKind.ObjectLiteralExpression,
     ];
-    if (!valid.includes(property.initializer.kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPath)}' no és una expressió substituïble.`); }
+    if (!valid.includes(kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPath)}' no és una expressió substituïble.`); }
     const propValue = property.initializer as any as ts.LiteralLikeNode;
-    const text = typeof value === 'string' ? `'${value}'` : `${value}`;
+    const text = this.getValueText(value);
     this.replacements.push({ start: propValue.pos + 1, end: propValue.end, text });
   }
 
-  parsePropertyInitializer(value: ts.Expression): number | string | boolean | null | RegExp {
+  private getValueText(value: PrimitiveType): string {
+    if (Array.isArray(value)) {
+      const values: string[] = value.map(el => this.getValueText(el));
+      return `[${values.join(', ')}]`;
+
+    } else if (value instanceof RegExp) {
+      return `${value}`;
+
+    } else if (typeof value === 'object') {
+      const assigns: string[] = Object.keys(value).map(key => {
+        const v = this.getValueText((value as any)[key]);
+        return `${key}: ${v}`;
+      });
+      return `{ ${assigns.join(', ')} }`;
+
+    } else if (typeof value === 'string') {
+      return `'${value}'`;
+
+    } else {
+      return `${value}`;
+    }
+  }
+
+  parsePropertyInitializer(value: ts.Expression): PrimitiveType {
     switch (value.kind) {
       case ts.SyntaxKind.StringLiteral: return (value as ts.StringLiteral).text;
       case ts.SyntaxKind.NumericLiteral: return +(value as ts.NumericLiteral).text;
       case ts.SyntaxKind.TrueKeyword: return true;
       case ts.SyntaxKind.FalseKeyword: return false;
       case ts.SyntaxKind.NullKeyword: return null;
-      case ts.SyntaxKind.RegularExpressionLiteral: return (value as ts.RegularExpressionLiteral).text;
+      case ts.SyntaxKind.RegularExpressionLiteral:
+        const text = (value as ts.RegularExpressionLiteral).text;
+        const pattern = text.replace(/((d|g|i|m|s|u|y)*)$/g, '');
+        const flags = text.slice(pattern.length);
+        return new RegExp(pattern.slice(1, -1), flags);
+      case ts.SyntaxKind.ArrayLiteralExpression: return this.parseArrayLiteralExpression(value as ts.ArrayLiteralExpression);
+      case ts.SyntaxKind.ObjectLiteralExpression: return this.parseObjectLiteralExpression(value as ts.ObjectLiteralExpression);
       default: return value.getText();
     }
+  }
+
+  parseArrayLiteralExpression(value: ts.ArrayLiteralExpression): PrimitiveType[] {
+    const elements: PrimitiveType[] = value.elements.map(el => {
+      return this.parsePropertyInitializer(el);
+    });
+    return elements;
+  }
+
+  parseObjectLiteralExpression(value: ts.ObjectLiteralExpression): object {
+    const obj: { [key: string]: any } = {};
+    value.properties.map(p => {
+      const prop = p as ts.PropertyAssignment;
+      const key = prop.name.kind === ts.SyntaxKind.Identifier ? (prop.name as ts.Identifier).text
+        : prop.name.kind === ts.SyntaxKind.FirstLiteralToken ? (prop.name as ts.LiteralToken).text
+        : (prop.name as any).text
+      const value = this.parsePropertyInitializer(prop.initializer);
+      obj[key] = value;
+    });
+    return obj;
   }
 
   resolvePropertyPath(propertyPath: string): ts.PropertyAssignment {

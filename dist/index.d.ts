@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 export { TextReplacement } from './parsers/types';
-export { TypescriptParser } from './parsers/typescript-parser';
+export { TypescriptParser, PrimitiveType, ComplexPrimitiveType, BasicPrimitiveType, EmptyPrimitiveType } from './parsers/typescript-parser';
 export { XmlParser } from './parsers/xml-parser';
 export { CodeProject } from './projects/code-project';
 export { TypescriptProject } from './projects/typescript-project';

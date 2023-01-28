@@ -8,7 +8,7 @@
 export { TextReplacement } from './parsers/types';
 // export * from './parsers/java-parser';
 // export * from './parsers/php-parser';
-export { TypescriptParser } from './parsers/typescript-parser';
+export { TypescriptParser, PrimitiveType, ComplexPrimitiveType, BasicPrimitiveType, EmptyPrimitiveType } from './parsers/typescript-parser';
 export { XmlParser } from './parsers/xml-parser';
 
 

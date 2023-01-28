@@ -2,7 +2,7 @@
 export const AppConfig = {
 
   name: 'kk',
-
+  
   app: {
     name: /^3/g,
     regex: true,
@@ -10,12 +10,14 @@ export const AppConfig = {
     text: 'text',
     package: 'com.exceltaxisantcugat.user',
     id: 1,
+    arr: ['foo', 21],
+    obj: { foo: 'bar', regex: /(g|i)/, arr: [{ do: /^4/i }] },
   },
   // blobs/paymentsSettings.json
   gateways: {
-    foo: 'bar',
+    foo: ['foo', 21],
     // visa
-    10: '10',
+    10: { foo: 'bar', regex: {  }, arr: [{ do: {  } }] },
     // mastercard
     11: true,
     // amex

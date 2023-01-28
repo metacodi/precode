@@ -92,6 +92,7 @@ class TypescriptParser {
     }
     replaceProperty(propertyPath, value) {
         const property = this.resolvePropertyPath(propertyPath);
+        const kind = property.initializer.kind;
         const valid = [
             typescript_1.default.SyntaxKind.StringLiteral,
             typescript_1.default.SyntaxKind.NumericLiteral,
@@ -99,13 +100,37 @@ class TypescriptParser {
             typescript_1.default.SyntaxKind.FalseKeyword,
             typescript_1.default.SyntaxKind.NullKeyword,
             typescript_1.default.SyntaxKind.RegularExpressionLiteral,
+            typescript_1.default.SyntaxKind.ArrayLiteralExpression,
+            typescript_1.default.SyntaxKind.ObjectLiteralExpression,
         ];
-        if (!valid.includes(property.initializer.kind)) {
+        if (!valid.includes(kind)) {
             throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPath)}' no és una expressió substituïble.`);
         }
         const propValue = property.initializer;
-        const text = typeof value === 'string' ? `'${value}'` : `${value}`;
+        const text = this.getValueText(value);
         this.replacements.push({ start: propValue.pos + 1, end: propValue.end, text });
+    }
+    getValueText(value) {
+        if (Array.isArray(value)) {
+            const values = value.map(el => this.getValueText(el));
+            return `[${values.join(', ')}]`;
+        }
+        else if (value instanceof RegExp) {
+            return `${value}`;
+        }
+        else if (typeof value === 'object') {
+            const assigns = Object.keys(value).map(key => {
+                const v = this.getValueText(value[key]);
+                return `${key}: ${v}`;
+            });
+            return `{ ${assigns.join(', ')} }`;
+        }
+        else if (typeof value === 'string') {
+            return `'${value}'`;
+        }
+        else {
+            return `${value}`;
+        }
     }
     parsePropertyInitializer(value) {
         switch (value.kind) {
@@ -114,9 +139,33 @@ class TypescriptParser {
             case typescript_1.default.SyntaxKind.TrueKeyword: return true;
             case typescript_1.default.SyntaxKind.FalseKeyword: return false;
             case typescript_1.default.SyntaxKind.NullKeyword: return null;
-            case typescript_1.default.SyntaxKind.RegularExpressionLiteral: return value.text;
+            case typescript_1.default.SyntaxKind.RegularExpressionLiteral:
+                const text = value.text;
+                const pattern = text.replace(/((d|g|i|m|s|u|y)*)$/g, '');
+                const flags = text.slice(pattern.length);
+                return new RegExp(pattern.slice(1, -1), flags);
+            case typescript_1.default.SyntaxKind.ArrayLiteralExpression: return this.parseArrayLiteralExpression(value);
+            case typescript_1.default.SyntaxKind.ObjectLiteralExpression: return this.parseObjectLiteralExpression(value);
             default: return value.getText();
         }
+    }
+    parseArrayLiteralExpression(value) {
+        const elements = value.elements.map(el => {
+            return this.parsePropertyInitializer(el);
+        });
+        return elements;
+    }
+    parseObjectLiteralExpression(value) {
+        const obj = {};
+        value.properties.map(p => {
+            const prop = p;
+            const key = prop.name.kind === typescript_1.default.SyntaxKind.Identifier ? prop.name.text
+                : prop.name.kind === typescript_1.default.SyntaxKind.FirstLiteralToken ? prop.name.text
+                    : prop.name.text;
+            const value = this.parsePropertyInitializer(prop.initializer);
+            obj[key] = value;
+        });
+        return obj;
     }
     resolvePropertyPath(propertyPath) {
         const path = propertyPath.split('.');

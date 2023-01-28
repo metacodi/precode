@@ -1,5 +1,9 @@
 import ts from 'typescript';
 import { TextReplacement } from './types';
+export declare type PrimitiveType = BasicPrimitiveType | ComplexPrimitiveType;
+export declare type BasicPrimitiveType = string | number | boolean | null | RegExp;
+export declare type ComplexPrimitiveType = object | Array<PrimitiveType>;
+export declare type EmptyPrimitiveType = undefined | never | unknown | void;
 export declare class TypescriptParser {
     fullName: string;
     content: string;
@@ -15,9 +19,12 @@ export declare class TypescriptParser {
         firstOnly?: boolean;
     }): ts.Node[];
     constructor(fullName: string, content?: string);
-    getPropertyValue(propertyPath: string): string | number | boolean | null | RegExp;
-    replaceProperty(propertyPath: string, value: string | number | boolean | null | RegExp): void;
-    parsePropertyInitializer(value: ts.Expression): number | string | boolean | null | RegExp;
+    getPropertyValue(propertyPath: string): PrimitiveType;
+    replaceProperty(propertyPath: string, value: PrimitiveType): void;
+    private getValueText;
+    parsePropertyInitializer(value: ts.Expression): PrimitiveType;
+    parseArrayLiteralExpression(value: ts.ArrayLiteralExpression): PrimitiveType[];
+    parseObjectLiteralExpression(value: ts.ObjectLiteralExpression): object;
     resolvePropertyPath(propertyPath: string): ts.PropertyAssignment;
     existsPropertyPath(propertyPath: string): boolean;
     findIdentifier(name: string, parent?: ts.Node, indent?: string): ts.Node;
