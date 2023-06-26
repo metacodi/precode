@@ -21,8 +21,9 @@ import chalk from 'chalk';
  */
 
 import Prompt from 'commander';
+import { Terminal } from '@metacodi/node-utils';
+
 import { IonicAngularProject } from '../../src/projects/ionic-angular-project';
-import { Terminal } from '../../src/utils/terminal';
 
 Prompt
   .requiredOption('-f, --folder <folder>', 'Ruta absoluta de la carpeta i nom del component.')

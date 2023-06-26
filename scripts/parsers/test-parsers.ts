@@ -11,7 +11,7 @@
 import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
 
-import { Terminal } from '../../src/utils/terminal';
+import { Terminal } from '@metacodi/node-utils';
 
 // import { PhpProject } from '../../src/projects/php-project';
 import { XmlParser } from '../../src/parsers/xml-parser';

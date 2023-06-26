@@ -24,7 +24,7 @@ export class FileExists extends CodeDeployment {
       if (!data) { data = this.data; }
 
       const fullName = data.fileName;
-      const relativeTo = data.relativeTo || '';
+      const relativeTo = data.relativeTo || project.projectPath || '';
       const fileName =  path.relative(relativeTo, fullName);
       const help = data.help;
 

@@ -88,7 +88,8 @@ export class AngularProject extends TypescriptProject {
 
   /** Devuelve una de las propiedades `imports`, `providers`, `entryComponents` o `declarations` del decorador de clase `@NgModule`. */
   getNgModuleProperty(classe: ts.ClassDeclaration, propName: string, throwError = true): ts.PropertyAssignment {
-    const deco = (classe.decorators as any[] || []).find(d => ((d.expression as ts.CallExpression).expression as ts.Identifier).text === 'NgModule');
+    const decorators = ts.canHaveDecorators(classe) ? ts.getDecorators(classe) : undefined;
+    const deco = (decorators || []).find(d => ((d.expression as ts.CallExpression).expression as ts.Identifier).text === 'NgModule');
     if (!deco) {
       if (throwError) { Terminal.error(`No s'ha trobat el decorador de classe '${chalk.bold('@NgModule')}'.`, false); }
       return undefined;

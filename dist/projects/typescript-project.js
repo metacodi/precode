@@ -88,7 +88,7 @@ class TypescriptProject extends code_project_1.CodeProject {
     }
     hasDependency(name, type) {
         if (this.package && typeof this.package.dependencies === 'object') {
-            return Object.keys(this.package[type === '--save-prod' ? 'dependencies' : 'devDependencies']).includes(name);
+            return Object.keys(this.package[type === '--save-prod' ? 'dependencies' : (type === '--save-peer' ? 'peerDependencies' : 'devDependencies')]).includes(name);
         }
     }
     isCapacitorElectron() {
@@ -112,7 +112,7 @@ class TypescriptProject extends code_project_1.CodeProject {
         }
         let content = fileContent || fs.readFileSync(fullName, 'utf-8').toString();
         if (imports && imports.length) {
-            node_utils_1.Terminal.log(`Modificant importacions de l'arxiu ${node_utils_1.Terminal.file(fileName)}...`);
+            node_utils_1.Terminal.logInline(`Modificant importacions de l'arxiu ${node_utils_1.Terminal.file(fileName)}...`);
             const sourceFile = this.getSourceFile(fullName, content);
             const replacer = new text_replacer_1.TextReplacer(content);
             const declared = this.getImports(sourceFile);
@@ -183,6 +183,7 @@ class TypescriptProject extends code_project_1.CodeProject {
     }
     replaces(fileName, options) {
         if (options.replaces && options.replaces.length) {
+            fileName = this.relativePath(fileName);
             node_utils_1.Terminal.log(`Actualitzant codi de l'arxiu '${node_utils_1.Terminal.file(fileName)}'...`);
             const sourceFile = this.getSourceFile(fileName, options.content);
             const replacer = new text_replacer_1.TextReplacer(options.content);
@@ -223,12 +224,19 @@ class TypescriptProject extends code_project_1.CodeProject {
     }
     getSourceFile(fileName, content) {
         const fullName = this.rootPath(fileName);
+        fileName = this.relativePath(fileName);
         const result = typescript_parser_1.TypescriptParser.parse(fullName, content);
         if (!result) {
             node_utils_1.Terminal.error(`No existeix l'arxiu ${node_utils_1.Terminal.file(fileName)}`);
             return undefined;
         }
         return result;
+    }
+    parseSourceFile(fileName, content) {
+        const fullName = this.rootPath(fileName);
+        fileName = this.relativePath(fileName);
+        const parser = new typescript_parser_1.TypescriptParser(fileName, content);
+        return parser;
     }
     findClassDeclaration(name, source, throwError = true) {
         if (typeof source === 'string') {

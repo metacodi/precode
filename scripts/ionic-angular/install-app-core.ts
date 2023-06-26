@@ -16,7 +16,7 @@ import Prompt from 'commander';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 
-import { Terminal } from '../../src/utils/terminal';
+import { Terminal } from '@metacodi/node-utils';
 
 import { IonicAngularAppCore } from '../../src/deployments/ionic-angular/dependencies/ionic-angular-app-core';
 import { IonicAngularProject } from '../../src/projects/ionic-angular-project';

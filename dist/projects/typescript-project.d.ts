@@ -1,6 +1,7 @@
 import { CodeProject } from './code-project';
 import ts from 'typescript';
 import { FileOptions, TypescriptImportType } from './types';
+import { TypescriptParser } from '../parsers/typescript-parser';
 export declare class TypescriptProject extends CodeProject {
     tsconfig: any;
     package: any;
@@ -9,7 +10,7 @@ export declare class TypescriptProject extends CodeProject {
     constructor(folder?: string);
     initialize(): Promise<boolean>;
     incrementPackageVersion(): void;
-    hasDependency(name: string, type?: '--save-prod' | '--save-dev'): boolean;
+    hasDependency(name: string, type?: '--save-prod' | '--save-peer' | '--save-dev'): boolean;
     isCapacitorElectron(): boolean;
     isCapacitoriOS(): boolean;
     isCapacitorAndroid(): boolean;
@@ -22,6 +23,7 @@ export declare class TypescriptProject extends CodeProject {
     }[];
     protected replaces(fileName: string, options: FileOptions): string;
     getSourceFile(fileName: string, content?: string): ts.SourceFile;
+    parseSourceFile(fileName: string, content?: string): TypescriptParser;
     findClassDeclaration(name: string, source: string | ts.SourceFile, throwError?: boolean): ts.ClassDeclaration;
     saveSourceFile(fileName: string, content: string): void;
     private normalizeObjectLiteral;

@@ -55,7 +55,6 @@ class CalendarCordova extends typescript_deployment_1.TypescriptDeployment {
                 if (data && data.showTitle) {
                     node_utils_1.Terminal.line();
                 }
-                resolve(true);
             }));
         });
     }

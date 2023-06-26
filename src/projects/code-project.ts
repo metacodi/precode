@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
 import { exec, ExecException } from 'child_process';
-import { of } from 'rxjs';
 import * as mysql from 'mysql2';
 
 import { Terminal, Resource, ResourceType } from '@metacodi/node-utils';
@@ -583,7 +582,7 @@ export class CodeProject {
 
     } else {
       Terminal.verbose(`La carpeta no existeix '${Terminal.file(fullName)}'.`);
-      return await of().toPromise();
+      return await Promise.resolve();
     }
   }
 
@@ -631,7 +630,7 @@ export class CodeProject {
   relativePath(fileName: string): string {
     if (!fileName || typeof fileName !== 'string') { return fileName; }
     const idx = fileName.indexOf(this.projectPath);
-    if (idx > -1) { return fileName.substring(idx); }
+    return idx > -1 ? fileName.substring(idx) : fileName;
   }
 
 

@@ -31,7 +31,7 @@ class FileExists extends code_deployment_1.CodeDeployment {
                     data = this.data;
                 }
                 const fullName = data.fileName;
-                const relativeTo = data.relativeTo || '';
+                const relativeTo = data.relativeTo || project.projectPath || '';
                 const fileName = path_1.default.relative(relativeTo, fullName);
                 const help = data.help;
                 if (!node_utils_1.Resource.isAccessible(fullName)) {

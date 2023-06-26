@@ -24,19 +24,19 @@ project.initialize().then(async () => {
     console.log('AppConfig.app.obj =', obj);
     const arr = config.getPropertyValue('AppConfig.app.arr');
     console.log('AppConfig.app.arr =', arr);
-    config.replaceProperty('AppConfig.gateways.foo', arr);
-    config.replaceProperty('AppConfig.gateways.10', obj);
-    // config.replaceProperty('AppConfig.gateways.11', arr);
+    config.setPropertyValue('AppConfig.gateways.foo', arr);
+    config.setPropertyValue('AppConfig.gateways.10', obj);
+    // config.setPropertyValue('AppConfig.gateways.11', arr);
     // console.log('AppConfig.app.package =', config.getPropertyValue('AppConfig.app.package'));
     // console.log('AppConfig.gateways.foo =', config.getPropertyValue('AppConfig.gateways.foo'));
     // console.log('AppConfig.gateways.10 =', config.getPropertyValue('AppConfig.gateways.10'));
-    // // config.replaceProperty('AppConfig.app.name', /^3/g);
-    // // config.replaceProperty('AppConfig.app.name', 'jord');
-    // config.replaceProperty('AppConfig.app.name', /^3/g);
-    // config.replaceProperty('AppConfig.app.regex', true);
-    // config.replaceProperty('AppConfig.app.nulo', null);
-    // config.replaceProperty('AppConfig.app.text', 'text');
-    // config.replaceProperty('AppConfig.gateways.10', '10');
+    // // config.setPropertyValue('AppConfig.app.name', /^3/g);
+    // // config.setPropertyValue('AppConfig.app.name', 'jord');
+    // config.setPropertyValue('AppConfig.app.name', /^3/g);
+    // config.setPropertyValue('AppConfig.app.regex', true);
+    // config.setPropertyValue('AppConfig.app.nulo', null);
+    // config.setPropertyValue('AppConfig.app.text', 'text');
+    // config.setPropertyValue('AppConfig.gateways.10', '10');
     config.save();
 
   } catch (error) {

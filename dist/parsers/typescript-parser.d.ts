@@ -19,16 +19,27 @@ export declare class TypescriptParser {
         firstOnly?: boolean;
     }): ts.Node[];
     constructor(fullName: string, content?: string);
-    getPropertyValue(propertyPath: string): PrimitiveType;
-    replaceProperty(propertyPath: string, value: PrimitiveType): void;
+    getPropertyValue(propertyPathOrAssignment: string | ts.PropertyAssignment): PrimitiveType;
+    setPropertyValue(propertyPathOrAssignment: string | ts.PropertyAssignment, value: PrimitiveType): void;
+    removeProperty(propertyPathOrAssignment: string | ts.PropertyAssignment): void;
     private getValueText;
     parsePropertyInitializer(value: ts.Expression): PrimitiveType;
     parseArrayLiteralExpression(value: ts.ArrayLiteralExpression): PrimitiveType[];
     parseObjectLiteralExpression(value: ts.ObjectLiteralExpression): object;
     resolvePropertyPath(propertyPath: string): ts.PropertyAssignment;
     existsPropertyPath(propertyPath: string): boolean;
+    findClassDeclaration(name: string, parent?: ts.Node): ts.ClassDeclaration;
     findIdentifier(name: string, parent?: ts.Node, indent?: string): ts.Node;
-    hasIdentifierChild(name: string, parent: ts.Node, indent?: string): boolean;
+    find(filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: {
+        recursive?: boolean;
+        firstOnly?: boolean;
+        parent?: ts.Node;
+    }): ts.Node;
+    filter(filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: {
+        recursive?: boolean;
+        firstOnly?: boolean;
+        parent?: ts.Node;
+    }): ts.Node[];
     getNodes(parent: ts.Node): ts.Node[];
     insertBefore(node: ts.Node, text: string): void;
     insertAfter(node: ts.Node, text: string): void;

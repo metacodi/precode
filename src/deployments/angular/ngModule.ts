@@ -36,11 +36,11 @@ export class AngularNgModule extends AngularDeployment {
 
       if (!value.elements.find(e => test(e))) {
         if (options.onlyTest) {
-          if (options.echo) { Terminal.fail(`Falta la importació ${chalk.bold(element)} al decorador ${chalk.bold('@NgModule')}.`); }
+          if (options.echo) { Terminal.fail(`Falta la importació ${chalk.bold(element)} al mòdul ${chalk.bold('@NgModule')}.`); }
           resolve(false);
 
         } else {
-          if (options.echo) { Terminal.success(`Afegint la importació ${chalk.bold(element)} al decorador ${chalk.bold('@NgModule')}...`); }
+          if (options.echo) { Terminal.success(`Afegint la importació ${chalk.bold(element)} al mòdul ${chalk.bold('@NgModule')}...`); }
           // Insertem al final (end) retrocedint un caràcter per estar dins dels paréntesis (ej: '[]')
           const pos = value.end - 1;
           const comma = value.getText() === '[]' ? '' : ', ';
@@ -51,7 +51,7 @@ export class AngularNgModule extends AngularDeployment {
         }
 
       } else {
-        if (options.echo) { Terminal.success(`Importació correcta de ${chalk.bold(element)} al decorador ${chalk.bold('@NgModule')}.`); }
+        if (options.echo) { Terminal.success(`Importació correcta de ${chalk.bold(element)} al mòdul ${chalk.bold('@NgModule')}.`); }
         resolve(true);
       }
     });

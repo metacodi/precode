@@ -41,7 +41,6 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const chalk_1 = __importDefault(require("chalk"));
 const child_process_1 = require("child_process");
-const rxjs_1 = require("rxjs");
 const mysql = __importStar(require("mysql2"));
 const node_utils_1 = require("@metacodi/node-utils");
 class CodeProject {
@@ -308,7 +307,7 @@ class CodeProject {
             }
             else {
                 node_utils_1.Terminal.verbose(`La carpeta no existeix '${node_utils_1.Terminal.file(fullName)}'.`);
-                return yield (0, rxjs_1.of)().toPromise();
+                return yield Promise.resolve();
             }
         });
     }
@@ -333,9 +332,7 @@ class CodeProject {
             return fileName;
         }
         const idx = fileName.indexOf(this.projectPath);
-        if (idx > -1) {
-            return fileName.substring(idx);
-        }
+        return idx > -1 ? fileName.substring(idx) : fileName;
     }
     connect(config) {
         return __awaiter(this, void 0, void 0, function* () {

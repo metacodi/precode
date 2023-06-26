@@ -74,7 +74,7 @@ export class CalendarCordova extends TypescriptDeployment {
 
       if (data && data.showTitle) { Terminal.line(); }
 
-      resolve(true);
+      // resolve(true);
     });
   }
 }

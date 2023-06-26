@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AngularProject = void 0;
 const chalk_1 = __importDefault(require("chalk"));
+const typescript_1 = __importDefault(require("typescript"));
 const node_utils_1 = require("@metacodi/node-utils");
 const typescript_project_1 = require("./typescript-project");
 class AngularProject extends typescript_project_1.TypescriptProject {
@@ -50,7 +51,8 @@ class AngularProject extends typescript_project_1.TypescriptProject {
         });
     }
     getNgModuleProperty(classe, propName, throwError = true) {
-        const deco = (classe.decorators || []).find(d => d.expression.expression.text === 'NgModule');
+        const decorators = typescript_1.default.canHaveDecorators(classe) ? typescript_1.default.getDecorators(classe) : undefined;
+        const deco = (decorators || []).find(d => d.expression.expression.text === 'NgModule');
         if (!deco) {
             if (throwError) {
                 node_utils_1.Terminal.error(`No s'ha trobat el decorador de classe '${chalk_1.default.bold('@NgModule')}'.`, false);

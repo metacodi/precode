@@ -44,7 +44,6 @@ class PushCapacitor extends typescript_deployment_1.TypescriptDeployment {
                     new typescript_dependency_1.TypescriptDependency({ install: '@capacitor-community/fcm', type: '--save' }),
                     new file_exists_1.FileExists({
                         fileName: project.rootPath('GoogleService-Info.plist'),
-                        relativeTo: project.projectPath,
                         help: `  → Download from ${chalk_1.default.blue('https://firebase.google.com/docs?authuser=0')}`
                     }),
                 ];

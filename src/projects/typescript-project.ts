@@ -112,9 +112,9 @@ export class TypescriptProject extends CodeProject {
   // --------------------------------------------------------------------------------
 
   /** Comprova si el `package.json` conté la dependència indicada. */
-  hasDependency(name: string, type?: '--save-prod' | '--save-dev'): boolean {
+  hasDependency(name: string, type?: '--save-prod' | '--save-peer' | '--save-dev'): boolean {
     if (this.package && typeof this.package.dependencies === 'object') {
-      return Object.keys(this.package[type === '--save-prod' ? 'dependencies' : 'devDependencies']).includes(name);
+      return Object.keys(this.package[type === '--save-prod' ? 'dependencies' : (type === '--save-peer' ? 'peerDependencies' : 'devDependencies')]).includes(name);
     }
   }
 
@@ -168,7 +168,7 @@ export class TypescriptProject extends CodeProject {
     let content: string = fileContent || fs.readFileSync(fullName, 'utf-8').toString();
 
     if (imports && imports.length) {
-      Terminal.log(`Modificant importacions de l'arxiu ${Terminal.file(fileName)}...`);
+      Terminal.logInline(`Modificant importacions de l'arxiu ${Terminal.file(fileName)}...`);
 
       const sourceFile: ts.SourceFile = this.getSourceFile(fullName, content);
       const replacer: TextReplacer = new TextReplacer(content);
@@ -253,6 +253,7 @@ export class TypescriptProject extends CodeProject {
   /** @category Command */
   protected replaces(fileName: string, options: FileOptions): string {
     if (options.replaces && options.replaces.length) {
+      fileName = this.relativePath(fileName);
       Terminal.log(`Actualitzant codi de l'arxiu '${Terminal.file(fileName)}'...`);
 
       const sourceFile: ts.SourceFile = this.getSourceFile(fileName, options.content);
@@ -296,9 +297,25 @@ export class TypescriptProject extends CodeProject {
   /** Obté el conteingut de l'arxiu indicat i retorna una estructura del codi font `ts.SourceFile`. */
   getSourceFile(fileName: string, content?: string): ts.SourceFile {
     const fullName = this.rootPath(fileName);
+    fileName = this.relativePath(fileName);
     const result = TypescriptParser.parse(fullName, content);
     if (!result) { Terminal.error(`No existeix l'arxiu ${Terminal.file(fileName)}`); return undefined; }
     return result;
+  }
+
+  /** Obté un parser de TypeScript per manipular el codi font de l'arxiu indicat.
+   *
+   * ```typescript
+   * const parser = project.parseSourceFile('src/app/app.component.ts');
+   * const classe = parser.findClassDeclaration('AppComponent');
+   * parser.save();
+   * ```
+   */
+  parseSourceFile(fileName: string, content?: string): TypescriptParser {
+    const fullName = this.rootPath(fileName);
+    fileName = this.relativePath(fileName);
+    const parser = new TypescriptParser(fileName, content);
+    return parser;
   }
 
   /** Atraviesa el AST en busca de un nodo con la declaración de la clase indicada. */

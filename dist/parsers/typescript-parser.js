@@ -25,7 +25,8 @@ class TypescriptParser {
         if (!content && !fs_1.default.existsSync(fullName)) {
             return undefined;
         }
-        return typescript_1.default.createSourceFile(fullName, content || fs_1.default.readFileSync(fullName, 'utf-8'), typescript_1.default.ScriptTarget.Latest, true);
+        content = content || fs_1.default.readFileSync(fullName, 'utf-8');
+        return typescript_1.default.createSourceFile(fullName, content, typescript_1.default.ScriptTarget.Latest, true);
     }
     static find(nodes, filter, options) {
         if (!options) {
@@ -38,7 +39,7 @@ class TypescriptParser {
             options.firstOnly = true;
         }
         const results = TypescriptParser.filter(nodes, filter, options);
-        return results && results.length ? results[0] : undefined;
+        return (results === null || results === void 0 ? void 0 : results.length) ? results[0] : undefined;
     }
     static filter(nodes, filter, options) {
         if (!Array.isArray(nodes)) {
@@ -86,12 +87,12 @@ class TypescriptParser {
         }
         return results;
     }
-    getPropertyValue(propertyPath) {
-        const property = this.resolvePropertyPath(propertyPath);
+    getPropertyValue(propertyPathOrAssignment) {
+        const property = typeof propertyPathOrAssignment === 'string' ? this.resolvePropertyPath(propertyPathOrAssignment) : propertyPathOrAssignment;
         return this.parsePropertyInitializer(property.initializer);
     }
-    replaceProperty(propertyPath, value) {
-        const property = this.resolvePropertyPath(propertyPath);
+    setPropertyValue(propertyPathOrAssignment, value) {
+        const property = typeof propertyPathOrAssignment === 'string' ? this.resolvePropertyPath(propertyPathOrAssignment) : propertyPathOrAssignment;
         const kind = property.initializer.kind;
         const valid = [
             typescript_1.default.SyntaxKind.StringLiteral,
@@ -104,11 +105,15 @@ class TypescriptParser {
             typescript_1.default.SyntaxKind.ObjectLiteralExpression,
         ];
         if (!valid.includes(kind)) {
-            throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPath)}' no és una expressió substituïble.`);
+            throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPathOrAssignment)}' no és una expressió substituïble.`);
         }
         const propValue = property.initializer;
         const text = this.getValueText(value);
         this.replacements.push({ start: propValue.pos + 1, end: propValue.end, text });
+    }
+    removeProperty(propertyPathOrAssignment) {
+        const property = typeof propertyPathOrAssignment === 'string' ? this.resolvePropertyPath(propertyPathOrAssignment) : propertyPathOrAssignment;
+        this.replacements.push({ start: property.pos, end: property.end + 1, text: '' });
     }
     getValueText(value) {
         if (Array.isArray(value)) {
@@ -195,12 +200,19 @@ class TypescriptParser {
         }
         return true;
     }
+    findClassDeclaration(name, parent) {
+        const nodes = this.getNodes(parent || this.source);
+        const found = TypescriptParser.find(nodes, (node) => (node.kind === typescript_1.default.SyntaxKind.ClassDeclaration && node.name.text === name));
+        return found;
+    }
     findIdentifier(name, parent, indent = '') {
         indent += '  ';
+        const hasIdentifier = (name, node, indent = '') => (node.kind === typescript_1.default.SyntaxKind.Identifier && node.text === name) ||
+            (node.kind === typescript_1.default.SyntaxKind.FirstLiteralToken && node.text === name);
         const nodes = this.getNodes(parent || this.source);
         for (const node of nodes) {
-            if (this.hasIdentifierChild(name, node, indent)) {
-                return node;
+            if (hasIdentifier(name, node, indent)) {
+                return parent;
             }
             const found = this.findIdentifier(name, node, indent);
             if (found) {
@@ -209,27 +221,17 @@ class TypescriptParser {
         }
         return undefined;
     }
-    hasIdentifierChild(name, parent, indent = '') {
-        const children = this.getNodes(parent);
-        for (const child of children) {
-            if (child.kind === typescript_1.default.SyntaxKind.Identifier) {
-                if (child.text === name) {
-                    return true;
-                }
-            }
-            else if (child.kind === typescript_1.default.SyntaxKind.FirstLiteralToken) {
-                if (child.text === name) {
-                    return true;
-                }
-            }
-            else if (child.text) {
-            }
-        }
-        return false;
+    find(filter, options) {
+        const nodes = this.getNodes((options === null || options === void 0 ? void 0 : options.parent) || this.source);
+        return TypescriptParser.find(nodes, filter, options);
+    }
+    filter(filter, options) {
+        const nodes = this.getNodes((options === null || options === void 0 ? void 0 : options.parent) || this.source);
+        return TypescriptParser.filter(nodes, filter, options);
     }
     getNodes(parent) {
         if (parent.kind === typescript_1.default.SyntaxKind.SourceFile) {
-            return parent.statements;
+            return parent.statements.map(v => v);
         }
         const nodes = [];
         parent.forEachChild(node => {
