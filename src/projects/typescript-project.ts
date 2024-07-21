@@ -238,7 +238,8 @@ export class TypescriptProject extends CodeProject {
     return TypescriptParser.filter(sourceFile.statements, ts.SyntaxKind.ImportDeclaration, { firstOnly: false }).map((node: ts.Node) => ({
       // // imports: node.importClause.getText().replace('{', '').replace('}', '').split(',').map((e: any) => e.split(' as ')[0].trim()),
       // // NOTA: `propertyName` se establece cuando hay un alias (Ej: HttpClientModule as http)
-      imports: ((node as ts.ImportDeclaration).importClause.namedBindings as ts.NamedImports).elements.map((e: any) => e.propertyName ? e.propertyName.text : e.name.text),
+      imports: (node as ts.ImportDeclaration).importClause.name ? [(node as ts.ImportDeclaration).importClause.name] :
+        ((node as ts.ImportDeclaration).importClause.namedBindings as ts.NamedImports).elements.map((e: any) => e.propertyName ? e.propertyName.text : e.name.text),
       from: (node as ts.ImportDeclaration).moduleSpecifier.getText(),
       pos: node.pos,
       end: node.end,

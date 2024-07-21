@@ -9,18 +9,6 @@ const fs_1 = __importDefault(require("fs"));
 const typescript_1 = __importDefault(require("typescript"));
 const node_utils_1 = require("@metacodi/node-utils");
 class TypescriptParser {
-    constructor(fullName, content) {
-        this.fullName = fullName;
-        this.replacements = [];
-        fullName = node_utils_1.Resource.normalize(fullName);
-        if (!content) {
-            if (!fs_1.default.existsSync(fullName)) {
-                throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
-            }
-            this.content = fs_1.default.readFileSync(fullName, 'utf-8');
-        }
-        this.source = typescript_1.default.createSourceFile(fullName, this.content, typescript_1.default.ScriptTarget.Latest);
-    }
     static parse(fullName, content) {
         if (!content && !fs_1.default.existsSync(fullName)) {
             return undefined;
@@ -87,6 +75,26 @@ class TypescriptParser {
         }
         return results;
     }
+    constructor(fullName, content) {
+        this.fullName = fullName;
+        this.replacements = [];
+        fullName = node_utils_1.Resource.normalize(fullName);
+        if (!content) {
+            if (!fs_1.default.existsSync(fullName)) {
+                throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
+            }
+            this.content = fs_1.default.readFileSync(fullName, 'utf-8');
+        }
+        this.source = typescript_1.default.createSourceFile(fullName, this.content, typescript_1.default.ScriptTarget.Latest);
+    }
+    getImportDeclarations() {
+        return TypescriptParser.filter(this.source.statements, typescript_1.default.SyntaxKind.ImportDeclaration, { firstOnly: false });
+    }
+    getImportClauseNames(node) {
+        const names = node.importClause.name ? [node.importClause.name] :
+            node.importClause.namedBindings.elements.map((e) => e.propertyName ? e.propertyName.text : e.name.text);
+        return names;
+    }
     getPropertyValue(propertyPathOrAssignment) {
         const property = typeof propertyPathOrAssignment === 'string' ? this.resolvePropertyPath(propertyPathOrAssignment) : propertyPathOrAssignment;
         return this.parsePropertyInitializer(property.initializer);
@@ -96,6 +104,7 @@ class TypescriptParser {
         const kind = property.initializer.kind;
         const valid = [
             typescript_1.default.SyntaxKind.StringLiteral,
+            typescript_1.default.SyntaxKind.NoSubstitutionTemplateLiteral,
             typescript_1.default.SyntaxKind.NumericLiteral,
             typescript_1.default.SyntaxKind.TrueKeyword,
             typescript_1.default.SyntaxKind.FalseKeyword,
@@ -108,16 +117,16 @@ class TypescriptParser {
             throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPathOrAssignment)}' no és una expressió substituïble.`);
         }
         const propValue = property.initializer;
-        const text = this.getValueText(value);
+        const text = this.stringifyPrimitiveType(value);
         this.replacements.push({ start: propValue.pos + 1, end: propValue.end, text });
     }
     removeProperty(propertyPathOrAssignment) {
         const property = typeof propertyPathOrAssignment === 'string' ? this.resolvePropertyPath(propertyPathOrAssignment) : propertyPathOrAssignment;
         this.replacements.push({ start: property.pos, end: property.end + 1, text: '' });
     }
-    getValueText(value) {
+    stringifyPrimitiveType(value) {
         if (Array.isArray(value)) {
-            const values = value.map(el => this.getValueText(el));
+            const values = value.map(el => this.stringifyPrimitiveType(el));
             return `[${values.join(', ')}]`;
         }
         else if (value instanceof RegExp) {
@@ -125,7 +134,7 @@ class TypescriptParser {
         }
         else if (typeof value === 'object') {
             const assigns = Object.keys(value).map(key => {
-                const v = this.getValueText(value[key]);
+                const v = this.stringifyPrimitiveType(value[key]);
                 return `${key}: ${v}`;
             });
             return `{ ${assigns.join(', ')} }`;
@@ -140,6 +149,7 @@ class TypescriptParser {
     parsePropertyInitializer(value) {
         switch (value.kind) {
             case typescript_1.default.SyntaxKind.StringLiteral: return value.text;
+            case typescript_1.default.SyntaxKind.NoSubstitutionTemplateLiteral: return value.text;
             case typescript_1.default.SyntaxKind.NumericLiteral: return +value.text;
             case typescript_1.default.SyntaxKind.TrueKeyword: return true;
             case typescript_1.default.SyntaxKind.FalseKeyword: return false;
@@ -208,6 +218,7 @@ class TypescriptParser {
     findIdentifier(name, parent, indent = '') {
         indent += '  ';
         const hasIdentifier = (name, node, indent = '') => (node.kind === typescript_1.default.SyntaxKind.Identifier && node.text === name) ||
+            (node.kind === typescript_1.default.SyntaxKind.VariableDeclaration && node.name.text === name) ||
             (node.kind === typescript_1.default.SyntaxKind.FirstLiteralToken && node.text === name);
         const nodes = this.getNodes(parent || this.source);
         for (const node of nodes) {
@@ -240,7 +251,7 @@ class TypescriptParser {
         return nodes;
     }
     insertBefore(node, text) { this.replacements.push({ start: node.pos, end: node.pos, text }); }
-    insertAfter(node, text) { this.replacements.push({ start: node.end + 1, end: node.end + 1, text }); }
+    insertAfter(node, text) { this.replacements.push({ start: ((node === null || node === void 0 ? void 0 : node.end) || 0) + 1, end: ((node === null || node === void 0 ? void 0 : node.end) || 0) + 1, text }); }
     save() {
         this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
         fs_1.default.writeFileSync(node_utils_1.Resource.normalize(this.fullName), this.content);

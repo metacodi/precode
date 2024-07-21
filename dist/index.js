@@ -15,7 +15,12 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextReplacer = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = exports.XmlParser = exports.TypescriptParser = void 0;
+exports.TextReplacer = exports.PushCapacitor = exports.IonicAngularAppCore = exports.I18n = exports.AngularNgModule = exports.TypescriptImport = exports.TypescriptDependency = exports.TypescriptConstructor = exports.IonicAngularDeployment = exports.AngularDeployment = exports.TypescriptDeployment = exports.CodeDeployment = exports.IonicAngularProject = exports.AngularProject = exports.TypescriptProject = exports.CodeProject = exports.XmlParser = exports.TypescriptParser = exports.AppCustomers = exports.AppApiClient = void 0;
+var app_api_client_1 = require("./customers/app-api-client");
+Object.defineProperty(exports, "AppApiClient", { enumerable: true, get: function () { return app_api_client_1.AppApiClient; } });
+var app_customers_1 = require("./customers/app-customers");
+Object.defineProperty(exports, "AppCustomers", { enumerable: true, get: function () { return app_customers_1.AppCustomers; } });
+__exportStar(require("./customers/app-customers.types"), exports);
 var typescript_parser_1 = require("./parsers/typescript-parser");
 Object.defineProperty(exports, "TypescriptParser", { enumerable: true, get: function () { return typescript_parser_1.TypescriptParser; } });
 var xml_parser_1 = require("./parsers/xml-parser");

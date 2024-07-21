@@ -8,22 +8,6 @@ const fs_1 = __importDefault(require("fs"));
 const java_ast_1 = require("java-ast");
 const node_utils_1 = require("@metacodi/node-utils");
 class JavaParser {
-    constructor(fullName, content) {
-        this.fullName = fullName;
-        this.replacements = [];
-        fullName = node_utils_1.Resource.normalize(fullName);
-        if (content) {
-            this.content = content;
-        }
-        else {
-            if (!fs_1.default.existsSync(fullName)) {
-                throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
-            }
-            this.content = fs_1.default.readFileSync(fullName, 'utf-8');
-        }
-        this.document = (0, java_ast_1.parse)(this.content);
-        console.log(this.document);
-    }
     static parse(fullName, content) {
     }
     static find(nodes, match, options) {
@@ -76,6 +60,22 @@ class JavaParser {
             }
         }
         return results;
+    }
+    constructor(fullName, content) {
+        this.fullName = fullName;
+        this.replacements = [];
+        fullName = node_utils_1.Resource.normalize(fullName);
+        if (content) {
+            this.content = content;
+        }
+        else {
+            if (!fs_1.default.existsSync(fullName)) {
+                throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
+            }
+            this.content = fs_1.default.readFileSync(fullName, 'utf-8');
+        }
+        this.document = (0, java_ast_1.parse)(this.content);
+        console.log(this.document);
     }
     save() {
         this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));

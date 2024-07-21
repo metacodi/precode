@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+export { AppApiClient, AppApiOptions } from './customers/app-api-client';
+export { ApiEntitySchema, ApiEntityFieldSchema, ApiEntityRelationSchema } from './customers/api-entity-schema';
+export { AppCustomers } from './customers/app-customers';
+export * from './customers/app-customers.types';
 export { TextReplacement } from './parsers/types';
 export { TypescriptParser, PrimitiveType, ComplexPrimitiveType, BasicPrimitiveType, EmptyPrimitiveType } from './parsers/typescript-parser';
 export { XmlParser } from './parsers/xml-parser';

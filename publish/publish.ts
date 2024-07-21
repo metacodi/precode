@@ -18,16 +18,19 @@ import { TypescriptProject } from '../src';
 
 Terminal.title('PUBLISH');
 
-Prompt
+/** {@link https://www.npmjs.com/package/commander#common-option-types-boolean-and-value } */
+Prompt.program
   // .requiredOption('-f, --folder <folder>', 'Ruta absoluta de la carpeta i nom del component.')
   // .option('-c, --commit <dir>', 'Descripció pel commit')
   .option('-v, --verbose', 'Log verbose')
 ;
-Prompt.parse(process.argv);
+Prompt.program.parse(process.argv);
 
-if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
+const options = Prompt.program.opts();
 
-Prompt.folder = Resource.normalize(Prompt.folder || process.cwd());
+if (options.verbose) { console.log('Arguments: ', options); }
+
+options.folder = Resource.normalize(options.folder || process.cwd());
 
 const project: TypescriptProject = new TypescriptProject();
 project.initialize().then(async () => {
@@ -45,7 +48,7 @@ project.initialize().then(async () => {
   Terminal.log(chalk.bold(`Compilant projecte typescript`));
   await Terminal.run(`tsc`);
 
-  // const ok = await Git.publish({ branch: 'main', commit: Prompt.commit });
+  // const ok = await Git.publish({ branch: 'main', commit: options.commit });
   // if (ok) { Terminal.log(`Git published successfully!`); }
 
   Terminal.log(`npm publish`);

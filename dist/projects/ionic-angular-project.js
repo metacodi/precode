@@ -43,7 +43,6 @@ const code_project_1 = require("./code-project");
 const angular_project_1 = require("./angular-project");
 const generate_1 = require("./resources/generate/generate");
 class IonicAngularProject extends angular_project_1.AngularProject {
-    constructor(folder) { super(folder); }
     static isProjectFolder(folder) {
         const resources = node_utils_1.Resource.discover(folder);
         return angular_project_1.AngularProject.isProjectFolder(folder)
@@ -55,6 +54,7 @@ class IonicAngularProject extends angular_project_1.AngularProject {
         const projectName = path.basename(folder);
         code_project_1.CodeProject.install(folder, [`ionic start ${projectName}`]);
     }
+    constructor(folder) { super(folder); }
     initialize() {
         const _super = Object.create(null, {
             initialize: { get: () => super.initialize }

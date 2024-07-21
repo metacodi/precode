@@ -1,0 +1,1 @@
+export { Transaccion, Transacciones, Depositos, Remesas } from './schema-types.types';

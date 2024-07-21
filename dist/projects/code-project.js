@@ -44,10 +44,6 @@ const child_process_1 = require("child_process");
 const mysql = __importStar(require("mysql2"));
 const node_utils_1 = require("@metacodi/node-utils");
 class CodeProject {
-    constructor(projectPath) {
-        this.projectPath = projectPath || process.cwd();
-        this.name = this.projectPath.split('/').pop();
-    }
     static execute(command) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
@@ -81,6 +77,10 @@ class CodeProject {
             }
             process.chdir(curDir);
         });
+    }
+    constructor(projectPath) {
+        this.projectPath = projectPath || process.cwd();
+        this.name = this.projectPath.split('/').pop();
     }
     initialize() {
         return __awaiter(this, void 0, void 0, function* () {

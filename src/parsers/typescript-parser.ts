@@ -115,6 +115,26 @@ export class TypescriptParser {
     this.source = ts.createSourceFile(fullName, this.content, ts.ScriptTarget.Latest);
   }
 
+  
+  // --------------------------------------------------------------------------------
+  //  imports
+  // --------------------------------------------------------------------------------
+
+  getImportDeclarations(): ts.ImportDeclaration[] {
+    return TypescriptParser.filter(this.source.statements, ts.SyntaxKind.ImportDeclaration, { firstOnly: false }) as ts.ImportDeclaration[];
+  }
+
+  getImportClauseNames(node: ts.ImportDeclaration) {
+    const names = node.importClause.name ? [node.importClause.name] :
+      (node.importClause.namedBindings as ts.NamedImports).elements.map((e: any) => e.propertyName ? e.propertyName.text : e.name.text);
+    return names;
+  }
+
+
+  // --------------------------------------------------------------------------------
+  //  properties
+  // --------------------------------------------------------------------------------
+
   getPropertyValue(propertyPathOrAssignment: string | ts.PropertyAssignment): PrimitiveType  {
     const property = typeof propertyPathOrAssignment === 'string' ? this.resolvePropertyPath(propertyPathOrAssignment) : propertyPathOrAssignment;
     return this.parsePropertyInitializer(property.initializer);
@@ -133,6 +153,7 @@ export class TypescriptParser {
     const kind = property.initializer.kind;
     const valid = [
       ts.SyntaxKind.StringLiteral,
+      ts.SyntaxKind.NoSubstitutionTemplateLiteral,
       ts.SyntaxKind.NumericLiteral,
       ts.SyntaxKind.TrueKeyword,
       ts.SyntaxKind.FalseKeyword,
@@ -143,7 +164,7 @@ export class TypescriptParser {
     ];
     if (!valid.includes(kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPathOrAssignment)}' no és una expressió substituïble.`); }
     const propValue = property.initializer as any as ts.LiteralLikeNode;
-    const text = this.getValueText(value);
+    const text = this.stringifyPrimitiveType(value);
     this.replacements.push({ start: propValue.pos + 1, end: propValue.end, text });
   }
 
@@ -152,9 +173,9 @@ export class TypescriptParser {
     this.replacements.push({ start: property.pos, end: property.end + 1, text: '' });  
   }
 
-  private getValueText(value: PrimitiveType): string {
+  private stringifyPrimitiveType(value: PrimitiveType): string {
     if (Array.isArray(value)) {
-      const values: string[] = value.map(el => this.getValueText(el));
+      const values: string[] = value.map(el => this.stringifyPrimitiveType(el));
       return `[${values.join(', ')}]`;
 
     } else if (value instanceof RegExp) {
@@ -162,7 +183,7 @@ export class TypescriptParser {
 
     } else if (typeof value === 'object') {
       const assigns: string[] = Object.keys(value).map(key => {
-        const v = this.getValueText((value as any)[key]);
+        const v = this.stringifyPrimitiveType((value as any)[key]);
         return `${key}: ${v}`;
       });
       return `{ ${assigns.join(', ')} }`;
@@ -178,6 +199,7 @@ export class TypescriptParser {
   parsePropertyInitializer(value: ts.Expression): PrimitiveType {
     switch (value.kind) {
       case ts.SyntaxKind.StringLiteral: return (value as ts.StringLiteral).text;
+      case ts.SyntaxKind.NoSubstitutionTemplateLiteral: return (value as ts.NoSubstitutionTemplateLiteral).text;
       case ts.SyntaxKind.NumericLiteral: return +(value as ts.NumericLiteral).text;
       case ts.SyntaxKind.TrueKeyword: return true;
       case ts.SyntaxKind.FalseKeyword: return false;
@@ -262,6 +284,7 @@ export class TypescriptParser {
     indent += '  ';
     const hasIdentifier = (name: string, node: ts.Node, indent = ''): boolean =>
       (node.kind === ts.SyntaxKind.Identifier && (node as ts.Identifier).text === name) ||
+      (node.kind === ts.SyntaxKind.VariableDeclaration && ((node as ts.VariableDeclaration).name as any).text === name) ||
       (node.kind === ts.SyntaxKind.FirstLiteralToken && (node as ts.LiteralToken).text === name)
     ;
     // console.log(indent + 'findIdentifier =>', { parent: this.syntaxKindToName(parent?.kind) });
@@ -338,7 +361,7 @@ export class TypescriptParser {
    * parser.save();
    * ```
    */
-  insertAfter(node: ts.Node, text: string) { this.replacements.push({ start: node.end + 1, end: node.end + 1, text }); }
+  insertAfter(node: ts.Node, text: string) { this.replacements.push({ start: (node?.end || 0) + 1, end: (node?.end || 0) + 1, text }); }
 
   save() {
     this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));

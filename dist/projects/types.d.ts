@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import ts from 'typescript';
 import { TextReplacer } from '../utils/text-replacer';
-export declare type EditActionType = 'add' | 'remove';
-export declare type ProjectType = 'typescript' | 'angular' | 'php';
+export type EditActionType = 'add' | 'remove';
+export type ProjectType = 'typescript' | 'angular' | 'php';
 export interface CustomDeploymentType {
     fn: any;
     arguments?: any[];
@@ -40,7 +40,7 @@ export interface TypescriptConstructorType {
     identifier: string;
     type: string;
 }
-export declare type DeploymentType = CustomDeploymentType | FileExistsType | AngularNgModuleType | TypescriptDependencyType | TypescriptImportType | TypescriptConstructorType;
+export type DeploymentType = CustomDeploymentType | FileExistsType | AngularNgModuleType | TypescriptDependencyType | TypescriptImportType | TypescriptConstructorType;
 export interface DeploymentOptions {
     onlyTest?: boolean;
     resolveOnFail?: boolean;
@@ -80,7 +80,7 @@ export interface CurlOptions {
     to: string;
     token?: string;
 }
-export declare type TypescriptModifierType = 'private' | 'protected' | 'public';
+export type TypescriptModifierType = 'private' | 'protected' | 'public';
 export interface TypescriptConstructorParameter {
     modifier: TypescriptModifierType;
     name: string;

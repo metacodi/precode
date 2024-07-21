@@ -18,7 +18,6 @@ const typescript_1 = __importDefault(require("typescript"));
 const node_utils_1 = require("@metacodi/node-utils");
 const typescript_project_1 = require("./typescript-project");
 class AngularProject extends typescript_project_1.TypescriptProject {
-    constructor(folder) { super(folder); }
     static isProjectFolder(folder) {
         const resources = node_utils_1.Resource.discover(folder);
         return typescript_project_1.TypescriptProject.isProjectFolder(folder)
@@ -27,6 +26,7 @@ class AngularProject extends typescript_project_1.TypescriptProject {
     }
     static createProject(folder) {
     }
+    constructor(folder) { super(folder); }
     initialize() {
         const _super = Object.create(null, {
             initialize: { get: () => super.initialize }

@@ -16,11 +16,6 @@ exports.CodeDeployment = void 0;
 const chalk_1 = __importDefault(require("chalk"));
 const node_utils_1 = require("@metacodi/node-utils");
 class CodeDeployment {
-    constructor(data, project, options) {
-        this.project = project;
-        this.options = options;
-        this.data = data;
-    }
     static extendOptions(options) {
         if (!options) {
             options = {};
@@ -38,6 +33,11 @@ class CodeDeployment {
             options.verbose = false;
         }
         return options;
+    }
+    constructor(data, project, options) {
+        this.project = project;
+        this.options = options;
+        this.data = data;
     }
     run(tasks, project, options) {
         return __awaiter(this, void 0, void 0, function* () {

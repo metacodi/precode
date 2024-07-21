@@ -9,22 +9,6 @@ const parser_1 = require("@xml-tools/parser");
 const ast_1 = require("@xml-tools/ast");
 const node_utils_1 = require("@metacodi/node-utils");
 class XmlParser {
-    constructor(fullName, content) {
-        this.fullName = fullName;
-        this.replacements = [];
-        fullName = node_utils_1.Resource.normalize(fullName);
-        if (content) {
-            this.content = content;
-        }
-        else {
-            if (!fs_1.default.existsSync(fullName)) {
-                throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
-            }
-            this.content = fs_1.default.readFileSync(fullName, 'utf-8');
-        }
-        const { cst, tokenVector } = (0, parser_1.parse)(this.content);
-        this.document = (0, ast_1.buildAst)(cst, tokenVector);
-    }
     static parse(fullName, content) {
         if (!content && !fs_1.default.existsSync(fullName)) {
             return undefined;
@@ -89,6 +73,22 @@ class XmlParser {
             }
         }
         return results;
+    }
+    constructor(fullName, content) {
+        this.fullName = fullName;
+        this.replacements = [];
+        fullName = node_utils_1.Resource.normalize(fullName);
+        if (content) {
+            this.content = content;
+        }
+        else {
+            if (!fs_1.default.existsSync(fullName)) {
+                throw Error(`No s'ha trobat l'arxiu '${fullName}'.`);
+            }
+            this.content = fs_1.default.readFileSync(fullName, 'utf-8');
+        }
+        const { cst, tokenVector } = (0, parser_1.parse)(this.content);
+        this.document = (0, ast_1.buildAst)(cst, tokenVector);
     }
     find(nodes, match, options) {
         if (!options) {

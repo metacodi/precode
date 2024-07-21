@@ -18,10 +18,6 @@ const i18n_1 = require("../../angular/i18n");
 const push_capacitor_1 = require("./capacitor/push-capacitor");
 const typescript_constructor_1 = require("../../typescript/typescript-constructor");
 class IonicAngularAppCore extends ionic_angular_deployment_1.IonicAngularDeployment {
-    constructor(data, project, options) {
-        super(data, project, options);
-        this.title = `Install Ionic Angular App Core`;
-    }
     static deploy(project, options, data) {
         return __awaiter(this, void 0, void 0, function* () {
             const instance = new IonicAngularAppCore(data || {}, project, options);
@@ -30,6 +26,10 @@ class IonicAngularAppCore extends ionic_angular_deployment_1.IonicAngularDeploym
             }
             return instance.deploy();
         });
+    }
+    constructor(data, project, options) {
+        super(data, project, options);
+        this.title = `Install Ionic Angular App Core`;
     }
     deploy(project, options, data) {
         return __awaiter(this, void 0, void 0, function* () {

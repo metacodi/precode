@@ -44,7 +44,6 @@ const node_utils_1 = require("@metacodi/node-utils");
 const text_replacer_1 = require("../utils/text-replacer");
 const typescript_parser_1 = require("../parsers/typescript-parser");
 class TypescriptProject extends code_project_1.CodeProject {
-    constructor(folder) { super(folder); }
     static isProjectFolder(folder) {
         const resources = node_utils_1.Resource.discover(folder);
         return !!resources.find(d => d.name === 'tsconfig.json');
@@ -52,6 +51,7 @@ class TypescriptProject extends code_project_1.CodeProject {
     static createProject(folder) {
         code_project_1.CodeProject.install(folder, ['tsc --init']);
     }
+    constructor(folder) { super(folder); }
     initialize() {
         const _super = Object.create(null, {
             initialize: { get: () => super.initialize }
@@ -175,7 +175,8 @@ class TypescriptProject extends code_project_1.CodeProject {
     }
     getImports(sourceFile) {
         return typescript_parser_1.TypescriptParser.filter(sourceFile.statements, typescript_1.default.SyntaxKind.ImportDeclaration, { firstOnly: false }).map((node) => ({
-            imports: node.importClause.namedBindings.elements.map((e) => e.propertyName ? e.propertyName.text : e.name.text),
+            imports: node.importClause.name ? [node.importClause.name] :
+                node.importClause.namedBindings.elements.map((e) => e.propertyName ? e.propertyName.text : e.name.text),
             from: node.moduleSpecifier.getText(),
             pos: node.pos,
             end: node.end,

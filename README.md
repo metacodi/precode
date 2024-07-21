@@ -123,11 +123,7 @@ npx ts-node --project precode/tsconfig.json precode/publish.ts
 ```
 
 
-Habilitem `esModuleInterop` i `allowSyntheticDefaultImports` per poder importar mòduls `commonjs` sense errors encara que estiguem en un projecte amb resolució `esnext`:
-
-```typescript
-import Prompt from 'commander';
-```
+Habilitem `esModuleInterop` i `allowSyntheticDefaultImports` per poder importar mòduls `commonjs` sense errors encara que estiguem en un projecte amb resolució `esnext`.
 
 
 <br />

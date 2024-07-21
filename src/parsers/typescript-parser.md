@@ -6,6 +6,8 @@ El contingut s'estructura en un arbre de nodes que es conneix com a **arbre sint
 
 TypeScript AST Viewer: <https://ts-ast-viewer.com/>
 
+AST Explorer: <https://astexplorer.net/>
+
 <br />
 
 ## Ús

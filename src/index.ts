@@ -2,6 +2,16 @@
 
 
 // ---------------------------------------------------------------------------------------------------
+//  Customers
+// ---------------------------------------------------------------------------------------------------
+
+export { AppApiClient, AppApiOptions } from './customers/app-api-client';
+export { ApiEntitySchema, ApiEntityFieldSchema, ApiEntityRelationSchema } from './customers/api-entity-schema';
+export { AppCustomers } from './customers/app-customers';
+export * from './customers/app-customers.types';
+
+
+// ---------------------------------------------------------------------------------------------------
 //  Parsers
 // ---------------------------------------------------------------------------------------------------
 

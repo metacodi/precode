@@ -1,9 +1,9 @@
 import ts from 'typescript';
 import { TextReplacement } from './types';
-export declare type PrimitiveType = BasicPrimitiveType | ComplexPrimitiveType;
-export declare type BasicPrimitiveType = string | number | boolean | null | RegExp;
-export declare type ComplexPrimitiveType = object | Array<PrimitiveType>;
-export declare type EmptyPrimitiveType = undefined | never | unknown | void;
+export type PrimitiveType = BasicPrimitiveType | ComplexPrimitiveType;
+export type BasicPrimitiveType = string | number | boolean | null | RegExp;
+export type ComplexPrimitiveType = object | Array<PrimitiveType>;
+export type EmptyPrimitiveType = undefined | never | unknown | void;
 export declare class TypescriptParser {
     fullName: string;
     content: string;
@@ -19,10 +19,12 @@ export declare class TypescriptParser {
         firstOnly?: boolean;
     }): ts.Node[];
     constructor(fullName: string, content?: string);
+    getImportDeclarations(): ts.ImportDeclaration[];
+    getImportClauseNames(node: ts.ImportDeclaration): any[];
     getPropertyValue(propertyPathOrAssignment: string | ts.PropertyAssignment): PrimitiveType;
     setPropertyValue(propertyPathOrAssignment: string | ts.PropertyAssignment, value: PrimitiveType): void;
     removeProperty(propertyPathOrAssignment: string | ts.PropertyAssignment): void;
-    private getValueText;
+    private stringifyPrimitiveType;
     parsePropertyInitializer(value: ts.Expression): PrimitiveType;
     parseArrayLiteralExpression(value: ts.ArrayLiteralExpression): PrimitiveType[];
     parseObjectLiteralExpression(value: ts.ObjectLiteralExpression): object;
