@@ -1,1 +1,0 @@
-{"version":3,"file":"app-customers.types.d.ts","sourceRoot":"","sources":["../../src/customers/app-customers.types.ts"],"names":[],"mappings":"AAaA,MAAM,WAAW,mBAAmB;IAElC,IAAI,EAAE,MAAM,CAAC;IAEb,cAAc,CAAC,EAAE,MAAM,CAAC;IAExB,cAAc,EAAE,MAAM,CAAC;CACxB"}

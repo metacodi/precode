@@ -3,19 +3,39 @@ import * as mysql from 'mysql2';
 import { PoolConnection, Pool } from 'mysql2/promise';
 import Prompt from 'commander';
 import chalk from "chalk";
-import moment from 'moment';
+import moment from "moment";
 
 import { PrimitiveType, TypescriptParser } from "../parsers/typescript-parser";
 
-import { AppCustomersOptions } from "./app-customers.types";
 
 
-const promptOptions = Prompt.program.opts();
+/**
+ * ```typescript
+ * export interface AppToolsOptions {
+ *   // Path relatiu des de la carpeta d'execució (típicament /precode) fins a la carpeta on es troben els environments del projecte. Ex: `../apps`
+ *   apps: string;
+ *   // Nom de la propietat dins de l'arxiu 'data.ts' que conté la info del customer. @default `data`.
+ *   dataIdentifier?: string;
+ *   // Nom de la carpeta del projecte front-end.
+ *   frontendFolder: string;
+ * }
+ * ```
+ */
+export interface AppToolsOptions {
+  /** Path relatiu des de la carpeta d'execució (típicament /precode) fins a la carpeta on es troben els environments del projecte. Ex: `../apps` */
+  apps: string;
+  /** Nom de la propietat dins de l'arxiu 'data.ts' que conté la info del customer. @default `data`. */
+  dataIdentifier?: string;
+  /** Nom de la carpeta del projecte front-end.  */
+  frontendFolder: string;
+}
 
-export class AppCustomers {
+
+
+export class AppTools {
  
   constructor(
-    public options: AppCustomersOptions,
+    public options: AppToolsOptions,
   ) {
     if (options.apps.endsWith('/')) { options.apps = options.apps.slice(1); }
   }
@@ -174,6 +194,7 @@ export class AppCustomers {
    */
   async executeQueries(queries: string[], env: string, options?: { customers?: string[]; verbose?: boolean; }) {
     if (!options) { options = {}; }
+    const promptOptions = Prompt.program.opts();
     const customers = options.customers === undefined ? this.getAllCustomers() : options.customers;
     const verbose = options.verbose === undefined ? promptOptions.verbose : options.verbose;
     for (const customer of customers) {
@@ -189,6 +210,56 @@ export class AppCustomers {
       } else {
         if (verbose) { Terminal.warning(`No existeix l'entorn ${chalk.green(`${env}`)} per ${chalk.bold(`${customer}`)}`); }
       }
+    }
+  }
+
+  /** Actualitza els canvis d'auditoria de la taula indicada (comprovant el camp `updated`) d'un entorn a un altre.
+   *
+   * @param fromCustomer Si no s'indica cap, s'utilitza per defecte `'demo'`.
+   * @param toCustomers Si no s'indica cap, s'obtenen a través de `getAllCustomers()`.
+   */
+  async syncTableChanges(table: string, fromEnv: string, toEnv: string, fromCustomer?: string, toCustomers?: string[]): Promise<void> {
+    const promptOptions = Prompt.program.opts();
+    // Per defecte de `demo` a tots els altres customers.
+    fromCustomer = fromCustomer || 'demo';
+    toCustomers = toCustomers || this.getAllCustomers();
+    if (!Array.isArray(toCustomers)) { toCustomers = [toCustomers]; }
+    // Comprovem els darrers canvis segons el camp d'auditoria `updated` de la taula.
+    const fromUpdated = await this.getCustomerTableLastUpdate('demo', fromEnv, table);
+    const toUpdated = await this.getCustomerTableLastUpdate('demo', toEnv, table);
+    if (promptOptions.verbose) { Terminal.log('changes:', { fromUpdated, toUpdated }); }
+    if (!toUpdated || fromUpdated > toUpdated) {
+      // Obtenim totes les files amb canvis que s'han d'actualitzar.
+      const fromConn = await this.getConnecion('demo', fromEnv);
+      const sql = toUpdated ? `SELECT * FROM ${table} WHERE updated > '${toUpdated}'` : `SELECT * FROM ${table}`;
+      const [ rows ] = await fromConn.query(sql);
+      Terminal.log(`Tenim ${chalk.green((rows as any[]).length)} canvis a ${chalk.yellow(table)} des de ${chalk.green(toUpdated)}`);
+      // Actualitzem els canvis a cada customer.
+      for (const customer of toCustomers) {
+        const conn = await this.getPersistentConnecion(customer, toEnv);
+        for (const row of (rows as any[])) { 
+          await syncRow(conn, table, row);
+        }
+        conn.release();
+        Terminal.log(`Actualitzat ${chalk.yellow(customer)} ${chalk.green(toEnv)} ${table}`);
+      }
+
+    } else {
+      Terminal.log(`No hi ha canvis a ${chalk.yellow(table)}`);
+    }
+    return Promise.resolve();
+  }
+
+  /** Obté la data d'auditoria (camp `updated`) de l'actualització més recent. */
+  async getCustomerTableLastUpdate(customer: string, env: string, table: string): Promise<string> {
+    const conn = await this.getConnecion(customer, env);
+    const date = await getTableLastUpdate(conn, table);
+    if (!date || date === 'Invalid date' || !moment(date).isValid()) {
+      const [rows] = await conn.query(`SELECT updated FROM ${table} ORDER BY updated DESC LIMIT 1`);
+      const result = Array.isArray(rows) ? rows as any[] : [rows];
+      return Promise.resolve(result.length ? moment(result[0].updated).format('YYYY-MM-DD HH:mm:ss') : '');
+    } else {
+      return date;
     }
   }
 

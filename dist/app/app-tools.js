@@ -35,14 +35,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppCustomers = void 0;
+exports.AppTools = void 0;
 const node_utils_1 = require("@metacodi/node-utils");
 const mysql = __importStar(require("mysql2"));
 const commander_1 = __importDefault(require("commander"));
 const chalk_1 = __importDefault(require("chalk"));
+const moment_1 = __importDefault(require("moment"));
 const typescript_parser_1 = require("../parsers/typescript-parser");
-const promptOptions = commander_1.default.program.opts();
-class AppCustomers {
+class AppTools {
     constructor(options) {
         this.options = options;
         this.pools = {};
@@ -172,6 +172,7 @@ class AppCustomers {
             if (!options) {
                 options = {};
             }
+            const promptOptions = commander_1.default.program.opts();
             const customers = options.customers === undefined ? this.getAllCustomers() : options.customers;
             const verbose = options.verbose === undefined ? promptOptions.verbose : options.verbose;
             for (const customer of customers) {
@@ -196,6 +197,53 @@ class AppCustomers {
             }
         });
     }
+    syncTableChanges(table, fromEnv, toEnv, fromCustomer, toCustomers) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const promptOptions = commander_1.default.program.opts();
+            fromCustomer = fromCustomer || 'demo';
+            toCustomers = toCustomers || this.getAllCustomers();
+            if (!Array.isArray(toCustomers)) {
+                toCustomers = [toCustomers];
+            }
+            const fromUpdated = yield this.getCustomerTableLastUpdate('demo', fromEnv, table);
+            const toUpdated = yield this.getCustomerTableLastUpdate('demo', toEnv, table);
+            if (promptOptions.verbose) {
+                node_utils_1.Terminal.log('changes:', { fromUpdated, toUpdated });
+            }
+            if (!toUpdated || fromUpdated > toUpdated) {
+                const fromConn = yield this.getConnecion('demo', fromEnv);
+                const sql = toUpdated ? `SELECT * FROM ${table} WHERE updated > '${toUpdated}'` : `SELECT * FROM ${table}`;
+                const [rows] = yield fromConn.query(sql);
+                node_utils_1.Terminal.log(`Tenim ${chalk_1.default.green(rows.length)} canvis a ${chalk_1.default.yellow(table)} des de ${chalk_1.default.green(toUpdated)}`);
+                for (const customer of toCustomers) {
+                    const conn = yield this.getPersistentConnecion(customer, toEnv);
+                    for (const row of rows) {
+                        yield (0, node_utils_1.syncRow)(conn, table, row);
+                    }
+                    conn.release();
+                    node_utils_1.Terminal.log(`Actualitzat ${chalk_1.default.yellow(customer)} ${chalk_1.default.green(toEnv)} ${table}`);
+                }
+            }
+            else {
+                node_utils_1.Terminal.log(`No hi ha canvis a ${chalk_1.default.yellow(table)}`);
+            }
+            return Promise.resolve();
+        });
+    }
+    getCustomerTableLastUpdate(customer, env, table) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const conn = yield this.getConnecion(customer, env);
+            const date = yield (0, node_utils_1.getTableLastUpdate)(conn, table);
+            if (!date || date === 'Invalid date' || !(0, moment_1.default)(date).isValid()) {
+                const [rows] = yield conn.query(`SELECT updated FROM ${table} ORDER BY updated DESC LIMIT 1`);
+                const result = Array.isArray(rows) ? rows : [rows];
+                return Promise.resolve(result.length ? (0, moment_1.default)(result[0].updated).format('YYYY-MM-DD HH:mm:ss') : '');
+            }
+            else {
+                return date;
+            }
+        });
+    }
 }
-exports.AppCustomers = AppCustomers;
-//# sourceMappingURL=app-customers.js.map
+exports.AppTools = AppTools;
+//# sourceMappingURL=app-tools.js.map

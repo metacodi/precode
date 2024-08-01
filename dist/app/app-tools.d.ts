@@ -2,10 +2,14 @@ import { FtpClient } from "@metacodi/node-utils";
 import * as mysql from 'mysql2';
 import { PoolConnection, Pool } from 'mysql2/promise';
 import { PrimitiveType, TypescriptParser } from "../parsers/typescript-parser";
-import { AppCustomersOptions } from "./app-customers.types";
-export declare class AppCustomers {
-    options: AppCustomersOptions;
-    constructor(options: AppCustomersOptions);
+export interface AppToolsOptions {
+    apps: string;
+    dataIdentifier?: string;
+    frontendFolder: string;
+}
+export declare class AppTools {
+    options: AppToolsOptions;
+    constructor(options: AppToolsOptions);
     get apps(): string;
     get dataIdentifier(): string;
     get frontendFolder(): string;
@@ -38,5 +42,7 @@ export declare class AppCustomers {
         customers?: string[];
         verbose?: boolean;
     }): Promise<void>;
+    syncTableChanges(table: string, fromEnv: string, toEnv: string, fromCustomer?: string, toCustomers?: string[]): Promise<void>;
+    getCustomerTableLastUpdate(customer: string, env: string, table: string): Promise<string>;
 }
-//# sourceMappingURL=app-customers.d.ts.map
+//# sourceMappingURL=app-tools.d.ts.map
