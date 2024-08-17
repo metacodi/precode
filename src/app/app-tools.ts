@@ -6,6 +6,7 @@ import chalk from "chalk";
 import moment from "moment";
 
 import { PrimitiveType, TypescriptParser } from "../parsers/typescript-parser";
+import { AppApiClient } from "./app-api-client";
 
 
 
@@ -28,8 +29,9 @@ export interface AppToolsOptions {
   dataIdentifier?: string;
   /** Nom de la carpeta del projecte front-end.  */
   frontendFolder: string;
+  /** Referència a la implementació d'un client de l'Api Rest de l'App. */
+  api?: AppApiClient;
 }
-
 
 
 export class AppTools {
@@ -40,11 +42,13 @@ export class AppTools {
     if (options.apps.endsWith('/')) { options.apps = options.apps.slice(1); }
   }
 
+  get api(): AppApiClient { return this.options?.api; }
+
   get apps(): string { return this.options?.apps || ''; }
   
   get dataIdentifier(): string { return this.options?.dataIdentifier || 'data'; }
   
-  get frontendFolder(): string { return this.options?.frontendFolder || ''; }
+  get frontendFolder(): string { return this.options?.frontendFolder || 'frontend'; }
 
 
   // --------------------------------------------------------------------------------
@@ -138,13 +142,13 @@ export class AppTools {
    * En acabat, cal alliberar la connexió fent `release()`.
    *
    * ```typescript
-   * const conn: PoolConnection = await getPersistentConnecion(customer, env);
+   * const conn: PoolConnection = await getPersistentConnection(customer, env);
    * const [ rows ] = conn.query(`SELECT * FROM table`);
    * conn.release();
    * ```
    */
-  async getPersistentConnecion(customer: string, env: string): Promise<PoolConnection> {
-    const pool = await this.getConnecion(customer, env);
+  async getPersistentConnection(customer: string, env: string): Promise<PoolConnection> {
+    const pool = await this.getConnection(customer, env);
     // @ts-ignore
     if (!pool) { return undefined; }
     const conn: PoolConnection = await pool.getConnection();
@@ -156,11 +160,11 @@ export class AppTools {
    * Després d'executar la consulta no cal tancar-la.
    *
    * ```typescript
-   * const conn: Pool = await getConnecion(customer, env);
+   * const conn: Pool = await getConnection(customer, env);
    * const [ rows ] = conn.query(`SELECT * FROM table`);
    * ```
    */
-  getConnecion(customer: string, env: string): Promise<Pool> {
+  getConnection(customer: string, env: string): Promise<Pool> {
     return new Promise<Pool>((resolve: any, reject: any) => {
       const poolKey = `${customer}-${env}`;
       if (!this.pools[poolKey]) {
@@ -198,7 +202,7 @@ export class AppTools {
     const customers = options.customers === undefined ? this.getAllCustomers() : options.customers;
     const verbose = options.verbose === undefined ? promptOptions.verbose : options.verbose;
     for (const customer of customers) {
-      const conn = await this.getPersistentConnecion(customer, env);
+      const conn = await this.getPersistentConnection(customer, env);
       if (conn) {
         if (verbose) { Terminal.log(`Connected to ${chalk.bold(`${customer}`)} db`); }
         for (const query of queries) {
@@ -230,13 +234,13 @@ export class AppTools {
     if (promptOptions.verbose) { Terminal.log('changes:', { fromUpdated, toUpdated }); }
     if (!toUpdated || fromUpdated > toUpdated) {
       // Obtenim totes les files amb canvis que s'han d'actualitzar.
-      const fromConn = await this.getConnecion('demo', fromEnv);
+      const fromConn = await this.getConnection('demo', fromEnv);
       const sql = toUpdated ? `SELECT * FROM ${table} WHERE updated > '${toUpdated}'` : `SELECT * FROM ${table}`;
       const [ rows ] = await fromConn.query(sql);
       Terminal.log(`Tenim ${chalk.green((rows as any[]).length)} canvis a ${chalk.yellow(table)} des de ${chalk.green(toUpdated)}`);
       // Actualitzem els canvis a cada customer.
       for (const customer of toCustomers) {
-        const conn = await this.getPersistentConnecion(customer, toEnv);
+        const conn = await this.getPersistentConnection(customer, toEnv);
         for (const row of (rows as any[])) { 
           await syncRow(conn, table, row);
         }
@@ -252,7 +256,7 @@ export class AppTools {
 
   /** Obté la data d'auditoria (camp `updated`) de l'actualització més recent. */
   async getCustomerTableLastUpdate(customer: string, env: string, table: string): Promise<string> {
-    const conn = await this.getConnecion(customer, env);
+    const conn = await this.getConnection(customer, env);
     const date = await getTableLastUpdate(conn, table);
     if (!date || date === 'Invalid date' || !moment(date).isValid()) {
       const [rows] = await conn.query(`SELECT updated FROM ${table} ORDER BY updated DESC LIMIT 1`);

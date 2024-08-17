@@ -24,6 +24,9 @@ class AppApiClient extends node_api_client_1.ApiClient {
         super();
         this.options = options;
     }
+    get httpServer() { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.httpServer; }
+    get apiBaseUrl() { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.apiBaseUrl; }
+    get apiIdUser() { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.apiIdUser; }
     baseUrl() { return this.options.apiBaseUrl; }
     getAuthHeaders(method, endpoint, params) {
         return __awaiter(this, void 0, void 0, function* () {

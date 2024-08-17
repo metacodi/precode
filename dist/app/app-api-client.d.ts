@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /// <reference types="node" />
-import { Server as HttpServer } from 'http';
+import { Server as HttpServer, IncomingMessage, ServerResponse } from 'http';
 import ts from 'typescript';
 import { ApiClient, ApiClientOptions, ApiRequestOptions, HttpMethod } from '@metacodi/node-api-client';
 import { ResourceType } from '@metacodi/node-utils';
@@ -14,6 +14,9 @@ export interface AppApiOptions extends ApiClientOptions {
 export declare class AppApiClient extends ApiClient {
     options: AppApiOptions;
     constructor(options: AppApiOptions);
+    get httpServer(): HttpServer<typeof IncomingMessage, typeof ServerResponse>;
+    get apiBaseUrl(): string;
+    get apiIdUser(): number;
     baseUrl(): string;
     protected getAuthHeaders(method: HttpMethod, endpoint: string, params: any): Promise<{
         Authorization: string;

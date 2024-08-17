@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Server as HttpServer, request as httpRequest } from 'http';
+import { Server as HttpServer, IncomingMessage, ServerResponse, request as httpRequest } from 'http';
 import ts from 'typescript';
 import chalk from 'chalk';
 
@@ -23,6 +23,17 @@ export class AppApiClient extends ApiClient {
   ) {
     super();
   }
+
+  // ---------------------------------------------------------------------------------------------------
+  //  options exposed
+  // ---------------------------------------------------------------------------------------------------
+
+  get httpServer(): HttpServer<typeof IncomingMessage, typeof ServerResponse> { return this.options?.httpServer; }
+
+  get apiBaseUrl(): string { return this.options?.apiBaseUrl; }
+
+  get apiIdUser(): number { return this.options?.apiIdUser; }
+
 
   // ---------------------------------------------------------------------------------------------------
   //  ApiClient implementation

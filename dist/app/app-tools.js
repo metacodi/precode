@@ -50,6 +50,7 @@ class AppTools {
             options.apps = options.apps.slice(1);
         }
     }
+    get api() { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.api; }
     get apps() { var _a; return ((_a = this.options) === null || _a === void 0 ? void 0 : _a.apps) || ''; }
     get dataIdentifier() { var _a; return ((_a = this.options) === null || _a === void 0 ? void 0 : _a.dataIdentifier) || 'data'; }
     get frontendFolder() { var _a; return ((_a = this.options) === null || _a === void 0 ? void 0 : _a.frontendFolder) || ''; }

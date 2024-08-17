@@ -2,14 +2,17 @@ import { FtpClient } from "@metacodi/node-utils";
 import * as mysql from 'mysql2';
 import { PoolConnection, Pool } from 'mysql2/promise';
 import { PrimitiveType, TypescriptParser } from "../parsers/typescript-parser";
+import { AppApiClient } from "./app-api-client";
 export interface AppToolsOptions {
     apps: string;
     dataIdentifier?: string;
     frontendFolder: string;
+    api?: AppApiClient;
 }
 export declare class AppTools {
     options: AppToolsOptions;
     constructor(options: AppToolsOptions);
+    get api(): AppApiClient;
     get apps(): string;
     get dataIdentifier(): string;
     get frontendFolder(): string;
