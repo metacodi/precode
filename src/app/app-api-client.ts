@@ -260,12 +260,10 @@ export class AppApiClient extends ApiClient {
     , { parent: entity.initializer, recursive: false, firstOnly: true }) as ts.PropertyAssignment;
     const fieldsValue = fieldsProperty ? parser.getPropertyValue(fieldsProperty) : undefined;
     const fields = Array.isArray(fieldsValue) ? fieldsValue.join(',') : fieldsValue || '';
-    const paramsProperty = parser.find((node: ts.Node | ts.Statement) => 
-      node.kind === ts.SyntaxKind.PropertyAssignment && ((node as ts.PropertyAssignment).name as any).text === 'params' && (node as ts.PropertyAssignment).initializer.kind !== ts.SyntaxKind.ArrowFunction
-    , { parent: entity.initializer, recursive: false, firstOnly: true }) as ts.PropertyAssignment;
+    const paramsFilter = (node: ts.Node | ts.Statement) => node.kind === ts.SyntaxKind.PropertyAssignment && ((node as ts.PropertyAssignment).name as any).text === 'params' && (node as ts.PropertyAssignment).initializer.kind !== ts.SyntaxKind.ArrowFunction
+    const paramsProperty = parser.find(paramsFilter, { parent: entity.initializer, recursive: false, firstOnly: true }) as ts.PropertyAssignment;
     const paramsValue = paramsProperty ? parser.getPropertyValue(paramsProperty) : undefined;
-    const params = Array.isArray(paramsValue) ? `&${paramsValue.join('&')}` : '';
-  
+    const params = typeof paramsProperty === 'string' ? `&${paramsValue}` : (Array.isArray(paramsValue) ? `&${paramsValue.join('&')}` : '');  
     return { fields, relations, params }
   };
   

@@ -53,7 +53,7 @@ class AppTools {
     get api() { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.api; }
     get apps() { var _a; return ((_a = this.options) === null || _a === void 0 ? void 0 : _a.apps) || ''; }
     get dataIdentifier() { var _a; return ((_a = this.options) === null || _a === void 0 ? void 0 : _a.dataIdentifier) || 'data'; }
-    get frontendFolder() { var _a; return ((_a = this.options) === null || _a === void 0 ? void 0 : _a.frontendFolder) || ''; }
+    get frontendFolder() { var _a; return ((_a = this.options) === null || _a === void 0 ? void 0 : _a.frontendFolder) || 'frontend'; }
     getCustomerData(customer) {
         const { apps, dataIdentifier } = this;
         const parser = new typescript_parser_1.TypescriptParser(`${apps}/customers/${customer}/data.ts`);
@@ -131,9 +131,9 @@ class AppTools {
             return changes;
         });
     }
-    getPersistentConnecion(customer, env) {
+    getPersistentConnection(customer, env) {
         return __awaiter(this, void 0, void 0, function* () {
-            const pool = yield this.getConnecion(customer, env);
+            const pool = yield this.getConnection(customer, env);
             if (!pool) {
                 return undefined;
             }
@@ -141,7 +141,7 @@ class AppTools {
             return conn;
         });
     }
-    getConnecion(customer, env) {
+    getConnection(customer, env) {
         return new Promise((resolve, reject) => {
             const poolKey = `${customer}-${env}`;
             if (!this.pools[poolKey]) {
@@ -177,7 +177,7 @@ class AppTools {
             const customers = options.customers === undefined ? this.getAllCustomers() : options.customers;
             const verbose = options.verbose === undefined ? promptOptions.verbose : options.verbose;
             for (const customer of customers) {
-                const conn = yield this.getPersistentConnecion(customer, env);
+                const conn = yield this.getPersistentConnection(customer, env);
                 if (conn) {
                     if (verbose) {
                         node_utils_1.Terminal.log(`Connected to ${chalk_1.default.bold(`${customer}`)} db`);
@@ -212,12 +212,12 @@ class AppTools {
                 node_utils_1.Terminal.log('changes:', { fromUpdated, toUpdated });
             }
             if (!toUpdated || fromUpdated > toUpdated) {
-                const fromConn = yield this.getConnecion('demo', fromEnv);
+                const fromConn = yield this.getConnection('demo', fromEnv);
                 const sql = toUpdated ? `SELECT * FROM ${table} WHERE updated > '${toUpdated}'` : `SELECT * FROM ${table}`;
                 const [rows] = yield fromConn.query(sql);
                 node_utils_1.Terminal.log(`Tenim ${chalk_1.default.green(rows.length)} canvis a ${chalk_1.default.yellow(table)} des de ${chalk_1.default.green(toUpdated)}`);
                 for (const customer of toCustomers) {
-                    const conn = yield this.getPersistentConnecion(customer, toEnv);
+                    const conn = yield this.getPersistentConnection(customer, toEnv);
                     for (const row of rows) {
                         yield (0, node_utils_1.syncRow)(conn, table, row);
                     }
@@ -233,7 +233,7 @@ class AppTools {
     }
     getCustomerTableLastUpdate(customer, env, table) {
         return __awaiter(this, void 0, void 0, function* () {
-            const conn = yield this.getConnecion(customer, env);
+            const conn = yield this.getConnection(customer, env);
             const date = yield (0, node_utils_1.getTableLastUpdate)(conn, table);
             if (!date || date === 'Invalid date' || !(0, moment_1.default)(date).isValid()) {
                 const [rows] = yield conn.query(`SELECT updated FROM ${table} ORDER BY updated DESC LIMIT 1`);

@@ -13,17 +13,15 @@ import Prompt from 'commander';
 
 import { Terminal } from '@metacodi/node-utils';
 
-// import { PhpProject } from '../../src/projects/php-project';
-import { XmlParser } from '../../src/parsers/xml-parser';
-// import { PhpParser } from '../../src/parsers/php-parser';
 import { CodeProject } from '../../src';
+import { XmlParser } from '../../src/parsers/xml-parser';
 
 
 // --------------------------------------------------------------------------------
 //  Arguments
 // --------------------------------------------------------------------------------
 
-Prompt
+Prompt.program
   .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
   // .requiredOption('-f, --file <file>', 'Arxiu de codi.')
   // .option('-d, --directory <dir>', 'Carpeta del projecte.')
@@ -31,35 +29,24 @@ Prompt
   .option('-s, --system <system>', 'Sistema operativo: windows | linux')
   .option('-v, --verbose', 'Log verbose')
   ;
-Prompt.parse(process.argv);
+Prompt.program.parse(process.argv);
 
+const promptOpts = Prompt.program.opts();
+  
 console.clear();
 
 Terminal.title('Test Parsers', { color: 'magenta' });
 
-if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
 
 
 // --------------------------------------------------------------------------------
 //  Test Parsers
 // --------------------------------------------------------------------------------
 
-const project = new CodeProject(Prompt.directory);
+const project = new CodeProject(promptOpts.directory);
 
 project.initialize().then(async () => {
-
-  // // --------------------------------------------------------------------------------
-  // //  PHP Parser
-  // // --------------------------------------------------------------------------------
-
-  // Terminal.title('PHP Parser');
-
-  // // // const program = project.getSourceFile(project.rootPath('api.php'));
-  // const program = PhpParser.parse(project.rootPath('api.php'));
-  // // console.log('program =', (program as any));
-  // const classe = project.findClassDeclaration('api', program);
-  // if (classe !== undefined) { console.log('classe =', (classe as any).name.name); }
-
 
   // --------------------------------------------------------------------------------
   //  Xml Parser

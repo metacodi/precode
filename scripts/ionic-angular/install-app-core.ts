@@ -11,10 +11,7 @@
  * -------------------------------------------------------------------------------- */
 
 import chalk from 'chalk';
-import path from 'path';
 import Prompt from 'commander';
-import * as fs from 'fs';
-import * as ts from 'typescript';
 
 import { Terminal } from '@metacodi/node-utils';
 
@@ -26,37 +23,38 @@ import { IonicAngularProject } from '../../src/projects/ionic-angular-project';
 //  Arguments
 // --------------------------------------------------------------------------------
 
-Prompt
+Prompt.program
 .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
 // .requiredOption('-f, --file <file>', 'Arxiu de codi.')
-  // .option('-d, --directory <dir>', 'Carpeta del projecte.')
-  .option('-t, --test', 'Només realitzar el test')
-  .option('-f, --file <file>', 'Arxiu de codi.')
-  .option('-s, --system <system>', 'Sistema operativo: windows | linux')
-  .option('-v, --verbose', 'Log verbose')
-  ;
-Prompt.parse(process.argv);
+.option('-t, --test', 'Només realitzar el test')
+.option('-f, --file <file>', 'Arxiu de codi.')
+.option('-s, --system <system>', 'Sistema operativo: windows | linux')
+.option('-v, --verbose', 'Log verbose')
+;
+Prompt.program.parse(process.argv);
+
+const promptOpts = Prompt.program.opts();
 
 console.clear();
 
 Terminal.title('Install Ionic Angular App Core', { color: 'magenta' });
 
-if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
 
-Terminal.verboseEnabled = Prompt.verbose || false;
+Terminal.verboseEnabled = promptOpts.verbose || false;
 
 // --------------------------------------------------------------------------------
 //  Install Ionic Angular App Core
 // --------------------------------------------------------------------------------
 
-const project = new IonicAngularProject(Prompt.directory || __dirname);
+const project = new IonicAngularProject(promptOpts.directory || __dirname);
 
 project.initialize().then(async () => {
 
   await IonicAngularAppCore.deploy(project, {
-    onlyTest: Prompt.hasOwnProperty('Test'),
+    onlyTest: promptOpts.hasOwnProperty('Test'),
     resolveOnFail: false,
-    verbose: Prompt.verbose || false
+    verbose: promptOpts.verbose || false
   });
 
   Terminal.line();

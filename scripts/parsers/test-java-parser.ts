@@ -8,13 +8,11 @@
  *
  * -------------------------------------------------------------------------------- */
 
-import chalk from 'chalk'; // const chalk = require('chalk');
+import chalk from 'chalk';
 import Prompt from 'commander';
-import * as fs from 'fs';
 
-import { Terminal } from '../../src/utils/terminal';
+import { Terminal } from '@metacodi/node-utils';
 
-import { CodeProject } from '../../src';
 import { JavaParser } from '../../src/parsers/java-parser';
 
 
@@ -22,7 +20,7 @@ import { JavaParser } from '../../src/parsers/java-parser';
 //  Arguments
 // --------------------------------------------------------------------------------
 
-Prompt
+Prompt.program
   // .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
   // .requiredOption('-f, --file <file>', 'Arxiu de codi.')
   // .option('-d, --directory <dir>', 'Carpeta del projecte.')
@@ -30,13 +28,13 @@ Prompt
   .option('-s, --system <system>', 'Sistema operativo: windows | linux')
   .option('-v, --verbose', 'Log verbose')
   ;
-Prompt.parse(process.argv);
+Prompt.program.parse(process.argv);
 
-console.clear();
+const promptOpts = Prompt.program.opts();
 
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
+  
 Terminal.title('Test Parsers', { color: 'magenta' });
-
-if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
 
 
 // --------------------------------------------------------------------------------

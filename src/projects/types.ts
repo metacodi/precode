@@ -117,6 +117,16 @@ export interface FileOptions {
   appendRatherThanOverwrite?: boolean;
 }
 
+/**
+ * 
+ * ```typescript
+ * export interface FolderOptions {
+ *   action?: EditActionType;
+ * }
+ * export type EditActionType = 'add' | 'remove';
+ * ```
+ * 
+ */
 export interface FolderOptions {
   action?: EditActionType;
 }
@@ -127,6 +137,17 @@ export interface CloneOptions {
   removePreviousFolder?: boolean;
 }
 
+/**
+ * ```typescript
+ * export interface CurlOptions {
+ *   method?: string;
+ *   headers?: { [key: string]: string };
+ *   url: string;
+ *   to: string;
+ *   token?: string;
+ * }
+ * ```
+ */
 export interface CurlOptions {
   method?: string;
   headers?: { [key: string]: string };

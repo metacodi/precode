@@ -69,13 +69,15 @@ Per facilitar l'ús dels arguments podem importar la classe `Prompt` del package
 
 import Prompt from 'commander';
 
-Prompt
+Prompt.program
   .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
   .option('-v, --verbose', 'Log verbose')
   ;
-Prompt.parse(process.argv);
+Prompt.program.parse(process.argv);
 
-if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
+const promptOpts = Prompt.program.opts();
+
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
 ```
 
 
@@ -141,13 +143,15 @@ import { TypescriptProject, Terminal, Resource, Git } from '@metacodi/precode';
 
 Terminal.title('PUBLISH');
 
-Prompt
+Prompt.program
   // .requiredOption('-n, --name <name>', 'Nom del component.')
   .option('-v, --verbose', 'Log verbose')
   ;
-Prompt.parse(process.argv);
+Prompt.program.parse(process.argv);
 
-if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
+const promptOpts = Prompt.program.opts();
+
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
 
 Prompt.folder = Resource.normalize((Prompt.folder || process.cwd()));
 

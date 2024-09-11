@@ -229,9 +229,10 @@ class AppApiClient extends node_api_client_1.ApiClient {
         const fieldsProperty = parser.find((node) => node.kind === typescript_1.default.SyntaxKind.PropertyAssignment && node.name.text === 'fields', { parent: entity.initializer, recursive: false, firstOnly: true });
         const fieldsValue = fieldsProperty ? parser.getPropertyValue(fieldsProperty) : undefined;
         const fields = Array.isArray(fieldsValue) ? fieldsValue.join(',') : fieldsValue || '';
-        const paramsProperty = parser.find((node) => node.kind === typescript_1.default.SyntaxKind.PropertyAssignment && node.name.text === 'params' && node.initializer.kind !== typescript_1.default.SyntaxKind.ArrowFunction, { parent: entity.initializer, recursive: false, firstOnly: true });
+        const paramsFilter = (node) => node.kind === typescript_1.default.SyntaxKind.PropertyAssignment && node.name.text === 'params' && node.initializer.kind !== typescript_1.default.SyntaxKind.ArrowFunction;
+        const paramsProperty = parser.find(paramsFilter, { parent: entity.initializer, recursive: false, firstOnly: true });
         const paramsValue = paramsProperty ? parser.getPropertyValue(paramsProperty) : undefined;
-        const params = Array.isArray(paramsValue) ? `&${paramsValue.join('&')}` : '';
+        const params = typeof paramsProperty === 'string' ? `&${paramsValue}` : (Array.isArray(paramsValue) ? `&${paramsValue.join('&')}` : '');
         return { fields, relations, params };
     }
     ;

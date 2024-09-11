@@ -23,7 +23,7 @@ import { TypescriptParser } from '../../src/parsers/typescript-parser';
 //  Arguments
 // --------------------------------------------------------------------------------
 
-Prompt
+Prompt.program
   .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
   // .requiredOption('-f, --file <file>', 'Arxiu de codi.')
   // .option('-d, --directory <dir>', 'Carpeta del projecte.')
@@ -31,20 +31,22 @@ Prompt
   .option('-s, --system <system>', 'Sistema operativo: windows | linux')
   .option('-v, --verbose', 'Log verbose')
   ;
-Prompt.parse(process.argv);
+Prompt.program.parse(process.argv);
+
+const promptOpts = Prompt.program.opts();
 
 console.clear();
 
 Terminal.title('Test Parsers', { color: 'magenta' });
 
-if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
 
 
 // --------------------------------------------------------------------------------
 //  Test Parsers
 // --------------------------------------------------------------------------------
 
-const capacitorConfigElectronPath = Prompt.directory;
+const capacitorConfigElectronPath = promptOpts.directory;
 const parser = new TypescriptParser(capacitorConfigElectronPath);
 // const propertyKeyboard = parser.resolvePropertyPath('config.plugins.Keyboard');
 // const propertyIos = parser.resolvePropertyPath('config.ios');

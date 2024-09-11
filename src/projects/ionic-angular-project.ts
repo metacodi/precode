@@ -37,9 +37,6 @@ export class IonicAngularProject extends AngularProject {
   //  content
   // --------------------------------------------------------------------------------
 
-
-
-
   /** Comprova si la carpeta indicada és l'arrel d'un projecte d'aquest tipus. */
   static isProjectFolder(folder: string): boolean {
     // Obtenim el contingut de la carpeta arrel del projecte.

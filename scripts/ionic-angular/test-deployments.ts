@@ -12,10 +12,8 @@
 
 import chalk from 'chalk'; // const chalk = require('chalk');
 import Prompt from 'commander';
-import * as fs from 'fs';
-import * as ts from 'typescript';
 
-import { Terminal } from '../../src/utils/terminal';
+import { Terminal } from '@metacodi/node-utils';
 
 import { AngularProject } from '../../src/projects/angular-project';
 import { I18n } from '../../src/deployments/angular/i18n';
@@ -25,28 +23,28 @@ import { I18n } from '../../src/deployments/angular/i18n';
 //  Arguments
 // --------------------------------------------------------------------------------
 
-Prompt
+Prompt.program
 .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
-// .requiredOption('-f, --file <file>', 'Arxiu de codi.')
-  // .option('-d, --directory <dir>', 'Carpeta del projecte.')
   .option('-f, --file <file>', 'Arxiu de codi.')
   .option('-s, --system <system>', 'Sistema operativo: windows | linux')
   .option('-v, --verbose', 'Log verbose')
-  ;
-Prompt.parse(process.argv);
+;
+Prompt.program.parse(process.argv);
 
+const promptOpts = Prompt.program.opts();
+
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
+  
 console.clear();
 
 Terminal.title('Test Deployments', { color: 'magenta' });
-
-if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
 
 
 // --------------------------------------------------------------------------------
 //  Test Deployments
 // --------------------------------------------------------------------------------
 
-const project = new AngularProject(Prompt.directory || __dirname);
+const project = new AngularProject(promptOpts.directory || __dirname);
 
 project.initialize().then(async () => {
 
@@ -69,7 +67,7 @@ project.initialize().then(async () => {
   //   Terminal.line();
   // });
 
-  const options = { onlyTest: true, resolveOnFail: false, verbose: Prompt.verbose || false };
+  const options = { onlyTest: true, resolveOnFail: false, verbose: promptOpts.verbose || false };
   const i18n = new I18n();
   Terminal.title(`Test ${i18n.title}`);
   await i18n.deploy(project, options);

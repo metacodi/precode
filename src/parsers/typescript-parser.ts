@@ -100,6 +100,16 @@ export class TypescriptParser {
     return results;
   }
 
+  static getNodes(parent: ts.Node): ts.Node[] {
+    if (parent.kind === ts.SyntaxKind.SourceFile) { return (parent as ts.SourceFile).statements.map(v => v); }
+    const nodes: ts.Node[] = [];
+    parent.forEachChild(node => {
+      // console.log('child =>', node);
+      nodes.push(node);
+    });
+    return nodes;
+  }
+
   constructor(
     public fullName: string,
     content?: string,
@@ -113,6 +123,16 @@ export class TypescriptParser {
       // console.log('contingut =>', this.content);
     }
     this.source = ts.createSourceFile(fullName, this.content, ts.ScriptTarget.Latest);
+  }
+
+  
+  // --------------------------------------------------------------------------------
+  //  save
+  // --------------------------------------------------------------------------------
+
+  save() {
+    this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
+    fs.writeFileSync(Resource.normalize(this.fullName), this.content);
   }
 
   
@@ -259,6 +279,11 @@ export class TypescriptParser {
     return true;
   }
 
+
+  // --------------------------------------------------------------------------------
+  //  find & replace
+  // --------------------------------------------------------------------------------
+
   /** Cerca recursivament els nodes de l'arbre AST per trobar la declaració d'una classe (`ts.ClassDeclaration`) que coincideixi amb el nom indicat. 
    * 
    * ```typescript
@@ -267,7 +292,7 @@ export class TypescriptParser {
    * ```
    */
   findClassDeclaration(name: string, parent?: ts.Node): ts.ClassDeclaration {
-    const nodes = this.getNodes(parent || this.source);
+    const nodes = TypescriptParser.getNodes(parent || this.source);
     const found = TypescriptParser.find(nodes, (node: ts.Node): boolean =>
       (node.kind === ts.SyntaxKind.ClassDeclaration && (node as ts.ClassDeclaration).name.text === name)
     );
@@ -288,7 +313,7 @@ export class TypescriptParser {
       (node.kind === ts.SyntaxKind.FirstLiteralToken && (node as ts.LiteralToken).text === name)
     ;
     // console.log(indent + 'findIdentifier =>', { parent: this.syntaxKindToName(parent?.kind) });
-    const nodes = this.getNodes(parent || this.source);
+    const nodes = TypescriptParser.getNodes(parent || this.source);
     for (const node of nodes) {
       // Tornem el seu pare, pq el node identificador no té referència al seu pare.
       if (hasIdentifier(name, node, indent)) { return parent; }
@@ -308,7 +333,7 @@ export class TypescriptParser {
    * ```
    */
   find(filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean, parent?: ts.Node }): ts.Node {
-    const nodes = this.getNodes(options?.parent || this.source);
+    const nodes = TypescriptParser.getNodes(options?.parent || this.source);
     return TypescriptParser.find(nodes, filter, options);
   }
 
@@ -323,19 +348,14 @@ export class TypescriptParser {
    * ```
    */
   filter(filter: ts.SyntaxKind | ts.SyntaxKind[] | ((node: ts.Node | ts.Statement) => boolean), options?: { recursive?: boolean, firstOnly?: boolean, parent?: ts.Node }): ts.Node[] {
-    const nodes = this.getNodes(options?.parent || this.source);
+    const nodes = TypescriptParser.getNodes(options?.parent || this.source);
     return TypescriptParser.filter(nodes, filter, options);
   }
 
-  getNodes(parent: ts.Node): ts.Node[] {
-    if (parent.kind === ts.SyntaxKind.SourceFile) { return (parent as ts.SourceFile).statements.map(v => v); }
-    const nodes: ts.Node[] = [];
-    parent.forEachChild(node => {
-      // console.log('child =>', node);
-      nodes.push(node);
-    });
-    return nodes;
-  }
+
+  // --------------------------------------------------------------------------------
+  //  nodes
+  // --------------------------------------------------------------------------------
 
   /** Insereix un text abans del node indicat.
    * 
@@ -362,10 +382,5 @@ export class TypescriptParser {
    * ```
    */
   insertAfter(node: ts.Node, text: string) { this.replacements.push({ start: (node?.end || 0) + 1, end: (node?.end || 0) + 1, text }); }
-
-  save() {
-    this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
-    fs.writeFileSync(Resource.normalize(this.fullName), this.content);
-  }
 
 }

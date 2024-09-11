@@ -38,8 +38,8 @@ export declare class AppTools {
     pools: {
         [customer_env: string]: mysql.Pool;
     };
-    getPersistentConnecion(customer: string, env: string): Promise<PoolConnection>;
-    getConnecion(customer: string, env: string): Promise<Pool>;
+    getPersistentConnection(customer: string, env: string): Promise<PoolConnection>;
+    getConnection(customer: string, env: string): Promise<Pool>;
     closeConnections(): void;
     executeQueries(queries: string[], env: string, options?: {
         customers?: string[];

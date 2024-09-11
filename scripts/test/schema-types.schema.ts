@@ -43,6 +43,7 @@ export const TransaccionesSchema: EntitySchema = {
       'entidad[cuentaDestino.idEntidad=entidad.idreg]',
       'divisa[cuentaDestino.idDivisa=divisas.idreg]',
     ],
+    params: ['idFlota=1'],
     mapSchema: schema => {
       // ---------------------------------------------------------------------------------------------
       // WORK-AROUND: rectifiquem l'àlies pel compte de la transacció que hem hagut d'utilitzar per diferenciar-lo dels comptes d'origen i destí de l'operació.
@@ -53,6 +54,7 @@ export const TransaccionesSchema: EntitySchema = {
     },
   },
   list: {
+    params: ['idFlota=1'],
     mapSchema: schema => {
       schema.fields.push({ Field: 'diaFecha', Type: 'varchar' });
       schema.fields.push({ Field: 'diaFechaValor', Type: 'varchar' });

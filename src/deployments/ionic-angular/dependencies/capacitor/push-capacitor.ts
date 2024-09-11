@@ -29,7 +29,7 @@ export class PushCapacitor extends TypescriptDeployment {
       if (!project) { project = this.project; }
       if (!data) { data = this.data; }
 
-      if (data && data.showTitle) { Terminal.title(this.title); }
+      if (data?.showTitle) { Terminal.title(this.title); }
 
       const tasks: any[] = [
 
@@ -46,7 +46,7 @@ export class PushCapacitor extends TypescriptDeployment {
 
       // TODO: app-core ? check core/plugins/push.ts, constructor, notifications.service
 
-      if (data && data.showTitle) { Terminal.line(); }
+      if (data?.showTitle) { Terminal.line(); }
 
       resolve(await this.run(tasks, project, options));
     });

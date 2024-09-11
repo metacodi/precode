@@ -214,7 +214,7 @@ class CodeProject {
             if (node_utils_1.Resource.exists(fullName)) {
                 if (options.action === 'remove') {
                     node_utils_1.Terminal.success(`  Eliminant la carpeta '${node_utils_1.Terminal.file(folderName)}'.`);
-                    const command = process.platform === 'win32' ? `rmdir /S /Q "${fullName}"` : `rm -Rf ${fullName}`;
+                    const command = process.platform === 'win32' ? `rmdir /Q /S "${fullName}"` : `rm -Rf ${fullName}`;
                     return yield this.execute(command);
                 }
                 else {

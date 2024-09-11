@@ -1,4 +1,8 @@
 import fs from 'fs';
+import chalk from 'chalk';
+
+import { Terminal } from '@metacodi/node-utils';
+
 import { Engine, Program, Node } from 'php-parser';
 
 
@@ -52,4 +56,12 @@ export class PhpParser {
     }
     return results;
   }
+ 
+  /** Atraviesa el AST en busca de un nodo con la declaración de la clase indicada. */
+  static findClassDeclaration(name: string, source: any, throwError = true): Node {
+    const classe = PhpParser.find(source, (node: Node): boolean => node.kind === 'class' && (node as any).name && (node as any).name.name === name);
+    if (!classe && throwError) { Terminal.error(`No s'ha trobat la classe '${chalk.bold(name)}'.`, false); return undefined; }
+    return classe;
+  }
+
 }

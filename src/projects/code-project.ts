@@ -78,6 +78,44 @@ export class CodeProject {
   /** Referència a la connexió mysql oberta. */
   connection: mysql.Connection | mysql.PoolConnection;
 
+  
+  /**
+   * Executa una ordre curl.
+   *
+   * ```typescript
+   * await CodeProject.curl({
+   *   method: 'GET',
+   *   headers: { 'PRIVATE-TOKEN': project.config.git.token },
+   *   url: `${project.config.git.url}/tools/app-core`,
+   *   to: 'src/app/core',
+   * });
+   * ```
+   *
+   * La crida anterior executaria una ordre com la següent:
+   * ```bash
+   * curl -sb --request GET --header 'PRIVATE-TOKEN: {{TOKEN}}' https://gitlab.codi.ovh/tools/app-core src/app/core
+   * ```
+   * @param options Parametrización del comando curl.
+   * @category Command
+   */
+  static async curl(options: CurlOptions): Promise<string> {
+    if (!options) { options = {} as any; }
+    if (options.headers === undefined) { options.headers = [] as any; }
+    const token = options.token || '';
+
+    // curl -sb --request GET --header 'PRIVATE-TOKEN: $GITLAB_PRIVATE_TOKEN' https://gitlab.codi.ovh/tools/app-core src/app/core
+    const method = options.method || 'GET';
+    //// Ex: headers: [{ name: 'PRIVATE-TOKEN', value: project.config.git.token }]
+    // const headers = options.headers.map((h: PropertyValue) => `--header '${h.name}: ${h.value}'`).join(' ') || '';
+    // Ex: headers: { 'PRIVATE-TOKEN': project.config.git.token }
+    const headers = Object.keys(options.headers).map(prop => `--header '${prop}: ${options.headers[prop]}'`).join(' ') || '';
+    const url = options.url || '';
+    const to = options.to || '';
+    const command = `curl -sb --request ${method} ${headers} ${url} ${to}`.trim();
+    Terminal.log(`Curl ${method} '${Terminal.file(url.replace(`--header 'PRIVATE-TOKEN: ${token}`, ''))}'...`);
+    return await CodeProject.execute(command);
+  }
+
   /** Executa una ordre directament al terminal tenint cura dels estàndars d'entrada i de sortida alhora de mostrar els resultats.
    * @category Command
    */
@@ -413,7 +451,7 @@ export class CodeProject {
     if (Resource.exists(fullName)) {
       if (options.action === 'remove') {
         Terminal.success(`  Eliminant la carpeta '${Terminal.file(folderName)}'.`);
-        const command = process.platform === 'win32' ? `rmdir /S /Q "${fullName}"` : `rm -Rf ${fullName}`;
+        const command = process.platform === 'win32' ? `rmdir /Q /S "${fullName}"` : `rm -Rf ${fullName}`;
         return await this.execute(command);
 
       } else {
@@ -493,20 +531,9 @@ export class CodeProject {
    * @category Command
    */
   async curl(options: CurlOptions): Promise<string> {
-    if (options.headers === undefined) { options.headers = [] as any; }
-    const token = options.token || '';
-
-    // curl -sb --request GET --header 'PRIVATE-TOKEN: $GITLAB_PRIVATE_TOKEN' https://gitlab.codi.ovh/tools/app-core src/app/core
-    const method = options.method || 'GET';
-    //// Ex: headers: [{ name: 'PRIVATE-TOKEN', value: project.config.git.token }]
-    // const headers = options.headers.map((h: PropertyValue) => `--header '${h.name}: ${h.value}'`).join(' ') || '';
-    // Ex: headers: { 'PRIVATE-TOKEN': project.config.git.token }
-    const headers = Object.keys(options.headers).map(prop => `--header '${prop}: ${options.headers[prop]}'`).join(' ') || '';
-    const url = options.url || '';
-    const to = this.rootPath(options.to);
-    const command = `curl -sb --request ${method} ${headers} ${url} ${to}`;
-    Terminal.log(`Curl ${method} '${Terminal.file(url.replace(`--header 'PRIVATE-TOKEN: ${token}`, ''))}'...`);
-    return await this.execute(command);
+    if (!options) { options = {} as any; }
+    if (options.to) { options.to = this.rootPath(options.to); }
+    return await CodeProject.curl(options);
   }
 
   /**

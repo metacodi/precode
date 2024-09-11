@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import ts, { updateImportEqualsDeclaration } from 'typescript';
-import chalk from 'chalk';
 /// <reference types="node" />
+import ts from 'typescript';
+import chalk from 'chalk';
 
 /**
  * **Usage**
@@ -21,24 +21,27 @@ import chalk from 'chalk';
  */
 
 import Prompt from 'commander';
+
+import { Resource, Terminal } from '@metacodi/node-utils';
+
 import { TypescriptParser } from '../../src/parsers/typescript-parser';
 import { IonicAngularProject } from '../../src/projects/ionic-angular-project';
-import { Terminal } from '../../src/utils/terminal';
-import { Resource } from '../../src/utils/resource';
 
-Prompt
+Prompt.program
   .requiredOption('-f, --file <permissions file>', 'Ruta absoluta a l\'arxiu de definició dels permissos.')
   .requiredOption('-s, --server <ftp server>', 'Servidor')
   .requiredOption('-d, --directory <ftp directory>', 'Directori del servidor')
   .requiredOption('-c, --credentials <credentials>', 'Credencials d\'usuari')
   .option('-v, --verbose', 'Log verbose')
   .option('-h, --ajuda', 'Ajuda')
-  ;
-Prompt.parse(process.argv);
+;
+Prompt.program.parse(process.argv);
 
-if (Prompt.verbose) { console.log('Arguments: ', Prompt.opts()); }
+const promptOpts = Prompt.program.opts();
 
-if (Prompt.ajuda) {
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
+
+if (promptOpts.ajuda) {
   console.clear();
 
   Terminal.title(' Ajuda');
@@ -56,27 +59,27 @@ if (Prompt.ajuda) {
 const bad = process.platform === 'win32' ? '/' : '\\\\';
 const sep = process.platform === 'win32' ? '\\' : '/';
 
-Prompt.file = Prompt.file.replace(new RegExp(bad, 'g'), sep);
+promptOpts.file = promptOpts.file.replace(new RegExp(bad, 'g'), sep);
 
-Terminal.log(chalk.bold('Parsing: '), Terminal.green(Prompt.file));
+Terminal.log(chalk.bold('Parsing: '), Terminal.green(promptOpts.file));
 
 // Trobem la carpeta del projecte ionic-angular.
-let directory: string = Prompt.file;
+let directory: string = promptOpts.file;
 do {
   const dir = directory.split(sep);
   dir.pop(); directory = dir.join(sep);
 } while (directory && !IonicAngularProject.isProjectFolder(directory));
 if (!directory) { Terminal.error(`No s'ha trobat la carpeta del projecte`); process.exit(1); }
 
-Terminal.log(chalk.bold('Parsing2: '), Terminal.green(Prompt.file));
+Terminal.log(chalk.bold('Parsing2: '), Terminal.green(promptOpts.file));
 
 // Creem una nova instància del projecte.
 const project = new IonicAngularProject(directory);
 project.initialize().then(async () => {
 
-  if (!Resource.isAccessible(Prompt.file)) { Terminal.error(`No s'ha trobat l'arxiu de permisos: '${Terminal.file(project.relativePath(Prompt.file))}'`); process.exit(1); }
+  if (!Resource.isAccessible(promptOpts.file)) { Terminal.error(`No s'ha trobat l'arxiu de permisos: '${Terminal.file(project.relativePath(promptOpts.file))}'`); process.exit(1); }
 
-  const sourceFile: ts.SourceFile = TypescriptParser.parse(Prompt.file);
+  const sourceFile: ts.SourceFile = TypescriptParser.parse(promptOpts.file);
 
   // Terminal.log(chalk.bold('source: '), Terminal.green(sourceFile.text));
 
@@ -99,7 +102,7 @@ project.initialize().then(async () => {
         project.file('permissions.json', { content: json }).then(() => {
           // Upload del JSON a api.
           const localFile = project.rootPath('permissions.json');
-          const command = `curl -T ${localFile} -u ${Prompt.credentials} ftp://${Prompt.server}/${Prompt.directory}/permissions.json`;
+          const command = `curl -T ${localFile} -u ${promptOpts.credentials} ftp://${promptOpts.server}/${promptOpts.directory}/permissions.json`;
           Terminal.log(Terminal.yellow(command));
           project.execute(command);
         });

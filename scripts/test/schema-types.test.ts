@@ -7,7 +7,7 @@ import { createServer } from 'http';
 
 import { Resource, ResourceType, Terminal } from '@metacodi/node-utils';
 
-import { AppApiClient } from '../../src/customers/app-api-client';
+import { AppApiClient } from '../../src/app/app-api-client';
 
 
 const app = express();

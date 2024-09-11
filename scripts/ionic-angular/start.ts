@@ -13,27 +13,30 @@ import chalk from 'chalk';
 import Prompt from 'commander';
 // import { RegularFileNode, DirectoryNode, FileNode } from "@ionic/utils-fs";
 
+import { Terminal } from '@metacodi/node-utils';
+
 import { CodeProject } from '../../src/projects/code-project';
 // import { CodeProjectConfig } from '../../code/code-project-types';
 import * as resource from './resources/resources';
 import fs from 'fs';
 import { TypescriptProject } from '../../src/projects/typescript-project';
-import { Terminal } from '../../src/utils/terminal';
 
 
 // --------------------------------------------------------------------------------
 //  Arguments
 // --------------------------------------------------------------------------------
 
-Prompt
+Prompt.program
   .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
   .option('-s, --system <system>', 'Sistema operativo: windows | linux')
   .option('-v, --verbose', 'Log verbose')
-  ;
-Prompt.parse(process.argv);
+;
+Prompt.program.parse(process.argv);
 
-if (Prompt.verbose) { console.log(chalk.bold('Arguments: ')); console.log(Prompt.opts()); }
+const promptOpts = Prompt.program.opts();
 
+if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
+  
 console.clear();
 
 
@@ -41,7 +44,7 @@ console.clear();
 //  Install
 // --------------------------------------------------------------------------------
 
-const project = new TypescriptProject(Prompt.directory);
+const project = new TypescriptProject(promptOpts.directory);
 
 project.initialize().then(async () => {
 
