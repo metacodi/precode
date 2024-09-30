@@ -1,8 +1,9 @@
 import { AngularProject } from './angular-project';
+import { IonicProjectOptions } from './types';
 export declare class IonicAngularProject extends AngularProject {
     ionic: any;
     static isProjectFolder(folder: string): boolean;
-    static createProject(folder?: string): void;
+    static createProject(folder?: string, options?: IonicProjectOptions): void;
     constructor(folder?: string);
     initialize(): Promise<boolean>;
     sanitizeEntity(entity: string): string;

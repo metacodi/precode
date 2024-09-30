@@ -57,4 +57,5 @@ var push_capacitor_1 = require("./deployments/ionic-angular/dependencies/capacit
 Object.defineProperty(exports, "PushCapacitor", { enumerable: true, get: function () { return push_capacitor_1.PushCapacitor; } });
 var text_replacer_1 = require("./utils/text-replacer");
 Object.defineProperty(exports, "TextReplacer", { enumerable: true, get: function () { return text_replacer_1.TextReplacer; } });
+__exportStar(require("./work-arounds/work-around"), exports);
 //# sourceMappingURL=index.js.map

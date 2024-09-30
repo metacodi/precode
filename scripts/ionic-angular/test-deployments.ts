@@ -24,7 +24,7 @@ import { I18n } from '../../src/deployments/angular/i18n';
 // --------------------------------------------------------------------------------
 
 Prompt.program
-.requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
+  .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
   .option('-f, --file <file>', 'Arxiu de codi.')
   .option('-s, --system <system>', 'Sistema operativo: windows | linux')
   .option('-v, --verbose', 'Log verbose')

@@ -22,4 +22,5 @@ export { I18n } from './deployments/angular/i18n';
 export { IonicAngularAppCore } from './deployments/ionic-angular/dependencies/ionic-angular-app-core';
 export { PushCapacitor } from './deployments/ionic-angular/dependencies/capacitor/push-capacitor';
 export { TextReplacer } from './utils/text-replacer';
+export * from './work-arounds/work-around';
 //# sourceMappingURL=index.d.ts.map

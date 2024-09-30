@@ -44,6 +44,24 @@ const child_process_1 = require("child_process");
 const mysql = __importStar(require("mysql2"));
 const node_utils_1 = require("@metacodi/node-utils");
 class CodeProject {
+    static curl(options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!options) {
+                options = {};
+            }
+            if (options.headers === undefined) {
+                options.headers = [];
+            }
+            const token = options.token || '';
+            const method = options.method || 'GET';
+            const headers = Object.keys(options.headers).map(prop => `--header '${prop}: ${options.headers[prop]}'`).join(' ') || '';
+            const url = options.url || '';
+            const to = options.to || '';
+            const command = `curl -sb --request ${method} ${headers} ${url} ${to}`.trim();
+            node_utils_1.Terminal.log(`Curl ${method} '${node_utils_1.Terminal.file(url.replace(`--header 'PRIVATE-TOKEN: ${token}`, ''))}'...`);
+            return yield CodeProject.execute(command);
+        });
+    }
     static execute(command) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
@@ -257,17 +275,13 @@ class CodeProject {
     }
     curl(options) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (options.headers === undefined) {
-                options.headers = [];
+            if (!options) {
+                options = {};
             }
-            const token = options.token || '';
-            const method = options.method || 'GET';
-            const headers = Object.keys(options.headers).map(prop => `--header '${prop}: ${options.headers[prop]}'`).join(' ') || '';
-            const url = options.url || '';
-            const to = this.rootPath(options.to);
-            const command = `curl -sb --request ${method} ${headers} ${url} ${to}`;
-            node_utils_1.Terminal.log(`Curl ${method} '${node_utils_1.Terminal.file(url.replace(`--header 'PRIVATE-TOKEN: ${token}`, ''))}'...`);
-            return yield this.execute(command);
+            if (options.to) {
+                options.to = this.rootPath(options.to);
+            }
+            return yield CodeProject.curl(options);
         });
     }
     move(fromPath, toPath) {

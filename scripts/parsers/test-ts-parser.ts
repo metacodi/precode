@@ -17,6 +17,7 @@ import { XmlParser } from '../../src/parsers/xml-parser';
 // import { PhpParser } from '../../src/parsers/php-parser';
 import { CodeProject } from '../../src/';
 import { TypescriptParser } from '../../src/parsers/typescript-parser';
+// import { CapacitorConfig } from '@capacitor/cli';
 
 
 // --------------------------------------------------------------------------------
@@ -48,12 +49,24 @@ if (promptOpts.verbose) { console.log('Arguments: ', promptOpts); }
 
 const capacitorConfigElectronPath = promptOpts.directory;
 const parser = new TypescriptParser(capacitorConfigElectronPath);
+
+// // Eliminar propietats amb funcions de baix nivell.
 // const propertyKeyboard = parser.resolvePropertyPath('config.plugins.Keyboard');
 // const propertyIos = parser.resolvePropertyPath('config.ios');
 // parser.replacements.push({ start: propertyKeyboard.pos + 1, end: propertyKeyboard.end, text: '' });
 // parser.replacements.push({ start: propertyIos.pos + 1, end: propertyIos.end, text: '' });
-parser.removeProperty('config.appId');
-parser.removeProperty('config.plugins.Keyboard');
-parser.removeProperty('config.ios');
-parser.save();
+// parser.save();
+
+// // Eliminar propietats amb funcions d'alt nivell.
+// parser.removeProperty('config.appId');
+// parser.removeProperty('config.plugins.Keyboard');
+// parser.removeProperty('config.ios');
+// parser.save();
+
+// Parsejar tot el valor d'un objecte.
+const config = parser.resolvePropertyPath(`config`);
+const data = parser.parsePropertyInitializer(config.initializer as any) as any;
+const obj = data; // data.plugins.SplashScreen;
+Object.keys(obj).map(key => console.log(`${Terminal.blue('const')} ${key}: ${Terminal.blue(typeof obj[key])} = ${JSON.stringify(obj[key])};`));
+
 

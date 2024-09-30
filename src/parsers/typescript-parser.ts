@@ -181,6 +181,8 @@ export class TypescriptParser {
       ts.SyntaxKind.RegularExpressionLiteral,
       ts.SyntaxKind.ArrayLiteralExpression,
       ts.SyntaxKind.ObjectLiteralExpression,
+      ts.SyntaxKind.PropertyAccessExpression, // Alignment.TopRight
+      ts.SyntaxKind.ElementAccessExpression,
     ];
     if (!valid.includes(kind)) { throw Error(`El valor de la propietat '${chalk.bold(propertyPathOrAssignment)}' no és una expressió substituïble.`); }
     const propValue = property.initializer as any as ts.LiteralLikeNode;
@@ -231,6 +233,12 @@ export class TypescriptParser {
         return new RegExp(pattern.slice(1, -1), flags);
       case ts.SyntaxKind.ArrayLiteralExpression: return this.parseArrayLiteralExpression(value as ts.ArrayLiteralExpression);
       case ts.SyntaxKind.ObjectLiteralExpression: return this.parseObjectLiteralExpression(value as ts.ObjectLiteralExpression);
+      /**
+       * // case ts.SyntaxKind.PropertyAccessExpression: return this.parsePropertyAccessExpression(value as ts.PropertyAccessExpression);  
+       * 
+       * NOTA: El problema és que un PropertyAccessExpression és en realitat una referència a un membre o propietat d'un objecte
+       * del qual, des de l'àmbit actual, no en tenim cap referència de la instància real.
+       */
       default: return value.getText();
     }
   }
@@ -255,7 +263,36 @@ export class TypescriptParser {
     return obj;
   }
 
-  resolvePropertyPath(propertyPath: string): ts.PropertyAssignment {
+  parsePropertyAccessExpression(value: ts.PropertyAccessExpression): any {
+
+    // NOTA: Aquesta funció no és un "parser" perquè donada l'expressió hauria de retornar una referència a
+    // la propietat de l'objecte real, però això no és possible des d'aquest àmbit pq no tenim accés a la instància.
+    // Actualment aquesta funció fa més d'"stringify" perquè està retornant el text de codi de l'expressió.
+
+    // NOTA: una property access es composa d'una expressió al davant i un identificador al darrera separats per un punt.
+    // L'expressió pot ser un identificador o bé una property access (dos o més identificadors separats per un punt)
+    // Ex: Position.TopRight, on Position seria una expressió de tipus identificador i TopRight el nom de l'identificador.
+    // Ex: Config.Alignment.Center, on Config.Alignment seria una expressió de tipus PropertyAccessExpression i Center el nom de l'identificador.
+
+    const parts = [];
+    // 1) Processem l'expressió
+    switch (value.expression.kind) {
+      case ts.SyntaxKind.Identifier:
+        // Ex: Position
+        parts.push((value.expression as ts.Identifier).text);
+        break;
+      case ts.SyntaxKind.PropertyAccessExpression:
+        // Ex: Config.Alignment
+        parts.push(this.parsePropertyAccessExpression(value.expression as ts.PropertyAccessExpression));
+        break;
+    }
+    // 2) Afegim el nom de l'identificador. Ex: TopRight | Center
+    parts.push(value.name.text);
+    // 3) Juntem les parts: expressió + identificador. Ex: Position.TopRight | Config.Alignment.Center
+    return parts.join('.');
+  }
+
+  resolvePropertyPath(propertyPath: string): ts.PropertyAssignment | ts.VariableDeclaration {
     const path = propertyPath.split('.');
     let identifier: ts.Node;
     // Iterem l'array per anar cercant recursivament dins dels nodes trobats.
@@ -263,8 +300,25 @@ export class TypescriptParser {
       identifier = this.findIdentifier(prop, identifier);
       if (!identifier) { throw Error(`No s'ha trobat l'identificador '${chalk.bold(prop)}' cercant '${chalk.bold(propertyPath)}'`); }
     }
-    if (identifier.kind !== ts.SyntaxKind.PropertyAssignment) { throw Error(`La propietat '${chalk.bold(propertyPath)}' no és un node de tipus 'PropertyAssignment'.`); }
-    return identifier as ts.PropertyAssignment;
+
+    if (identifier.kind === ts.SyntaxKind.PropertyAssignment) {
+      return identifier as ts.PropertyAssignment;
+
+    } else if (identifier.kind === ts.SyntaxKind.VariableDeclaration) {
+      return identifier as ts.VariableDeclaration;
+
+    } else if (identifier.kind === ts.SyntaxKind.VariableDeclarationList) {
+      const list = identifier as ts.VariableDeclarationList;
+      if (list.declarations.length === 0) {
+        throw Error(`La propietat '${chalk.bold(propertyPath)}' és un node de tipus 'VariableDeclarationList' que no té cap declaració implementada.`);
+      } else if (list.declarations.length > 1) {
+        throw Error(`La propietat '${chalk.bold(propertyPath)}' és un node de tipus 'VariableDeclarationList' que té més d'una declaració implementada.`);
+      } else {
+        return list.declarations[0];
+      }
+    } else {
+      throw Error(`La propietat '${chalk.bold(propertyPath)}' no és cap node de tipus 'PropertyAssignment' o 'VariableDeclaration'.`);
+    }
   }
 
   existsPropertyPath(propertyPath: string): boolean {
@@ -275,8 +329,22 @@ export class TypescriptParser {
       identifier = this.findIdentifier(prop, identifier);
       if (!identifier) { return false }
     }
-    if (identifier.kind !== ts.SyntaxKind.PropertyAssignment) { return false; }
-    return true;
+
+    if (identifier.kind === ts.SyntaxKind.PropertyAssignment) {
+      return true
+
+    } else if (identifier.kind === ts.SyntaxKind.VariableDeclaration) {
+      const list = identifier as ts.VariableDeclarationList;
+      const va = list.declarations[0];
+      return true;
+
+    } else if (identifier.kind === ts.SyntaxKind.VariableDeclarationList) {
+      const list = identifier as ts.VariableDeclarationList;
+      return list.declarations.length === 1;
+
+    } else {
+      return false;
+    }
   }
 
 

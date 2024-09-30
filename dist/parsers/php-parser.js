@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PhpParser = void 0;
 const fs_1 = __importDefault(require("fs"));
+const chalk_1 = __importDefault(require("chalk"));
+const node_utils_1 = require("@metacodi/node-utils");
 const php_parser_1 = require("php-parser");
 class PhpParser {
     static parse(fullName, content) {
@@ -71,6 +73,14 @@ class PhpParser {
             }
         }
         return results;
+    }
+    static findClassDeclaration(name, source, throwError = true) {
+        const classe = PhpParser.find(source, (node) => node.kind === 'class' && node.name && node.name.name === name);
+        if (!classe && throwError) {
+            node_utils_1.Terminal.error(`No s'ha trobat la classe '${chalk_1.default.bold(name)}'.`, false);
+            return undefined;
+        }
+        return classe;
     }
 }
 exports.PhpParser = PhpParser;

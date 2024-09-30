@@ -75,6 +75,16 @@ class TypescriptParser {
         }
         return results;
     }
+    static getNodes(parent) {
+        if (parent.kind === typescript_1.default.SyntaxKind.SourceFile) {
+            return parent.statements.map(v => v);
+        }
+        const nodes = [];
+        parent.forEachChild(node => {
+            nodes.push(node);
+        });
+        return nodes;
+    }
     constructor(fullName, content) {
         this.fullName = fullName;
         this.replacements = [];
@@ -86,6 +96,10 @@ class TypescriptParser {
             this.content = fs_1.default.readFileSync(fullName, 'utf-8');
         }
         this.source = typescript_1.default.createSourceFile(fullName, this.content, typescript_1.default.ScriptTarget.Latest);
+    }
+    save() {
+        this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
+        fs_1.default.writeFileSync(node_utils_1.Resource.normalize(this.fullName), this.content);
     }
     getImportDeclarations() {
         return TypescriptParser.filter(this.source.statements, typescript_1.default.SyntaxKind.ImportDeclaration, { firstOnly: false });
@@ -112,6 +126,8 @@ class TypescriptParser {
             typescript_1.default.SyntaxKind.RegularExpressionLiteral,
             typescript_1.default.SyntaxKind.ArrayLiteralExpression,
             typescript_1.default.SyntaxKind.ObjectLiteralExpression,
+            typescript_1.default.SyntaxKind.PropertyAccessExpression,
+            typescript_1.default.SyntaxKind.ElementAccessExpression,
         ];
         if (!valid.includes(kind)) {
             throw Error(`El valor de la propietat '${chalk_1.default.bold(propertyPathOrAssignment)}' no és una expressió substituïble.`);
@@ -182,6 +198,19 @@ class TypescriptParser {
         });
         return obj;
     }
+    parsePropertyAccessExpression(value) {
+        const parts = [];
+        switch (value.expression.kind) {
+            case typescript_1.default.SyntaxKind.Identifier:
+                parts.push(value.expression.text);
+                break;
+            case typescript_1.default.SyntaxKind.PropertyAccessExpression:
+                parts.push(this.parsePropertyAccessExpression(value.expression));
+                break;
+        }
+        parts.push(value.name.text);
+        return parts.join('.');
+    }
     resolvePropertyPath(propertyPath) {
         const path = propertyPath.split('.');
         let identifier;
@@ -191,10 +220,27 @@ class TypescriptParser {
                 throw Error(`No s'ha trobat l'identificador '${chalk_1.default.bold(prop)}' cercant '${chalk_1.default.bold(propertyPath)}'`);
             }
         }
-        if (identifier.kind !== typescript_1.default.SyntaxKind.PropertyAssignment) {
-            throw Error(`La propietat '${chalk_1.default.bold(propertyPath)}' no és un node de tipus 'PropertyAssignment'.`);
+        if (identifier.kind === typescript_1.default.SyntaxKind.PropertyAssignment) {
+            return identifier;
         }
-        return identifier;
+        else if (identifier.kind === typescript_1.default.SyntaxKind.VariableDeclaration) {
+            return identifier;
+        }
+        else if (identifier.kind === typescript_1.default.SyntaxKind.VariableDeclarationList) {
+            const list = identifier;
+            if (list.declarations.length === 0) {
+                throw Error(`La propietat '${chalk_1.default.bold(propertyPath)}' és un node de tipus 'VariableDeclarationList' que no té cap declaració implementada.`);
+            }
+            else if (list.declarations.length > 1) {
+                throw Error(`La propietat '${chalk_1.default.bold(propertyPath)}' és un node de tipus 'VariableDeclarationList' que té més d'una declaració implementada.`);
+            }
+            else {
+                return list.declarations[0];
+            }
+        }
+        else {
+            throw Error(`La propietat '${chalk_1.default.bold(propertyPath)}' no és cap node de tipus 'PropertyAssignment' o 'VariableDeclaration'.`);
+        }
     }
     existsPropertyPath(propertyPath) {
         const path = propertyPath.split('.');
@@ -205,13 +251,24 @@ class TypescriptParser {
                 return false;
             }
         }
-        if (identifier.kind !== typescript_1.default.SyntaxKind.PropertyAssignment) {
+        if (identifier.kind === typescript_1.default.SyntaxKind.PropertyAssignment) {
+            return true;
+        }
+        else if (identifier.kind === typescript_1.default.SyntaxKind.VariableDeclaration) {
+            const list = identifier;
+            const va = list.declarations[0];
+            return true;
+        }
+        else if (identifier.kind === typescript_1.default.SyntaxKind.VariableDeclarationList) {
+            const list = identifier;
+            return list.declarations.length === 1;
+        }
+        else {
             return false;
         }
-        return true;
     }
     findClassDeclaration(name, parent) {
-        const nodes = this.getNodes(parent || this.source);
+        const nodes = TypescriptParser.getNodes(parent || this.source);
         const found = TypescriptParser.find(nodes, (node) => (node.kind === typescript_1.default.SyntaxKind.ClassDeclaration && node.name.text === name));
         return found;
     }
@@ -220,7 +277,7 @@ class TypescriptParser {
         const hasIdentifier = (name, node, indent = '') => (node.kind === typescript_1.default.SyntaxKind.Identifier && node.text === name) ||
             (node.kind === typescript_1.default.SyntaxKind.VariableDeclaration && node.name.text === name) ||
             (node.kind === typescript_1.default.SyntaxKind.FirstLiteralToken && node.text === name);
-        const nodes = this.getNodes(parent || this.source);
+        const nodes = TypescriptParser.getNodes(parent || this.source);
         for (const node of nodes) {
             if (hasIdentifier(name, node, indent)) {
                 return parent;
@@ -233,29 +290,15 @@ class TypescriptParser {
         return undefined;
     }
     find(filter, options) {
-        const nodes = this.getNodes((options === null || options === void 0 ? void 0 : options.parent) || this.source);
+        const nodes = TypescriptParser.getNodes((options === null || options === void 0 ? void 0 : options.parent) || this.source);
         return TypescriptParser.find(nodes, filter, options);
     }
     filter(filter, options) {
-        const nodes = this.getNodes((options === null || options === void 0 ? void 0 : options.parent) || this.source);
+        const nodes = TypescriptParser.getNodes((options === null || options === void 0 ? void 0 : options.parent) || this.source);
         return TypescriptParser.filter(nodes, filter, options);
-    }
-    getNodes(parent) {
-        if (parent.kind === typescript_1.default.SyntaxKind.SourceFile) {
-            return parent.statements.map(v => v);
-        }
-        const nodes = [];
-        parent.forEachChild(node => {
-            nodes.push(node);
-        });
-        return nodes;
     }
     insertBefore(node, text) { this.replacements.push({ start: node.pos, end: node.pos, text }); }
     insertAfter(node, text) { this.replacements.push({ start: ((node === null || node === void 0 ? void 0 : node.end) || 0) + 1, end: ((node === null || node === void 0 ? void 0 : node.end) || 0) + 1, text }); }
-    save() {
-        this.replacements.sort((r1, r2) => r2.start - r1.start).map(r => this.content = this.content.slice(0, r.start) + r.text + this.content.slice(r.end));
-        fs_1.default.writeFileSync(node_utils_1.Resource.normalize(this.fullName), this.content);
-    }
 }
 exports.TypescriptParser = TypescriptParser;
 //# sourceMappingURL=typescript-parser.js.map

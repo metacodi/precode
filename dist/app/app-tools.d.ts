@@ -18,7 +18,11 @@ export declare class AppTools {
     get frontendFolder(): string;
     getCustomerData(customer: string): {
         parser: TypescriptParser;
-        data: (path: string) => PrimitiveType;
+        data: PrimitiveType;
+    };
+    getCustomerDataResolver(customer: string): {
+        parser: TypescriptParser;
+        resolver: (path: string) => PrimitiveType;
     };
     getCurrentCustomer(env: string): string;
     getCurrentAppId(env: string): string;

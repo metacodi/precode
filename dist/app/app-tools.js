@@ -57,8 +57,14 @@ class AppTools {
     getCustomerData(customer) {
         const { apps, dataIdentifier } = this;
         const parser = new typescript_parser_1.TypescriptParser(`${apps}/customers/${customer}/data.ts`);
-        const data = (path) => parser.getPropertyValue(`${dataIdentifier}.${path}`);
+        const data = parser.getPropertyValue(`${dataIdentifier}`);
         return { parser, data };
+    }
+    getCustomerDataResolver(customer) {
+        const { apps, dataIdentifier } = this;
+        const parser = new typescript_parser_1.TypescriptParser(`${apps}/customers/${customer}/data.ts`);
+        const resolver = (path) => parser.getPropertyValue(path ? `${dataIdentifier}.${path}` : `${dataIdentifier}`);
+        return { parser, resolver };
     }
     getCurrentCustomer(env) {
         return this.findCustomerFolder(this.getCurrentAppId(env));
@@ -82,8 +88,8 @@ class AppTools {
             if (!node_utils_1.Resource.exists(dataFile)) {
                 return false;
             }
-            const { data } = this.getCustomerData(d.name);
-            return data('app.id') === appId;
+            const { resolver } = this.getCustomerDataResolver(d.name);
+            return resolver('app.id') === appId;
         })) === null || _a === void 0 ? void 0 : _a.name) || '';
     }
     getAllCustomers() {
@@ -112,12 +118,12 @@ class AppTools {
             options = {};
         }
         const ftpVar = options.ftpVar === undefined ? 'ftp' : options.ftpVar;
-        const { data } = this.getCustomerData(customer);
-        const host = data(`${ftpVar}.host`);
-        const port = data(`${ftpVar}.port`);
-        const user = data(`${ftpVar}.username`);
-        const password = data(`${ftpVar}.password`);
-        const remotePath = `${data(`${ftpVar}.remotePath`)}`;
+        const { resolver } = this.getCustomerDataResolver(customer);
+        const host = resolver(`${ftpVar}.host`);
+        const port = resolver(`${ftpVar}.port`);
+        const user = resolver(`${ftpVar}.username`);
+        const password = resolver(`${ftpVar}.password`);
+        const remotePath = `${resolver(`${ftpVar}.remotePath`)}`;
         const ftp = new node_utils_1.FtpClient({ host, user, password, port });
         return { remotePath, ftp };
     }
@@ -145,17 +151,17 @@ class AppTools {
         return new Promise((resolve, reject) => {
             const poolKey = `${customer}-${env}`;
             if (!this.pools[poolKey]) {
-                const { parser, data } = this.getCustomerData(customer);
+                const { parser, resolver } = this.getCustomerDataResolver(customer);
                 if (!parser.existsPropertyPath(`database.${env}.hostname`)) {
                     resolve(undefined);
                     return;
                 }
                 const config = {
                     connectionLimit: 10,
-                    host: data(`database.${env}.hostname`),
-                    user: data(`database.${env}.username`),
-                    password: data(`database.${env}.password`),
-                    database: data(`database.${env}.database`),
+                    host: resolver(`database.${env}.hostname`),
+                    user: resolver(`database.${env}.username`),
+                    password: resolver(`database.${env}.password`),
+                    database: resolver(`database.${env}.database`),
                 };
                 this.pools[poolKey] = mysql.createPool(config);
             }

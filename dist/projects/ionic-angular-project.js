@@ -50,9 +50,23 @@ class IonicAngularProject extends angular_project_1.AngularProject {
             && !!resources.find(d => d.name === 'angular.json')
             && !!resources.find(d => d.name === 'ionic.config.json');
     }
-    static createProject(folder) {
+    static createProject(folder, options) {
+        if (!options) {
+            options = {};
+        }
+        const template = options.template === undefined ? 'blank' : options.template;
+        const type = options.type === undefined ? 'angular' : options.type;
+        const withCordova = options.withCordova === undefined ? false : options.withCordova;
+        const withCapacitor = options.withCapacitor === undefined ? false : options.withCapacitor;
+        const startOpts = [type];
+        if (withCordova) {
+            startOpts.push('--cordova');
+        }
+        if (withCapacitor) {
+            startOpts.push('--capacitor');
+        }
         const projectName = path.basename(folder);
-        code_project_1.CodeProject.install(folder, [`ionic start ${projectName}`]);
+        code_project_1.CodeProject.install(folder, [`ionic start ${projectName} ${template} ${startOpts.join(' ')}`]);
     }
     constructor(folder) { super(folder); }
     initialize() {

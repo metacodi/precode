@@ -87,4 +87,12 @@ export interface TypescriptConstructorParameter {
     type: string;
     action: EditActionType;
 }
+export interface IonicProjectOptions {
+    template?: IonicProjectTemplate;
+    type?: IonicProjectType;
+    withCordova?: boolean;
+    withCapacitor?: boolean;
+}
+export type IonicProjectType = 'vue' | 'angular' | 'angular-standalone' | 'react';
+export type IonicProjectTemplate = 'tabs' | 'sidemenu' | 'blank' | 'list' | 'my-first-app';
 //# sourceMappingURL=types.d.ts.map

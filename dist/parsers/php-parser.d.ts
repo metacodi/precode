@@ -9,5 +9,6 @@ export declare class PhpParser {
         recursive?: boolean;
         firstOnly?: boolean;
     }): Node[];
+    static findClassDeclaration(name: string, source: any, throwError?: boolean): Node;
 }
 //# sourceMappingURL=php-parser.d.ts.map

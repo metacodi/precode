@@ -18,7 +18,9 @@ export declare class TypescriptParser {
         recursive?: boolean;
         firstOnly?: boolean;
     }): ts.Node[];
+    static getNodes(parent: ts.Node): ts.Node[];
     constructor(fullName: string, content?: string);
+    save(): void;
     getImportDeclarations(): ts.ImportDeclaration[];
     getImportClauseNames(node: ts.ImportDeclaration): any[];
     getPropertyValue(propertyPathOrAssignment: string | ts.PropertyAssignment): PrimitiveType;
@@ -28,7 +30,8 @@ export declare class TypescriptParser {
     parsePropertyInitializer(value: ts.Expression): PrimitiveType;
     parseArrayLiteralExpression(value: ts.ArrayLiteralExpression): PrimitiveType[];
     parseObjectLiteralExpression(value: ts.ObjectLiteralExpression): object;
-    resolvePropertyPath(propertyPath: string): ts.PropertyAssignment;
+    parsePropertyAccessExpression(value: ts.PropertyAccessExpression): any;
+    resolvePropertyPath(propertyPath: string): ts.PropertyAssignment | ts.VariableDeclaration;
     existsPropertyPath(propertyPath: string): boolean;
     findClassDeclaration(name: string, parent?: ts.Node): ts.ClassDeclaration;
     findIdentifier(name: string, parent?: ts.Node, indent?: string): ts.Node;
@@ -42,9 +45,7 @@ export declare class TypescriptParser {
         firstOnly?: boolean;
         parent?: ts.Node;
     }): ts.Node[];
-    getNodes(parent: ts.Node): ts.Node[];
     insertBefore(node: ts.Node, text: string): void;
     insertAfter(node: ts.Node, text: string): void;
-    save(): void;
 }
 //# sourceMappingURL=typescript-parser.d.ts.map

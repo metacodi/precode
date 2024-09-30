@@ -36,7 +36,7 @@ class PushCapacitor extends typescript_deployment_1.TypescriptDeployment {
                 if (!data) {
                     data = this.data;
                 }
-                if (data && data.showTitle) {
+                if (data === null || data === void 0 ? void 0 : data.showTitle) {
                     node_utils_1.Terminal.title(this.title);
                 }
                 const tasks = [
@@ -47,7 +47,7 @@ class PushCapacitor extends typescript_deployment_1.TypescriptDeployment {
                         help: `  → Download from ${chalk_1.default.blue('https://firebase.google.com/docs?authuser=0')}`
                     }),
                 ];
-                if (data && data.showTitle) {
+                if (data === null || data === void 0 ? void 0 : data.showTitle) {
                     node_utils_1.Terminal.line();
                 }
                 resolve(yield this.run(tasks, project, options));

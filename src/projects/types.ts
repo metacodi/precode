@@ -169,3 +169,63 @@ export interface TypescriptConstructorParameter {
   type: string;
   action: EditActionType;
 }
+
+
+// --------------------------------------------------------------------------------
+//  Ionic
+// --------------------------------------------------------------------------------
+
+/**
+ * ```typescript
+ * export interface IonicProjectOptions {
+ *   template?: IonicProjectTemplate;
+ *   type?: IonicProjectType;
+ *   withCordova?: boolean;
+ *   withCapacitor?: boolean;
+ * }
+ * 
+ * type IonicProjectTemplate = 'tabs' | 'sidemenu' | 'blank' | 'list' | 'my-first-app'
+ * 
+ * type IonicProjectType = 'vue' | 'angular' | 'angular-standalone' | 'react'
+ * ```
+ */
+export interface IonicProjectOptions {
+  /**
+   * ```typescript
+   * type IonicProjectTemplate = 'tabs' | 'sidemenu' | 'blank' | 'list' | 'my-first-app'
+   * ```
+   * @default 'blank'
+   */
+  template?: IonicProjectTemplate;
+  /**
+   * {@link https://ionicframework.com/docs/cli/commands/start#options Ionic start options}
+   * 
+   * ```typescript
+   * type IonicProjectType = 'vue' | 'angular' | 'angular-standalone' | 'react'
+   * ```
+   * @default 'angular'
+   */
+  type?: IonicProjectType;
+  /** @default false */
+  withCordova?: boolean;
+  /** @default false */
+  withCapacitor?: boolean;
+}
+
+/** {@link https://ionicframework.com/docs/cli/commands/start#options ionic start} */
+export type IonicProjectType = 'vue' | 'angular' | 'angular-standalone' | 'react';
+
+/** Executar `ionic start --list` per obtenir un llista actualitzada de templates. */
+export type IonicProjectTemplate =
+  /** A starting project with a simple tabbed interface. */
+  'tabs' |
+  /** A starting project with a side menu with navigation in the content area. */
+  'sidemenu' |
+  /** A blank starter project. */
+  'blank' |
+  /** A starting project with a list. */
+  'list' |
+  /** A template for the "Build Your First App" tutorial. */
+  'my-first-app'
+;
+

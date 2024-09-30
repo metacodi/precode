@@ -6,6 +6,7 @@ export declare class CodeProject {
     projectPath: string;
     config: any;
     connection: mysql.Connection | mysql.PoolConnection;
+    static curl(options: CurlOptions): Promise<string>;
     static execute(command: string): Promise<any>;
     static install(folder: string, dependencies: any[]): Promise<any>;
     constructor(projectPath: string);

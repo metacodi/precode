@@ -6,6 +6,7 @@ import { Terminal, Resource, ResourceType, capitalize } from '@metacodi/node-uti
 import { CodeProject } from './code-project';
 import { AngularProject } from './angular-project';
 import { detailPageHtml, detailPageTs, listComponentHtml, listComponentScss, listComponentTs, listPageHtmlContent, listPageTsContent, moduleContent, schemaContent, serviceContent } from './resources/generate/generate';
+import { IonicProjectOptions } from './types';
 
 
 
@@ -19,12 +20,18 @@ import { detailPageHtml, detailPageTs, listComponentHtml, listComponentScss, lis
  * import { IonicAngularProject } from '@metacodi/precode';
  * import Prompt from 'commander';
  *
- * Prompt.requiredOption('-d, --directory <dir>', 'Carpeta del projecte.');
- * Prompt.parse(process.argv);
+ * Prompt.program
+ *   .requiredOption('-d, --directory <dir>', 'Carpeta del projecte.')
+ * ;
+ * Prompt.program.parse(process.argv);
+ * 
+ * const promptOpts = Prompt.program.opts();
  *
- * const project = new IonicAngularProject(Prompt.directory);
+ * const project = new IonicAngularProject(promptOpts.directory || __dirname);
  * project.initialize().then(async () => {
- *   // ...
+ *   const options = { onlyTest: true };
+ *   const i18n = new I18n();
+ *   await i18n.deploy(project, options);
  * });
  * ```
  */
@@ -51,9 +58,19 @@ export class IonicAngularProject extends AngularProject {
   }
 
   /** Instal·la tot el necessari per crear un projecte d'aquest tipus a la carpeta indicada. */
-  static createProject(folder?: string) {
+  static createProject(folder?: string, options?: IonicProjectOptions) {
+    if (!options) { options = {}; }
+    const template = options.template === undefined ? 'blank' : options.template;
+    const type = options.type === undefined ? 'angular' : options.type;
+    const withCordova = options.withCordova === undefined ? false : options.withCordova;
+    const withCapacitor = options.withCapacitor === undefined ? false : options.withCapacitor;
+
+    const startOpts: string[] = [ type ];
+    if (withCordova) { startOpts.push('--cordova'); }
+    if (withCapacitor) { startOpts.push('--capacitor'); }
+
     const projectName = path.basename(folder);
-    CodeProject.install(folder, [`ionic start ${projectName}`]);
+    CodeProject.install(folder, [`ionic start ${projectName} ${template} ${startOpts.join(' ')}`]);
   }
 
   // --------------------------------------------------------------------------------
