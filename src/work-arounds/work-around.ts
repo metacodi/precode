@@ -1,5 +1,7 @@
 import ts from 'typescript';
 
+import { Terminal } from '@metacodi/node-utils';
+
 import { TypescriptParser } from '../parsers/typescript-parser';
 
 
@@ -22,7 +24,10 @@ export const TS2420_FSWatcher_chokidarTypesIndex = (node_modules = 'node_modules
 
 
 /** Aquest problema apareix pq les signatures de typus de node i lib.dom no coincideixen. Es pot solucionar igualant typescript amb types/node.
- * I pot reaparèixer el problema si tenim una instal·lació global de typescript diferent (npm i -g typescript).
+ * I pot reaparèixer el problema si tenim una instal·lació global de typescript diferent (npm i -g typescript) o bé el VSCode està utilitzant
+ * una versió de l'arxiu `lib.dom.ts` que té en cache. Anar-hi per veure la versió de typescript que hi ha al package.json.
+ * Ex per Windows: ...\AppData\Local\Programs\Microsoft VS Code\resources\app\extensions\node_modules\typescript\lib\lib.dom.d.ts)
+ * Ex per Mac: /Applications/Visual Studio Code.app/Contents/Resources/app/extensions/node_modules/typescript/lib/lib.dom.d.ts
  * 
  * ```sh
  * node_modules/@types/node/globals.d.ts:72:13 - error TS2403: Subsequent variable declarations must have the same type. Variable 'AbortSignal'
@@ -30,12 +35,32 @@ export const TS2420_FSWatcher_chokidarTypesIndex = (node_modules = 'node_modules
  * WORK-AROUND: Prenem la interface de node_modules/typescript/lib/lib.dom.d.ts:2335:13 i la substituim a `globals.d.ts`.
  */
 export const TS2403_AbortSignal_typesNodeGlobals = (node_modules = 'node_modules') => {
-  const parser = new TypescriptParser(`${node_modules}/@types/node/globals.d.ts`);
-  const variableDeclaration = parser.find((node: ts.Node | ts.Statement) => 
+  // Obtenim la declaració de la llibreria `lib.dom.d.ts`.
+  const parserLib = new TypescriptParser(`${node_modules}/typescript/lib/lib.dom.d.ts`);
+  const declarationLib = parserLib.find((node: ts.Node | ts.Statement) => 
     node.kind === ts.SyntaxKind.VariableDeclaration && ((node as ts.VariableDeclaration).name as ts.Identifier).text === 'AbortSignal'
   , { recursive: true, firstOnly: true }) as ts.VariableDeclaration;
-  const { pos: start, end } = variableDeclaration.type;
-  const text = `{ prototype: AbortSignal; new(): AbortSignal; abort(reason?: any): AbortSignal; timeout(milliseconds: number): AbortSignal; }`;
-  parser.replacements.push({ start, end, text });
-  parser.save();
+  if (declarationLib === undefined) {
+    Terminal.error({ message: `No s'ha trobat la varaible 'AbortSignal' a '${node_modules}/typescript/lib/lib.dom'.` }, /* exit */ false);
+  } else {
+    const { pos: start, end, text } = declarationLib.type as any;
+    const abortSignalCode = parserLib.content.slice(start, end);
+    // console.log('abortSignalCode =>', abortSignalCode);
+    // Cerquem i substituim la declaració de `globals.d.ts`.
+    const parser = new TypescriptParser(`${node_modules}/@types/node/globals.d.ts`);
+    const variableDeclaration = parser.find((node: ts.Node | ts.Statement) => 
+      node.kind === ts.SyntaxKind.VariableDeclaration && ((node as ts.VariableDeclaration).name as ts.Identifier).text === 'AbortSignal'
+    , { recursive: true, firstOnly: true }) as ts.VariableDeclaration;
+    if (variableDeclaration === undefined) {
+      Terminal.error({ message: `No s'ha trobat la varaible 'AbortSignal' a '${node_modules}/@types/node/globals.d.ts'.` }, /* exit */ false);
+    } else {
+      const { pos: start, end } = variableDeclaration.type as ts.TypeNode;
+      // const text = `{ prototype: AbortSignal; new(): AbortSignal; abort(reason?: any): AbortSignal; any(signals: AbortSignal[]): AbortSignal; timeout(milliseconds: number): AbortSignal; }`;
+      const text = abortSignalCode;
+      parser.replacements.push({ start, end, text });
+      parser.save();  
+    }
+  }
 }
+
+TS2403_AbortSignal_typesNodeGlobals();

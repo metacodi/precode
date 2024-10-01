@@ -4,7 +4,8 @@ import Prompt from 'commander';
 import moment from 'moment';
 import Client from 'ftp';
 
-import { TypescriptProject, Terminal, Resource, Git, FtpClient, TypescriptParser } from '../../src';
+import { Git, Terminal } from '@metacodi/node-utils';
+
 
 try {
 

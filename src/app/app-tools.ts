@@ -1,9 +1,11 @@
-import { FtpClient, getTableLastUpdate, Git, Resource, ResourceType, syncRow, Terminal } from "@metacodi/node-utils";
-import * as mysql from 'mysql2';
-import { PoolConnection, Pool } from 'mysql2/promise';
 import Prompt from 'commander';
 import chalk from "chalk";
 import moment from "moment";
+import * as mysql from 'mysql2';
+import { PoolConnection, Pool } from 'mysql2/promise';
+
+import { FtpClient } from "@metacodi/node-ftp-client";
+import { getTableLastUpdate, Git, Resource, ResourceType, syncRow, Terminal } from "@metacodi/node-utils";
 
 import { PrimitiveType, TypescriptParser } from "../parsers/typescript-parser";
 import { AppApiClient } from "./app-api-client";

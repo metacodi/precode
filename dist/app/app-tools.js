@@ -36,11 +36,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppTools = void 0;
-const node_utils_1 = require("@metacodi/node-utils");
-const mysql = __importStar(require("mysql2"));
 const commander_1 = __importDefault(require("commander"));
 const chalk_1 = __importDefault(require("chalk"));
 const moment_1 = __importDefault(require("moment"));
+const mysql = __importStar(require("mysql2"));
+const node_ftp_client_1 = require("@metacodi/node-ftp-client");
+const node_utils_1 = require("@metacodi/node-utils");
 const typescript_parser_1 = require("../parsers/typescript-parser");
 class AppTools {
     constructor(options) {
@@ -124,7 +125,7 @@ class AppTools {
         const user = resolver(`${ftpVar}.username`);
         const password = resolver(`${ftpVar}.password`);
         const remotePath = `${resolver(`${ftpVar}.remotePath`)}`;
-        const ftp = new node_utils_1.FtpClient({ host, user, password, port });
+        const ftp = new node_ftp_client_1.FtpClient({ host, user, password, port });
         return { remotePath, ftp };
     }
     getPendingChanges(env, side) {

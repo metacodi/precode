@@ -1,6 +1,6 @@
-import { FtpClient } from "@metacodi/node-utils";
 import * as mysql from 'mysql2';
 import { PoolConnection, Pool } from 'mysql2/promise';
+import { FtpClient } from "@metacodi/node-ftp-client";
 import { PrimitiveType, TypescriptParser } from "../parsers/typescript-parser";
 import { AppApiClient } from "./app-api-client";
 export interface AppToolsOptions {
